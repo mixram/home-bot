@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+    <Properties>
+        <Property name="pattern1">%p %d{HH:mm:ss,SSS} [%t] %C: %m%n</Property>
+        <Property name="pattern2">[%-5level] [%d{HH:mm:ss.SSS}] [%25.25t] [%25.25c{1}:%-4L] - %m%n</Property>
+        <Property name="logLevel">debug</Property>
+        <Property name="logLevelRoot">info</Property>
+    </Properties>
+
+    <Appenders>
+
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="${pattern2}" />
+        </Console>
+
+    </Appenders>
+
+
+    <Loggers>
+
+        <!-- main log -->
+        <Logger name="com.mixram.telegram.bot" level="${logLevel}" includeLocation="true" additivity="false">
+            <AppenderRef ref="STDOUT" />
+        </Logger>
+
+        <!--spring log -->
+        <Logger name="org.springframework" level="${logLevelRoot}" includeLocation="true" additivity="false">
+            <AppenderRef ref="STDOUT" />
+        </Logger>
+
+        <Root level="${logLevelRoot}" includeLocation="true">
+            <AppenderRef ref="STDOUT" />
+        </Root>
+
+    </Loggers>
+
+</Configuration>
+
