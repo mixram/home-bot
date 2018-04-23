@@ -1,7 +1,9 @@
 package com.mixram.telegram.bot;
 
-import java.io.IOException;
-import java.util.Properties;
+import com.mixram.telegram.bot.service.Bot3D;
+import org.telegram.telegrambots.ApiContextInitializer;
+import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 /**
  * Main class for bot.
@@ -12,20 +14,19 @@ import java.util.Properties;
 public class TelegramBotApplication {
 
     public static void main(String[] args) throws Exception {
-        pushVersion2Env();
+        System.out.println("Starting the application...");
 
-        //
-    }
+        ApiContextInitializer.init();
+        TelegramBotsApi botsApi = new TelegramBotsApi();
+        try {
+            System.out.println("Registering the bot...");
 
-    private static void pushVersion2Env() throws IOException {
-        Properties p = new Properties();
-        p.load(Thread.class.getResourceAsStream("/META-INF/build-info.properties"));
+            botsApi.registerBot(new Bot3D());
 
-        String[] productVersion = p.getProperty("build.version").split("[.]");
-        if (productVersion.length < 2) {
-            throw new IllegalStateException(String.format("Wrong build.version=%s!", p.getProperty("build.version")));
+            System.out.println("The bot have registered successfully...");
+            System.out.println("The application have started successfully...");
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
-
-        System.setProperty("product.version", productVersion[0] + "." + productVersion[1]);
     }
 }
