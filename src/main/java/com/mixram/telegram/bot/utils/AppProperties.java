@@ -19,27 +19,6 @@ import java.util.Properties;
 @Component
 public class AppProperties {
 
-    private final Properties properties;
-
-    /**
-     * To create an instance of {@link AppProperties}.<br>
-     * Properties will be load automatically. If property-file have not found - an exception will be thrown.
-     *
-     * @since 0.1.0.0
-     */
-    public AppProperties() throws IOException {
-        this.properties = new Properties();
-
-        String pathToProps = System.getProperty("external.property.path");
-        Validate.notBlank(pathToProps, "Path to external properties is not found!");
-
-        try(InputStream is = new FileInputStream(pathToProps)) {
-            this.properties.load(is);
-        }
-
-        log.debug("token: {}", properties.getProperty("token"));
-    }
-
     /**
      * To get property.
      *
@@ -72,4 +51,41 @@ public class AppProperties {
 
         return property;
     }
+
+    /**
+     * To assert the property existence.
+     *
+     * @param key property name.
+     *
+     * @since 0.1.0.0
+     */
+    public void assertPropertyExists(String key) {
+        Validate.notNull(key, "Property key is not specified!");
+        Validate.notNull(getProperty(key), "Property value for key '%s' is not found!", key);
+    }
+
+    /*===Private elements===*/
+
+
+    /*===Util elements===*/
+
+    private final Properties properties;
+
+    /**
+     * To create an instance of {@link AppProperties}.<br>
+     * Properties will be load automatically. If property-file have not found - an exception will be thrown.
+     *
+     * @since 0.1.0.0
+     */
+    public AppProperties() throws IOException {
+        this.properties = new Properties();
+
+        String pathToProps = System.getProperty("application.props");
+        Validate.notBlank(pathToProps, "Path to external properties is not found!");
+
+        try(InputStream is = new FileInputStream(pathToProps)) {
+            this.properties.load(is);
+        }
+    }
+
 }
