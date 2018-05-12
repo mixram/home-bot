@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.mixram.telegram.bot</groupId>
-    <artifactId>3d-bot</artifactId>
-    <version>0.1.0.0</version>
+    <artifactId>home-bot</artifactId>
+    <version>0.1.1.0</version>
     <packaging>jar</packaging>
 
-    <name>3d-bot</name>
+    <name>home-bot</name>
     <description>The bot for Telegram</description>
 
     <properties>
