@@ -1,0 +1,6 @@
+
+===Bot should be able to do===
+
+* to parse Jusk page with discounts and save data to DB
+* to compare ordinary price and discount price
+* to send to chat the list of products with discount >= 30%
