@@ -1,4 +1,4 @@
-3d-bot
+Universal-bot
 ============
 
 +++Intro+++
@@ -6,8 +6,8 @@
 
 **Description**
 * the bot for Telegram.
-* main aim: to support ukrainian Telegram-group of 3D-printing.
-* app starts with **TelegramBotApplication.java**.
+* main aim: to provide comfortable modular platform for bots usage.
+* app starts with **UniversalBotApplication.java**.
 
 **Web**
 * 
@@ -18,7 +18,9 @@
 +++Environment+++
 -----------------
 
-*
+* -Dspring.profiles.active=dev
+* --spring.config.location=path\on\file\system\application.properties (all customizable app settings)
+* --logging.config=path\on\file\system\log4j2-spring.xml (if you need to redefine basic logger settings (from classpath))
 
 +++Business logic+++
 --------------------
