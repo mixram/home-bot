@@ -9,11 +9,13 @@ Universal-bot
 * main aim: to provide comfortable modular platform for bots usage.
 * app starts with **UniversalBotApplication.java**.
 
-**Web**
-* 
-
 **Back**
-* 
+* SpringBoot 2.0
+* WebMVC
+* Actuator
+* Guava
+* Lombok
+* Jackson
 
 +++Environment+++
 -----------------
