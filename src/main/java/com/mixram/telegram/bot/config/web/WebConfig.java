@@ -21,6 +21,25 @@ import java.util.Set;
 @Configuration
 public class WebConfig {
 
+    // <editor-fold defaultstate="collapsed" desc="***API elements***">
+
+    private static Set<String> actuatorEndpoints = Sets.newHashSet("/health", "/info");
+
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="***Util elements***">
+
+    public static void setActuatorEndpoints(Set<String> actuatorEndpoints) {
+        WebConfig.actuatorEndpoints = actuatorEndpoints;
+    }
+
+    public static Set<String> getActuatorEndpoints() {
+        return WebConfig.actuatorEndpoints;
+    }
+
+    // </editor-fold>
+
+
     @Bean
     public WebFilter acceptWebFilter() {
         return (exchange, chain) -> {
@@ -40,18 +59,10 @@ public class WebConfig {
     }
 
 
-    /*===Private elements===*/
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
+    //
 
-    /*===Util elements===*/
+    // </editor-fold>
 
-    private static Set<String> actuatorEndpoints = Sets.newHashSet("/health", "/info");
-
-    public static void setActuatorEndpoints(Set<String> actuatorEndpoints) {
-        WebConfig.actuatorEndpoints = actuatorEndpoints;
-    }
-
-    public static Set<String> getActuatorEndpoints() {
-        return WebConfig.actuatorEndpoints;
-    }
 }

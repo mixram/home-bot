@@ -1,6 +1,6 @@
 package com.mixram.telegram.bot.services.shedulers;
 
-import com.mixram.telegram.bot.services.domain.LongPooling;
+import com.mixram.telegram.bot.services.modules.Module;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,20 +12,18 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * Component to manage work with schedulers for "long pooling" Telegram communication type.
- *
- * @author mixram on 2018-07-31.
- * @since 0.1.0.0
+ * @author mixram on 2019-03-29.
+ * @since 0.2.0.0
  */
 @Slf4j
 @Component
-public class LongPoolingScheduler implements Scheduler {
+public class ModulesScheduler implements Scheduler {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private final boolean doSchedule;
 
-    private final Set<LongPooling> longPoolings;
+    private final Set<Module> modules;
     private final AsyncHelper asyncHelper;
 
     // </editor-fold>
@@ -33,11 +31,11 @@ public class LongPoolingScheduler implements Scheduler {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public LongPoolingScheduler(@Value("${bot.settings.scheduler.long-pooling.enable}") boolean doSchedule,
-                                Set<LongPooling> longPoolings,
-                                AsyncHelper asyncHelper) {
+    public ModulesScheduler(@Value("${bot.settings.scheduler.modules.enable}") boolean doSchedule,
+                            Set<Module> modules,
+                            AsyncHelper asyncHelper) {
         this.doSchedule = doSchedule;
-        this.longPoolings = longPoolings;
+        this.modules = modules;
         this.asyncHelper = asyncHelper;
     }
 
@@ -45,14 +43,14 @@ public class LongPoolingScheduler implements Scheduler {
 
 
     @Override
-    @Scheduled(cron = "${bot.settings.scheduler.long-pooling.cron-time}")
+    @Scheduled(cron = "${bot.settings.scheduler.modules.cron-time}")
     public void schedule() {
         if (!doSchedule) {
             return;
         }
 
-        longPoolings.forEach(lp -> asyncHelper.doAsync((Supplier<Void>) () -> {
-            lp.check();
+        modules.forEach(lp -> asyncHelper.doAsync((Supplier<Void>) () -> {
+            lp.execute();
 
             return null;
         }));
@@ -64,5 +62,4 @@ public class LongPoolingScheduler implements Scheduler {
     //
 
     // </editor-fold>
-
 }

@@ -1,8 +1,5 @@
 package com.mixram.telegram.bot.config;
 
-import com.mixram.telegram.bot.services.shedulers.LongPoolingScheduler;
-import com.mixram.telegram.bot.services.shedulers.Scheduler;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -14,8 +11,22 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AppConfig {
 
-    @Bean("longPoolingScheduler")
-    public Scheduler longPoolingScheduler() {
-        return new LongPoolingScheduler();
-    }
+    // <editor-fold defaultstate="collapsed" desc="***API elements***">
+
+    //
+
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="***Util elements***">
+
+    //
+
+    // </editor-fold
+
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    //
+
+    // </editor-fold>
+
 }
