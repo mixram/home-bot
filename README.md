@@ -1,12 +1,11 @@
-3d-bot
+universal-bot
 ============
 
 +++Intro+++
 -----------
 
 **Description**
-* the bot for Telegram.
-* main aim: to support ukrainian Telegram-group of 3D-printing.
+* a universal bot for Telegram.
 * app starts with **TelegramBotApplication.java**.
 
 **Web**
