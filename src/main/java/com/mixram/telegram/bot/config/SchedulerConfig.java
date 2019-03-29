@@ -1,7 +1,7 @@
 package com.mixram.telegram.bot.config;
 
-import com.mixram.telegram.bot.config.props.AppProperties;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -18,25 +18,36 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 @Configuration
 public class SchedulerConfig implements SchedulingConfigurer {
 
+    // <editor-fold defaultstate="collapsed" desc="***API elements***">
+
+    private final Integer poolSize;
+
+    // </editor-fold>
+
+    // <editor-fold defaultstate="collapsed" desc="***Util elements***">
+
+    @Autowired
+    public SchedulerConfig(@Value("${bot.settings.scheduler.base-pool-size}") Integer poolSize) {
+        this.poolSize = poolSize;
+    }
+
+    // </editor-fold>
+
+
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-        taskScheduler.setPoolSize(appProperties.getRequiredProperty("scheduler.base.pool.size", Integer :: valueOf));
+        taskScheduler.setPoolSize(poolSize);
         taskScheduler.initialize();
 
         taskRegistrar.setTaskScheduler(taskScheduler);
     }
 
 
-    /*===Private elements===*/
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
+    //
 
-    /*===Util elements===*/
+    // </editor-fold>
 
-    private final AppProperties appProperties;
-
-    @Autowired
-    public SchedulerConfig(AppProperties appProperties) {
-        this.appProperties = appProperties;
-    }
 }

@@ -31,7 +31,7 @@ public class UniversalBotApplication {
 
     private static void pushVersion2Env() throws IOException {
         Properties p = new Properties();
-        p.load(Thread.class.getResourceAsStream("/META-INF/build-info.properties"));
+        p.load(UniversalBotApplication.class.getResourceAsStream("/META-INF/build-info.properties"));
 
         String[] productVersion = p.getProperty("build.version").split("[.]");
         if (productVersion.length < 4) {

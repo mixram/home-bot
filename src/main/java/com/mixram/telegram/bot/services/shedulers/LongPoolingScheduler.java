@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class LongPoolingScheduler implements Scheduler {
 
     @Override
-    @Scheduled(cron = "${scheduler.long.pooling.cron.time}")
+    @Scheduled(cron = "${bot.settings.scheduler.long-pooling.cron-time}")
     public void schedule() {
         log.debug("Long pooling scheduler is alive! {}", LocalDateTime.now());
     }

@@ -21,10 +21,14 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <guava.version>25.0-jre</guava.version>
+        <java.version>11</java.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <guava.version>27.0.1-jre</guava.version>
+        <modelmapper.version>1.1.0</modelmapper.version>
+        <lombok.version>1.18.4</lombok.version>
+        <commons-lang3.version>3.8.1</commons-lang3.version>
+        <junit.version>4.12</junit.version>
     </properties>
 
     <dependencyManagement>
@@ -66,7 +70,7 @@
         <dependency>
             <groupId>com.github.jmnarloch</groupId>
             <artifactId>modelmapper-spring-boot-starter</artifactId>
-            <version>1.1.0</version>
+            <version>${modelmapper.version}</version>
         </dependency>
 
         <dependency>
@@ -96,12 +100,12 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.10</version>
+            <version>${lombok.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
+            <version>${commons-lang3.version}</version>
         </dependency>
 
         <dependency>
@@ -112,7 +116,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
