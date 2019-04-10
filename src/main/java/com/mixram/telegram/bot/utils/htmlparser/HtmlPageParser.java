@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.utils.htmlparser;
 
 /**
  * @author mixram on 2019-04-09.
- * @since 0.2.0.0
+ * @since 0.1.1.0
  */
 public interface HtmlPageParser {
 

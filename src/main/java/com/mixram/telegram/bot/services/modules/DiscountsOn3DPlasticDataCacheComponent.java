@@ -1,21 +1,21 @@
 package com.mixram.telegram.bot.services.modules;
 
+import com.mixram.telegram.bot.config.CacheCustomConfig;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.Shop3D;
-import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.Validate;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 /**
- * @author mixram on 2019-04-10.
+ * @author mixram on 2019-03-29.
  * @since 0.1.1.0
  */
 @Log4j2
+@CacheConfig(cacheManager = CacheCustomConfig.REDIS_CACHE_MANAGER)
 @Component
-public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer {
+public class DiscountsOn3DPlasticDataCacheComponent implements Module3DPlasticDataSearcher {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -30,13 +30,10 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
     // </editor-fold>
 
 
+    @Cacheable(cacheNames = CacheCustomConfig.PLASTIC_3D_DATA_CACHE, unless = "#result == null", key = "#p0")
     @Override
-    public void apply(Map<Shop3D, Data3DPlastic> plastics) {
-        Validate.notNull(plastics, "Plastic data is not specified!");
-
-        log.info("PLASTICS: {}", () -> JsonUtil.toPrettyJson(plastics));
-
-        //TODO: need to realize scheduler logic with plastic info...
+    public Data3DPlastic search(Shop3D shop) {
+        return null;
     }
 
 
@@ -45,5 +42,4 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
     //
 
     // </editor-fold>
-
 }

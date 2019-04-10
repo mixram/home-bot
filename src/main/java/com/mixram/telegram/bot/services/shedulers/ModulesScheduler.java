@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 /**
  * @author mixram on 2019-03-29.
- * @since 0.2.0.0
+ * @since 0.1.1.0
  */
 @Slf4j
 @Component

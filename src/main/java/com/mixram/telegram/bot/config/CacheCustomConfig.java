@@ -6,7 +6,9 @@ import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
@@ -22,11 +24,11 @@ import java.util.List;
 
 /**
  * @author mixram on 2019-03-29.
- * @since 0.2.0.0
+ * @since 0.1.1.0
  */
 @Slf4j
-//@Configuration
-//@EnableCaching(proxyTargetClass = true) //(mode = AdviceMode.ASPECTJ)
+@Configuration
+@EnableCaching(proxyTargetClass = true/*, mode = AdviceMode.ASPECTJ*/)
 public class CacheCustomConfig extends CachingConfigurerSupport {
 
     public static final String REDIS_CACHE_MANAGER = "redisCacheManager";
@@ -59,7 +61,7 @@ public class CacheCustomConfig extends CachingConfigurerSupport {
                 RedisSerializationContext.SerializationPair.fromSerializer(serializer);
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                                                                                  .disableCachingNullValues()
-                                                                                 .entryTtl(Duration.ofMinutes(5))
+                                                                                 .entryTtl(Duration.ZERO)
                                                                                  .serializeValuesWith(serializationPair);
         redisCacheConfiguration.usePrefix();
 

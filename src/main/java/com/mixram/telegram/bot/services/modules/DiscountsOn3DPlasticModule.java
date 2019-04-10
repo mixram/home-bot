@@ -3,6 +3,7 @@ package com.mixram.telegram.bot.services.modules;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.Shop3D;
 import com.mixram.telegram.bot.utils.AsyncHelper;
+import com.mixram.telegram.bot.utils.ConcurrentUtilites;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,10 +12,11 @@ import org.springframework.util.StopWatch;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author mixram on 2019-03-29.
- * @since 0.2.0.0
+ * @since 0.1.1.0
  */
 @Log4j2
 @Service
@@ -50,8 +52,13 @@ public class DiscountsOn3DPlasticModule implements Module {
 
         sw.start("Parse data");
         Map<Shop3D, Data3DPlastic> plastics = new HashMap<>(Shop3D.values().length);
+        Map<Shop3D, CompletableFuture<Data3DPlastic>> plasticsFromFuture = new HashMap<>(Shop3D.values().length);
         for (Shop3D value : Shop3D.values()) {
-            plastics.put(value, searcher.search(value));
+            plasticsFromFuture.put(value,
+                                   ConcurrentUtilites.supplyAsyncWithLocalThreadContext(aVoid -> searcher.search(value)));
+        }
+        for (Map.Entry<Shop3D, CompletableFuture<Data3DPlastic>> futureEntry : plasticsFromFuture.entrySet()) {
+            plastics.put(futureEntry.getKey(), futureEntry.getValue().join());
         }
         sw.stop();
 

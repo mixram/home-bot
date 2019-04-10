@@ -4,7 +4,7 @@ import lombok.Getter;
 
 /**
  * @author mixram on 2019-03-29.
- * @since 0.2.0.0
+ * @since 0.1.1.0
  */
 public enum Command {
 
