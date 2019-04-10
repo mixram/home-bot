@@ -2,6 +2,7 @@ package com.mixram.telegram.bot.services.modules;
 
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.Shop3D;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
  * @author mixram on 2019-03-29.
  * @since 0.2.0.0
  */
+@Log4j2
 @Service
 class DiscountsOn3DPlasticService {
 
@@ -46,7 +48,9 @@ class DiscountsOn3DPlasticService {
             case SHOP_DASPLAST:
             case SHOP_PLEXIWIRE:
             case SHOP_MONOFILAMENT:
-                throw new UnsupportedOperationException(String.format("The shop '%s' is has not been realized yet!", shop));
+                //                throw new UnsupportedOperationException(String.format("The shop '%s' is has not been realized yet!", shop));
+                log.info("The shop {} is has not been realized yet!", () -> shop);
+                return null;
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected shop: %s!", shop));
         }

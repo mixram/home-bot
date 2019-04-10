@@ -6,7 +6,7 @@
 
     <groupId>com.mixram.telegram.bot</groupId>
     <artifactId>universal-bot</artifactId>
-    <version>0.1.0.0</version>
+    <version>0.1.1.0</version>
     <packaging>jar</packaging>
 
     <name>universal-bot</name>
@@ -29,6 +29,7 @@
         <lombok.version>1.18.4</lombok.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <junit.version>4.12</junit.version>
+        <jsoup.version>1.11.3</jsoup.version>
     </properties>
 
     <dependencyManagement>
@@ -120,6 +121,11 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>3.141.59</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
         </dependency>
 
         <dependency>
