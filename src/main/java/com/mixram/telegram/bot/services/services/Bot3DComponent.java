@@ -1,6 +1,6 @@
 package com.mixram.telegram.bot.services.services;
 
-import org.springframework.http.HttpHeaders;
+import com.mixram.telegram.bot.services.domain.entity.Update;
 
 /**
  * @author mixram on 2019-04-10.
@@ -8,7 +8,5 @@ import org.springframework.http.HttpHeaders;
  */
 public interface Bot3DComponent {
 
-    <T> T getBotInfo(String url,
-                     HttpHeaders headers,
-                     T answer);
+    String proceedUpdate(Update update);
 }
