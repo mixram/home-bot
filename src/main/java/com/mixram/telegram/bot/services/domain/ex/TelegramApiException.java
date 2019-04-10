@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.services.domain;
+package com.mixram.telegram.bot.services.domain.ex;
 
 /**
  * @author mixram on 2019-03-29.

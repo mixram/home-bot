@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.shedulers;
 
 import com.mixram.telegram.bot.services.domain.LongPooling;
 import com.mixram.telegram.bot.utils.AsyncHelper;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * @author mixram on 2018-07-31.
  * @since 0.1.0.0
  */
-@Slf4j
+@Log4j2
 @Component
 public class LongPoolingScheduler implements Scheduler {
 

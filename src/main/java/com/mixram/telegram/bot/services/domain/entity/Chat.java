@@ -1,6 +1,7 @@
-package com.mixram.telegram.bot.services.domain;
+package com.mixram.telegram.bot.services.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mixram.telegram.bot.services.domain.TelegramApiEntity;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatResponseEntity implements TelegramApiResponseEntity {
+public class Chat implements TelegramApiEntity {
 
     /**
      * Unique identifier for this chat.<br>
@@ -82,7 +83,7 @@ public class ChatResponseEntity implements TelegramApiResponseEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("photo")
-    private ChatPhotoResponseEntity photo;
+    private ChatPhoto photo;
     /**
      * Description, for supergroups and channel chats. Returned only in getChat.
      *
@@ -106,7 +107,7 @@ public class ChatResponseEntity implements TelegramApiResponseEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("pinned_message")
-    private MessageResponseEntity pinnedMessage;
+    private Message pinnedMessage;
     /**
      * For supergroups, name of group sticker set. Returned only in getChat.
      *

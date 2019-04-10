@@ -1,6 +1,7 @@
-package com.mixram.telegram.bot.services.domain;
+package com.mixram.telegram.bot.services.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mixram.telegram.bot.services.domain.TelegramApiEntity;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatPhotoResponseEntity implements TelegramApiResponseEntity {
+public class ChatPhoto implements TelegramApiEntity {
 
     /**
      * Unique file identifier of small (160x160) chat photo. This file_id can be used only for photo download.

@@ -1,6 +1,7 @@
-package com.mixram.telegram.bot.services.domain;
+package com.mixram.telegram.bot.services.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mixram.telegram.bot.services.domain.TelegramApiEntity;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateResponseEntity implements TelegramApiResponseEntity {
+public class Update implements TelegramApiEntity {
 
     /**
      * The update`s unique identifier.<br>
@@ -37,7 +38,7 @@ public class UpdateResponseEntity implements TelegramApiResponseEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("message")
-    private MessageResponseEntity message;
+    private Message message;
 
     //TODO: to realize other response types
 

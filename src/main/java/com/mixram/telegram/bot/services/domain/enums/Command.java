@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.services.domain;
+package com.mixram.telegram.bot.services.domain.enums;
 
 import lombok.Getter;
 

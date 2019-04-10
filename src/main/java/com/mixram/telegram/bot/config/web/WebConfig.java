@@ -2,13 +2,23 @@ package com.mixram.telegram.bot.config.web;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.mixram.telegram.bot.utils.databinding.support.CustomJsonMapper;
+import com.mixram.telegram.bot.utils.databinding.support.CustomXmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.WebFilter;
 
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -56,6 +66,38 @@ public class WebConfig {
 
             return chain.filter(exchange);
         };
+    }
+
+    @Bean("createMessageConverters")
+    public List<HttpMessageConverter<?>> createMessageConverters() {
+        MappingJackson2HttpMessageConverter jackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
+        jackson2HttpMessageConverter.setObjectMapper(new CustomJsonMapper());
+        jackson2HttpMessageConverter.setSupportedMediaTypes(Lists.newArrayList(
+                MediaType.APPLICATION_JSON,
+                MediaType.TEXT_PLAIN,
+                MediaType.APPLICATION_JSON_UTF8,
+                MediaType.TEXT_HTML
+        ));
+
+        MappingJackson2XmlHttpMessageConverter jackson2XmlHttpMessageConverter = new MappingJackson2XmlHttpMessageConverter();
+        jackson2XmlHttpMessageConverter.setObjectMapper(new CustomXmlMapper());
+        jackson2XmlHttpMessageConverter.setSupportedMediaTypes(Lists.newArrayList(
+                MediaType.APPLICATION_ATOM_XML,
+                MediaType.APPLICATION_RSS_XML,
+                MediaType.APPLICATION_XHTML_XML,
+                MediaType.APPLICATION_XML,
+                MediaType.TEXT_XML
+        ));
+
+        List<HttpMessageConverter<?>> converters = new ArrayList<>(4);
+        converters.add(new ByteArrayHttpMessageConverter());
+        converters.add(new StringHttpMessageConverter(Charset.forName("utf-8")));
+        converters.add(jackson2HttpMessageConverter);
+        converters.add(jackson2XmlHttpMessageConverter);
+        //converters.add(new Jaxb2RootElementHttpMessageConverter());
+        //converters.add(new Jaxb2CollectionHttpMessageConverter());
+
+        return converters;
     }
 
 

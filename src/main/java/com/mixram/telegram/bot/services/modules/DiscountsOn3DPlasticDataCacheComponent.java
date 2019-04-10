@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.modules;
 
 import com.mixram.telegram.bot.config.CacheCustomConfig;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
-import com.mixram.telegram.bot.services.domain.Shop3D;
+import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.Cacheable;
