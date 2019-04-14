@@ -47,14 +47,22 @@ public enum Command {
     String name;
 
     private static final Map<String, Command> BY_NAME;
+    private static final Map<Shop3D, Command> BY_SHOP;
 
     static {
         Map<String, Command> byNameTemp = new HashMap<>(Command.values().length);
         for (Command value : Command.values()) {
             byNameTemp.put(value.getName(), value);
         }
-
         BY_NAME = ImmutableMap.copyOf(byNameTemp);
+
+        Map<Shop3D, Command> byShopTemp = new HashMap<>(Command.values().length);
+        for (Command value : Command.values()) {
+            if (value.getShop() != null) {
+                byShopTemp.put(value.getShop(), value);
+            }
+        }
+        BY_SHOP = ImmutableMap.copyOf(byShopTemp);
     }
 
     Command(Shop3D shop,
@@ -65,6 +73,10 @@ public enum Command {
 
     public static Command getByName(String name) {
         return BY_NAME.get(name);
+    }
+
+    public static Command getByShop(Shop3D shop) {
+        return BY_SHOP.get(shop);
     }
 
 }

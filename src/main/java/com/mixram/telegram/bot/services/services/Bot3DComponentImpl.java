@@ -4,6 +4,7 @@ import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
+import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
@@ -134,34 +135,51 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         String messageToSendString;
 
         if (Command.D_ALL == command) {
-            throw new UnsupportedOperationException();
+            StringBuilder builder = new StringBuilder();
+            for (Shop3D shop : Shop3D.values()) {
+                Data3DPlastic plastic = searcher.search(shop);
+                String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
+                                                 NO_DATA_FOR_SHOP + "\n" :
+                                                 prepareMessageToSendString(Command.getByShop(shop), full, plastic);
+
+                builder.append("<b>").append(shop.getName()).append(":").append("</b>").append("\n")
+                       .append(messageToSendStringTemp).append("\n");
+            }
+
+            messageToSendString = builder.toString();
         } else {
             Data3DPlastic plastic = searcher.search(command.getShop());
-            if (plastic == null || CollectionUtils.isEmpty(plastic.getData())) {
-                messageToSendString = NO_DATA_FOR_SHOP;
-            } else {
-                switch (command) {
-                    case D_3DP:
-                        if (full) {
-                            messageToSendString = prepareAnswerText(plastic);
-                        } else {
-                            messageToSendString = prepareAnswerTextShort(plastic);
-                        }
-
-                        break;
-                    case D_MF:
-                    case D_DAS:
-                    case D_3DUA:
-                    case D_PLEX:
-                    case D_U3DF:
-                    default:
-                        messageToSendString = NO_WORK_WITH_SHOP;
-                }
-            }
+            messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? NO_DATA_FOR_SHOP :
+                                  prepareMessageToSendString(command, full, plastic);
         }
 
         if (StringUtils.isBlank(messageToSendString)) {
             messageToSendString = NO_DISCOUNTS;
+        }
+
+        return messageToSendString;
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private String prepareMessageToSendString(Command command,
+                                              boolean full,
+                                              Data3DPlastic plastic) {
+        String messageToSendString;
+
+        switch (command) {
+            case D_3DP:
+                messageToSendString = full ? prepareAnswerText(plastic) : prepareAnswerTextShort(plastic);
+
+                break;
+            case D_MF:
+            case D_DAS:
+            case D_3DUA:
+            case D_PLEX:
+            case D_U3DF:
+            default:
+                messageToSendString = NO_WORK_WITH_SHOP;
         }
 
         return messageToSendString;
@@ -212,8 +230,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                         .append("Ссылка: ").append(datum.getProductUrl()).append(".\n")
                         .append("======================================================").append("\n")
                 ;
+
+                counter++;
             }
-            counter++;
 
             if (counter > 5) {
                 answer
