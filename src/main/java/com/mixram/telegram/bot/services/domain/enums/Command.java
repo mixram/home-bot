@@ -1,6 +1,10 @@
 package com.mixram.telegram.bot.services.domain.enums;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author mixram on 2019-03-29.
@@ -9,43 +13,58 @@ import lombok.Getter;
 public enum Command {
 
     /**
-     * To show all commands.
-     */
-    COMMANDS(null),
-    /**
      * Discounts for all shops.
      */
-    D_ALL(null),
+    D_ALL(null, "ALL"),
     /**
      * Discounts for https://3dua.com.ua.
      */
-    D_3DUA(Shop3D.SHOP_3DUA),
+    D_3DUA(Shop3D.SHOP_3DUA, "3DUA"),
     /**
      * Discounts for https://u3df.com.ua.
      */
-    DISCOUNT_U3DF(Shop3D.SHOP_U3DF),
+    D_U3DF(Shop3D.SHOP_U3DF, "U3DF"),
     /**
      * Discounts for https://monofilament.com.ua.
      */
-    D_MF(Shop3D.SHOP_MONOFILAMENT),
+    D_MF(Shop3D.SHOP_MONOFILAMENT, "MONO"),
     /**
      * Discounts for https://shop.plexiwire.com.ua.
      */
-    D_PLEX(Shop3D.SHOP_PLEXIWIRE),
+    D_PLEX(Shop3D.SHOP_PLEXIWIRE, "PLEX"),
     /**
      * Discounts for https://3dplast.biz.
      */
-    D_3DP(Shop3D.SHOP_3DPLAST),
+    D_3DP(Shop3D.SHOP_3DPLAST, "3DP"),
     /**
      * Discounts for https://dasplast.com.
      */
-    D_DAS(Shop3D.SHOP_DASPLAST);
+    D_DAS(Shop3D.SHOP_DASPLAST, "DAS");
 
     @Getter
     Shop3D shop;
+    @Getter
+    String name;
 
-    Command(Shop3D shop) {
+    private static final Map<String, Command> BY_NAME;
+
+    static {
+        Map<String, Command> byNameTemp = new HashMap<>(Command.values().length);
+        for (Command value : Command.values()) {
+            byNameTemp.put(value.getName(), value);
+        }
+
+        BY_NAME = ImmutableMap.copyOf(byNameTemp);
+    }
+
+    Command(Shop3D shop,
+            String name) {
         this.shop = shop;
+        this.name = name;
+    }
+
+    public static Command getByName(String name) {
+        return BY_NAME.get(name);
     }
 
 }

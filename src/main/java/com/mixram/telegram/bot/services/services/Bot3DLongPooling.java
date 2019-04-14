@@ -2,23 +2,22 @@ package com.mixram.telegram.bot.services.services;
 
 import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.LongPooling;
-import com.mixram.telegram.bot.services.domain.entity.Update;
-import com.mixram.telegram.bot.services.domain.entity.UpdateResponse;
-import com.mixram.telegram.bot.services.domain.entity.WhoAmI;
+import com.mixram.telegram.bot.services.domain.entity.*;
+import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
-import com.mixram.telegram.bot.utils.databinding.JsonUtil;
+import com.mixram.telegram.bot.utils.ConcurrentUtilites;
 import com.mixram.telegram.bot.utils.rest.RestClient;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,8 +30,11 @@ public class Bot3DLongPooling implements LongPooling {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
+    private static final String ERROR_MESSAGE = "Упс... Что-то пошло не так...\uD83D\uDE33";
+
     private static final String GET_ME_URL = "/getMe";
     private static final String GET_UPDATES_URL = "/getUpdates";
+    private static final String SEND_MESSAGE_URL = "/sendMessage";
 
     private final String botName;
     private final String adminName;
@@ -80,17 +82,82 @@ public class Bot3DLongPooling implements LongPooling {
 
     @Override
     public void check() {
-        log.trace("{} is started!", Bot3DLongPooling.class :: getSimpleName);
+        log.debug("{} is started!", Bot3DLongPooling.class :: getSimpleName);
 
         List<Update> updates = getUpdates();
 
-        //TODO: with ConcurrentUtilites to work with each Update...
+        Map<Update, CompletableFuture<String>> answers = new HashMap<>(updates.size());
+        updates.forEach(u -> answers.put(u, ConcurrentUtilites.supplyAsyncWithLocalThreadContext(
+                aVoid -> bot3DComponent.proceedUpdate(u))));
+        answers.forEach((k, v) -> sendMessage(k, v.join()));
 
-        System.out.println("UPDATES: " + JsonUtil.toPrettyJson(updates));
+        //        updates.forEach(u -> sendMessage(u, bot3DComponent.proceedUpdate(u)));
+
+        //        for (Update update : updates) {
+        //            sendMessage(update, bot3DComponent.proceedUpdate(update));
+        //        }
+
     }
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void sendMessage(Update update,
+                             String answer) {
+        if (answer == null) {
+            return;
+        }
+
+        try {
+            log.debug("sendMessage => : update={}, answer={}",
+                      () -> update,
+                      () -> answer);
+
+            doSendMessage(update, answer);
+        } catch (Exception e) {
+            log.warn("", e);
+
+            try {
+                doSendMessage(update, ERROR_MESSAGE);
+            } catch (TelegramApiException e1) {
+                log.warn("", e);
+            }
+        }
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void doSendMessage(Update update,
+                               String answer) {
+        Message mess = update.getMessage();
+        Long chatId = mess.getChat()
+                          .getChatId();
+        Integer messageId = mess.getMessageId();
+
+        SendMessage message = SendMessage.builder()
+                                         .chatId(chatId.toString())
+                                         .text(answer)
+                                         .parseMode("HTML")
+                                         .disableWebPagePreview(false)
+                                         .disableNotification(false)
+                                         .replyToMessageId(messageId)
+                                         .build();
+
+        String url = mainUrlPart + SEND_MESSAGE_URL;
+        HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                  .json()
+                                                  .build();
+
+        AnswerResponse answerResponse = restClient.post(url, headers.toSingleValueMap(), message, AnswerResponse.class);
+        Validate.notNull(answerResponse, "Empty answer!");
+        Validate.isTrue(answerResponse.getResult(), "An error in process of answer sending! %s", answerResponse);
+
+        log.debug("Answer on answer: {}", () -> answerResponse);
+    }
 
     /**
      * @since 0.1.2.0
@@ -108,9 +175,7 @@ public class Bot3DLongPooling implements LongPooling {
         }
 
         try {
-            UpdateResponse updatesHolder =
-                    restClient.get(url, params, headers.toSingleValueMap(),
-                                   new ParameterizedTypeReference<UpdateResponse>() {});
+            UpdateResponse updatesHolder = restClient.get(url, params, headers.toSingleValueMap(), UpdateResponse.class);
             Validate.notNull(updatesHolder, "Empty answer!");
             Validate.isTrue(updatesHolder.getResult(), "An error in process of updates getting! %s", updatesHolder);
 

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,7 +18,9 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Data3DPlastic {
+public class Data3DPlastic implements Serializable {
+
+    private static final long serialVersionUID = 0L;
 
     private List<ParseData> data;
 

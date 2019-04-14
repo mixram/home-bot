@@ -33,7 +33,7 @@ public class DiscountsOn3DPlasticModule implements Module {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public DiscountsOn3DPlasticModule(@Qualifier("discountsOn3DPlasticDataComponent") Module3DPlasticDataSearcher searcher,
+    public DiscountsOn3DPlasticModule(Module3DPlasticDataSearcher searcher,
                                       @Qualifier("module3DPlasticDataComponent") Module3DPlasticDataApplyer applyer,
                                       AsyncHelper asyncHelper) {
         this.searcher = searcher;
@@ -60,6 +60,9 @@ public class DiscountsOn3DPlasticModule implements Module {
         for (Map.Entry<Shop3D, CompletableFuture<Data3DPlastic>> futureEntry : plasticsFromFuture.entrySet()) {
             plastics.put(futureEntry.getKey(), futureEntry.getValue().join());
         }
+        //        for (Shop3D value : Shop3D.values()) {
+        //            plastics.put(value, searcher.search(value));
+        //        }
         sw.stop();
 
         sw.start("Apply data");

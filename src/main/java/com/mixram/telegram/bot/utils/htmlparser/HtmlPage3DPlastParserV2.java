@@ -29,15 +29,16 @@ public class HtmlPage3DPlastParserV2 implements HtmlPageParser {
     // </editor-fold>
 
     @Override
-    public ParseData parse(String url) {
-        log.debug("URL to parse: '{}'", () -> url);
+    public ParseData parse(ParseData parseData) {
+        log.debug("URL to parse: '{}'", () -> parseData);
 
         try {
-            Document doc = Jsoup.connect(url).get();
+            Document doc = Jsoup.connect(parseData.getProductUrl()).get();
 
             ParseData data = new ParseData();
+            data.setType(parseData.getType());
             data.setPageTitle(doc.title());
-            data.setProductUrl(url);
+            data.setProductUrl(parseData.getProductUrl());
 
             Elements oldPriceElements = doc.getElementsByClass("b-product-cost__old-price");
             if (!oldPriceElements.isEmpty()) {
@@ -52,6 +53,11 @@ public class HtmlPage3DPlastParserV2 implements HtmlPageParser {
             Elements nameElements = doc.select("[data-qaid=\"product_name\"]");
             if (!nameElements.isEmpty()) {
                 data.setProductName(nameElements.first().text());
+            }
+
+            Elements presenceElements = doc.select("[data-qaid=\"presence_data\"]");
+            if (!presenceElements.isEmpty()) {
+                data.setInStock("В наличии".equalsIgnoreCase(presenceElements.first().text().trim()));
             }
 
             return data;

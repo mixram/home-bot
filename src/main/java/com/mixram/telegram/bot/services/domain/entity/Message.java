@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * An incoming message entity.
  *
@@ -118,6 +120,13 @@ public class Message implements TelegramApiEntity {
      */
     @JsonProperty("text")
     private String text;
+    /**
+     * Optional. For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text.
+     *
+     * @since 0.1.3.0
+     */
+    @JsonProperty("entities")
+    private List<MessageEntity> entities;
 
 
     //TODO: to realize other response types

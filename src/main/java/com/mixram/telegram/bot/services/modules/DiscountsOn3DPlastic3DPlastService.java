@@ -23,7 +23,7 @@ class DiscountsOn3DPlastic3DPlastService {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private final List<String> urls;
+    private final List<ParseData> urls;
 
     private final HtmlPageParser parser;
 

@@ -1,21 +1,18 @@
-package com.mixram.telegram.bot.config;
+package com.mixram.telegram.bot.config.cache;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
@@ -27,8 +24,8 @@ import java.util.List;
  * @since 0.1.1.0
  */
 @Slf4j
-@Configuration
-@EnableCaching(proxyTargetClass = true/*, mode = AdviceMode.ASPECTJ*/)
+//@Configuration
+//@EnableCaching(proxyTargetClass = true/*, mode = AdviceMode.ASPECTJ*/)
 public class CacheCustomConfig extends CachingConfigurerSupport {
 
     public static final String REDIS_CACHE_MANAGER = "redisCacheManager";
@@ -37,6 +34,14 @@ public class CacheCustomConfig extends CachingConfigurerSupport {
     public static final String PLASTIC_3D_DATA_CACHE = "3d_plastic_data";
 
     private final List<String> cacheNames = new ArrayList<>();
+
+    private final RedisSerializer<Object> genericJackson2JsonRedisSerializer;
+
+    @Autowired
+    public CacheCustomConfig(
+            @Qualifier("genericJackson2JsonRedisSerializer") RedisSerializer<Object> genericJackson2JsonRedisSerializer) {
+        this.genericJackson2JsonRedisSerializer = genericJackson2JsonRedisSerializer;
+    }
 
     @PostConstruct
     public void init() {
@@ -52,13 +57,8 @@ public class CacheCustomConfig extends CachingConfigurerSupport {
     public CacheManager getRedisCacheManager(RedisConnectionFactory redisConnectionFactory) {
         log.info("Start creating RedisCacheManager...");
 
-        ObjectMapper mapper = new Jackson2ObjectMapperBuilder()
-                .failOnEmptyBeans(false)
-                .build();
-        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(mapper);
         RedisSerializationContext.SerializationPair<Object> serializationPair =
-                RedisSerializationContext.SerializationPair.fromSerializer(serializer);
+                RedisSerializationContext.SerializationPair.fromSerializer(genericJackson2JsonRedisSerializer);
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                                                                                  .disableCachingNullValues()
                                                                                  .entryTtl(Duration.ZERO)
@@ -89,27 +89,8 @@ public class CacheCustomConfig extends CachingConfigurerSupport {
 
     //    @Override
     //    public KeyGenerator keyGenerator() {
-    //        return new KeyGenerator() {
-    //
-    //            @Override
-    //            public Object generate(Object o,
-    //                                   Method method,
-    //                                   Object... os) {
-    //                Object key = null;
-    //                for (Object obj : os) {
-    //                    if (obj instanceof Keyable) {
-    //                        key = ((Keyable) obj).getKeyProperty();
-    //                    }
-    //                }
-    //
-    //                if (key == null) {
-    //                    throw new IllegalArgumentException(
-    //                            String.format("The instance to cache in redis must implement %s interface!",
-    //                                          Keyable.class.getSimpleName()));
-    //                }
-    //
-    //                return key;
-    //            }
-    //        };
+    //        return (o, method, os) -> o.getClass().getSimpleName() + "_"
+    //                                  + method.getName() + "_"
+    //                                  + StringUtils.arrayToDelimitedString(os, "_");
     //    }
 }

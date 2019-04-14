@@ -39,14 +39,15 @@ public class HtmlPage3DPlastParser implements HtmlPageParser {
 
 
     @Override
-    public ParseData parse(String url) {
-        log.debug("URL to parse: '{}'", () -> url);
+    public ParseData parse(ParseData parseData) {
+        log.debug("URL to parse: '{}'", () -> parseData);
 
-        driver.get(url);
+        driver.get(parseData.getProductUrl());
 
         ParseData data = new ParseData();
+        data.setType(parseData.getType());
         data.setPageTitle(driver.getTitle());
-        data.setProductUrl(url);
+        data.setProductUrl(parseData.getProductUrl());
 
         try {
             WebElement oldPrice = driver.findElement(By.className("b-product-cost__old-price"));

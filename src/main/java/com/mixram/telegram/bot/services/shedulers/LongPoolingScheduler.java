@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Component to manage work with schedulers for "long pooling" Telegram communication type.
@@ -51,11 +50,8 @@ public class LongPoolingScheduler implements Scheduler {
             return;
         }
 
-        longPoolings.forEach(lp -> asyncHelper.doAsync((Supplier<Void>) () -> {
-            lp.check();
-
-            return null;
-        }));
+        //not to do in async - Telegram API returns '409 Conflict'
+        longPoolings.forEach(LongPooling :: check);
     }
 
 

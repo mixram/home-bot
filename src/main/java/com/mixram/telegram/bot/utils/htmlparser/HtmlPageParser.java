@@ -9,11 +9,11 @@ public interface HtmlPageParser {
     /**
      * TO parse page been specified by URL.
      *
-     * @param url URL to parse.
+     * @param parseData URL to parse.
      *
      * @return the result of page parsing.
      *
      * @since 0.1.1.0
      */
-    ParseData parse(String url);
+    ParseData parse(ParseData parseData);
 }
