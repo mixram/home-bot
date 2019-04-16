@@ -5,18 +5,17 @@ import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * @author mixram on 2019-03-29.
- * @since 0.1.1.0
+ * @author mixram on 2019-04-15.
+ * @since 0.2.0.0
  */
 @Log4j2
 @Service
-class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
+class DiscountsOn3DPlastic3DUAService extends DiscountsOn3DPlasticV2Service {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -26,9 +25,8 @@ class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
-    @Autowired
-    public DiscountsOn3DPlastic3DPlastService(@Value("${parser.3dplast.urls}") String urls,
-                                              @Qualifier("htmlPage3DPlastParserV2") HtmlPageParser parser) {
+    public DiscountsOn3DPlastic3DUAService(@Value("${parser.3dua.urls}") String urls,
+                                           @Qualifier("htmlPage3DUAParser") HtmlPageParser parser) {
         super(JsonUtil.fromJson(urls, new TypeReference<>() {}), parser);
     }
 
@@ -40,7 +38,7 @@ class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
      *
      * @return data or exception.
      *
-     * @since 0.1.0.0
+     * @since 0.2.0.0
      */
     @Override
     public Data3DPlastic search() {

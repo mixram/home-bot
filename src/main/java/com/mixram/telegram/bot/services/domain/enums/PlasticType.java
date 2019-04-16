@@ -17,13 +17,33 @@ public enum PlasticType {
      */
     ABS("ABS"),
     /**
+     * ABS+.
+     */
+    ABS_PLUS("ABS+"),
+    /**
      * PLA.
      */
     PLA("PLA"),
     /**
      * FLEX.
      */
-    FLEX("FLEX");
+    FLEX("Flex"),
+    /**
+     * SAN.
+     */
+    SAN("SAN"),
+    /**
+     * PC.
+     */
+    PC("PC"),
+    /**
+     * HIPS.
+     */
+    HIPS("HIPS"),
+    /**
+     * Nylon.
+     */
+    NYLON("Nylon");
 
     @Getter
     String name;

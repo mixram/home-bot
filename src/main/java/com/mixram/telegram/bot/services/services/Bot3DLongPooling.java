@@ -82,7 +82,7 @@ public class Bot3DLongPooling implements LongPooling {
 
     @Override
     public void check() {
-        log.debug("{} is started!", Bot3DLongPooling.class :: getSimpleName);
+        log.trace("{} is started!", Bot3DLongPooling.class :: getSimpleName);
 
         List<Update> updates = getUpdates();
 

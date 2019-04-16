@@ -27,6 +27,9 @@
         <Logger name="com.mixram.telegram.bot.config.security" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
         </Logger>
+        <Logger name="com.mixram.telegram.bot.utils.rest" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="STDOUT" />
+        </Logger>
 
         <!-- spring log -->
         <Logger name="org.springframework" level="${logLevelSpring}" includeLocation="true" additivity="false">

@@ -23,15 +23,15 @@ public enum Command {
     /**
      * Discounts for https://u3df.com.ua.
      */
-    D_U3DF(Shop3D.SHOP_U3DF, "U3DF"),
+    //    D_U3DF(Shop3D.SHOP_U3DF, "U3DF"),
     /**
      * Discounts for https://monofilament.com.ua.
      */
-    D_MF(Shop3D.SHOP_MONOFILAMENT, "MONO"),
+    //    D_MF(Shop3D.SHOP_MONOFILAMENT, "MONO"),
     /**
      * Discounts for https://shop.plexiwire.com.ua.
      */
-    D_PLEX(Shop3D.SHOP_PLEXIWIRE, "PLEX"),
+    //    D_PLEX(Shop3D.SHOP_PLEXIWIRE, "PLEX"),
     /**
      * Discounts for https://3dplast.biz.
      */
@@ -39,7 +39,8 @@ public enum Command {
     /**
      * Discounts for https://dasplast.com.
      */
-    D_DAS(Shop3D.SHOP_DASPLAST, "DAS");
+    //    D_DAS(Shop3D.SHOP_DASPLAST, "DAS")
+    ;
 
     @Getter
     Shop3D shop;

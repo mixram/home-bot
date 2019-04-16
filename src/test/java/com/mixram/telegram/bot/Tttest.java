@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot;
 
-import com.mixram.telegram.bot.services.domain.enums.Command;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-04-13.
@@ -9,15 +10,16 @@ import com.mixram.telegram.bot.services.domain.enums.Command;
 public class Tttest {
 
     public static void main(String[] args) {
-        final String text = "/sales_all";
+        String test1 = "sale";
+        String test2 = "long";
+        String patternString = "sale|long";
 
-        String[] fs = text.split(" ");
-        String fsc = fs[0];
-        String[] ss = fsc.split("_");
-        String ssc = ss[1];
+        Pattern pattern = Pattern.compile(patternString);
 
-        Command command = Command.getByName(ssc.toUpperCase());
+        Matcher matcher1 = pattern.matcher(test1);
+        Matcher matcher2 = pattern.matcher(test2);
 
-        System.out.println("C: " + command);
+        System.out.println("1: " + matcher1.matches());
+        System.out.println("2: " + matcher2.matches());
     }
 }

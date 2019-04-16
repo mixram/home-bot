@@ -2,6 +2,7 @@ package com.mixram.telegram.bot.utils.htmlparser;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
+import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,4 +37,9 @@ public class ParseData implements Serializable {
     private PlasticType type;
     @JsonProperty("inStock")
     private boolean isInStock;
+
+    @Override
+    public String toString() {
+        return JsonUtil.toJson(this);
+    }
 }

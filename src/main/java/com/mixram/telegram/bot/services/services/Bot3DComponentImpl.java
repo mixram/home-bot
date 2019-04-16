@@ -142,7 +142,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                  NO_DATA_FOR_SHOP + "\n" :
                                                  prepareMessageToSendString(Command.getByShop(shop), full, plastic);
 
-                builder.append("<b>").append(shop.getName()).append(":").append("</b>").append("\n")
+                builder.append("<b>").append("***").append(shop.getName()).append("***").append("</b>").append("\n")
                        .append(messageToSendStringTemp).append("\n");
             }
 
@@ -170,14 +170,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         switch (command) {
             case D_3DP:
+            case D_3DUA:
                 messageToSendString = full ? prepareAnswerText(plastic) : prepareAnswerTextShort(plastic);
 
                 break;
-            case D_MF:
-            case D_DAS:
-            case D_3DUA:
-            case D_PLEX:
-            case D_U3DF:
+            //            case D_MF:
+            //            case D_DAS:
+            //            case D_PLEX:
+            //            case D_U3DF:
             default:
                 messageToSendString = NO_WORK_WITH_SHOP;
         }
@@ -228,7 +228,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                         .append("Обычная цена: ").append(datum.getProductOldPrice()).append("грн;\n")
                         .append("Цена со скидкой: ").append(datum.getProductSalePrice()).append("грн;\n")
                         .append("Ссылка: ").append(datum.getProductUrl()).append(".\n")
-                        .append("======================================================").append("\n")
+                        .append("\n\n")
                 ;
 
                 counter++;
