@@ -11,7 +11,7 @@ public enum PlasticType {
     /**
      * CoPET(PET-G).
      */
-    COPET("coPET(PET-G)"),
+    COPET("coPET"),
     /**
      * ABS.
      */
