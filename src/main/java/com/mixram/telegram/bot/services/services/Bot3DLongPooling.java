@@ -6,9 +6,13 @@ import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
 import com.mixram.telegram.bot.utils.ConcurrentUtilites;
+import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.rest.RestClient;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.Validate;
+import org.checkerframework.checker.signature.qual.BinaryNameForNonArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +56,21 @@ public class Bot3DLongPooling implements LongPooling {
      */
     private AtomicInteger offset;
 
+
+    @Data
+    @AllArgsConstructor
+    @BinaryNameForNonArray
+    private static class SendMessageData {
+
+        private Long chatId;
+        private Integer messageId;
+
+        @Override
+        public String toString() {
+            return JsonUtil.toJson(this);
+        }
+    }
+
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
@@ -91,37 +110,32 @@ public class Bot3DLongPooling implements LongPooling {
                 aVoid -> bot3DComponent.proceedUpdate(u))));
         answers.forEach((k, v) -> sendMessage(k, v.join()));
 
-        //        updates.forEach(u -> sendMessage(u, bot3DComponent.proceedUpdate(u)));
-
-        //        for (Update update : updates) {
-        //            sendMessage(update, bot3DComponent.proceedUpdate(update));
-        //        }
-
     }
-
-
-    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
      * @since 0.1.3.0
      */
-    private void sendMessage(Update update,
-                             String answer) {
-        if (answer == null) {
+    public void sendMessage(Update update,
+                            String message) {
+        if (update == null || message == null) {
             return;
         }
 
         try {
-            log.debug("sendMessage => : update={}, answer={}",
+            log.debug("sendMessage => : update={}, message={}",
                       () -> update,
-                      () -> answer);
+                      () -> message);
 
-            doSendMessage(update, answer);
+            SendMessageData data = createSendMessageData(update);
+
+            doSendMessage(data.getChatId(), data.getMessageId(), message);
         } catch (Exception e) {
             log.warn("", e);
 
             try {
-                doSendMessage(update, ERROR_MESSAGE);
+                SendMessageData data = createSendMessageData(update);
+
+                doSendMessage(data.getChatId(), data.getMessageId(), ERROR_MESSAGE);
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -129,34 +143,61 @@ public class Bot3DLongPooling implements LongPooling {
     }
 
     /**
-     * @since 0.1.3.0
+     * @since 1.0.0.0
      */
-    private void doSendMessage(Update update,
-                               String answer) {
+    public void sendMessageToAdmin(String message) {
+        Validate.notBlank(message, "Message for admin is not specified!");
+
+        try {
+            log.debug("sendMessage => : message={}", () -> message);
+
+            doSendMessage(Long.valueOf(adminName), null, message);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.0.0.0
+     */
+    private SendMessageData createSendMessageData(Update update) {
         Message mess = update.getMessage();
         Long chatId = mess.getChat()
                           .getChatId();
         Integer messageId = mess.getMessageId();
 
-        SendMessage message = SendMessage.builder()
-                                         .chatId(chatId.toString())
-                                         .text(answer)
-                                         .parseMode("HTML")
-                                         .disableWebPagePreview(false)
-                                         .disableNotification(false)
-                                         .replyToMessageId(messageId)
-                                         .build();
+        return new SendMessageData(chatId, messageId);
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void doSendMessage(Long chatId,
+                               Integer messageId,
+                               String message) {
+        SendMessage messageToSend = SendMessage.builder()
+                                               .chatId(chatId.toString())
+                                               .text(message)
+                                               .parseMode("HTML")
+                                               .disableWebPagePreview(false)
+                                               .disableNotification(false)
+                                               .replyToMessageId(messageId)
+                                               .build();
 
         String url = mainUrlPart + SEND_MESSAGE_URL;
         HttpHeaders headers = CommonHeadersBuilder.newInstance()
                                                   .json()
                                                   .build();
 
-        AnswerResponse answerResponse = restClient.post(url, headers.toSingleValueMap(), message, AnswerResponse.class);
-        Validate.notNull(answerResponse, "Empty answer!");
-        Validate.isTrue(answerResponse.getResult(), "An error in process of answer sending! %s", answerResponse);
+        AnswerResponse answerResponse =
+                restClient.post(url, headers.toSingleValueMap(), messageToSend, AnswerResponse.class);
+        Validate.notNull(answerResponse, "Empty message!");
+        Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
 
-        log.debug("Answer on answer: {}", () -> answerResponse);
+        log.debug("Answer on message: {}", () -> answerResponse);
     }
 
     /**

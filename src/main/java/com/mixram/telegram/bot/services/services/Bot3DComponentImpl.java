@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.services;
 
+import com.google.common.collect.ImmutableList;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
@@ -17,13 +18,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -39,10 +38,18 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     private static final String PARSE_PATTERN_STRING = "^/SALES_.*";
     private static final Pattern PARSE_PATTERN = Pattern.compile(PARSE_PATTERN_STRING);
-    private static final String MISUNDERSTANDING_MESSAGE = "Моя твоя не понимать... \uD83E\uDD2A";
     private static final String NO_WORK_WITH_SHOP = "К сожалению, я еще не работаю с этим магазином... \uD83D\uDE10";
     private static final String NO_DATA_FOR_SHOP = "У меня пока что нет данных о скидках в этом магазине... \uD83D\uDE1E";
     private static final String NO_DISCOUNTS = "Скидок нет, к сожалению";
+    private static final List<String> MISUNDERSTANDING_MESSAGE = ImmutableList.of(
+            "Моя твоя не понимать... 🤪",
+            "Какая-то не понятная команда... 🧐",
+            "А можно чуток точнее? 🤓",
+            "Абракадабра... 😎"
+    );
+
+    private final Integer maxQuantity;
+    private final Random random;
 
     private final Module3DPlasticDataSearcher searcher;
 
@@ -67,8 +74,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public Bot3DComponentImpl(@Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher) {
+    public Bot3DComponentImpl(@Value("${bot.settings.other.max-quantity-for-full-view}") Integer maxQuantity,
+                              @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher) {
+        this.maxQuantity = maxQuantity;
         this.searcher = searcher;
+        this.random = new Random();
     }
 
 
@@ -89,7 +99,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         try {
             command = defineCommand(message.getText());
         } catch (Exception e) {
-            return MISUNDERSTANDING_MESSAGE; //TODO: to make a set of different answers
+            return prepareMisunderstandingMessage();
         }
 
         return prepareAnswerWithCommand(command.getCommand(), command.isFull());
@@ -97,6 +107,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.0.0.0
+     */
+    private String prepareMisunderstandingMessage() {
+        return MISUNDERSTANDING_MESSAGE.get(random.nextInt(MISUNDERSTANDING_MESSAGE.size()));
+    }
 
     /**
      * @since 0.1.3.0
@@ -201,9 +218,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                       .anyMatch(p -> p.getProductOldPrice() != null)));
 
         StringBuilder answer = new StringBuilder();
-        discountsState.forEach((k, v) -> answer.append(k.getName()).append(": ").append(getDiscountText(v)).append("\n"));
+        discountsState.forEach((k, v) -> {
+            String text = alignText(k.getName() + ":");
+            answer.append("<code>").append(text).append("</code>").append(" ").append(getDiscountText(v)).append("\n");
+        });
 
         return answer.toString();
+    }
+
+    /**
+     * @since 1.0.0.0
+     */
+    private String alignText(String text) {
+        return String.format("%-6s", text);
     }
 
     /**
@@ -228,13 +255,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                         .append("Обычная цена: ").append(datum.getProductOldPrice()).append("грн;\n")
                         .append("Цена со скидкой: ").append(datum.getProductSalePrice()).append("грн;\n")
                         .append("Ссылка: ").append(datum.getProductUrl()).append(".\n")
-                        .append("\n\n")
+                        .append("\n")
                 ;
 
                 counter++;
             }
 
-            if (counter > 5) {
+            if (counter == maxQuantity) {
                 answer
                         .append("<b>").append("И еще есть...").append("</b>");
 

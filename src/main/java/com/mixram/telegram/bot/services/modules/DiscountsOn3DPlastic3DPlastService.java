@@ -28,8 +28,9 @@ class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
 
     @Autowired
     public DiscountsOn3DPlastic3DPlastService(@Value("${parser.3dplast.urls}") String urls,
+                                              @Value("${parser.common.time-to-wait-till-parse-new-url}") long waitTime,
                                               @Qualifier("htmlPage3DPlastParserV2") HtmlPageParser parser) {
-        super(JsonUtil.fromJson(urls, new TypeReference<>() {}), parser);
+        super(JsonUtil.fromJson(urls, new TypeReference<>() {}), waitTime, parser);
     }
 
     // </editor-fold>

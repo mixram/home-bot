@@ -26,8 +26,9 @@ class DiscountsOn3DPlastic3DUAService extends DiscountsOn3DPlasticV2Service {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     public DiscountsOn3DPlastic3DUAService(@Value("${parser.3dua.urls}") String urls,
+                                           @Value("${parser.common.time-to-wait-till-parse-new-url}") long waitTime,
                                            @Qualifier("htmlPage3DUAParser") HtmlPageParser parser) {
-        super(JsonUtil.fromJson(urls, new TypeReference<>() {}), parser);
+        super(JsonUtil.fromJson(urls, new TypeReference<>() {}), waitTime, parser);
     }
 
     // </editor-fold>

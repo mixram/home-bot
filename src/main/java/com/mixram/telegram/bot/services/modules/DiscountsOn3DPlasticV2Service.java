@@ -5,6 +5,8 @@ import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,7 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private final List<ParseData> urls;
+    private final long waitTime;
 
     private final HtmlPageParser parser;
 
@@ -26,8 +29,10 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     public DiscountsOn3DPlasticV2Service(List<ParseData> urls,
+                                         long waitTime,
                                          HtmlPageParser parser) {
         this.urls = urls;
+        this.waitTime = waitTime;
         this.parser = parser;
     }
 
@@ -37,6 +42,21 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
     @Override
     public Data3DPlastic search() {
         List<ParseData> data = new ArrayList<>(urls.size());
+
+        LocalDateTime nextTime = LocalDateTime.now();
+        for (ParseData url : urls) {
+            while (true) {
+                if (LocalDateTime.now().isAfter(nextTime)) {
+                    data.add(parser.parse(url));
+
+                    nextTime = LocalDateTime.now().plus(waitTime, ChronoUnit.MILLIS);
+
+                    break;
+                }
+            }
+        }
+
+
         urls.forEach(u -> {
             try {
                 data.add(parser.parse(u));
