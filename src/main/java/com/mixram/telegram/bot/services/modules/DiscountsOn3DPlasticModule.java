@@ -26,8 +26,8 @@ public class DiscountsOn3DPlasticModule implements Module {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String MODULE_START_MESSAGE_ADMIN = "Запускаю обновление данных по скидкам";
-    private static final String MODULE_FINISH_MESSAGE_ADMIN = "Обновление данных по скидкам завершено.";
+    private static final String MODULE_START_MESSAGE_ADMIN = "Start discounts data update";
+    private static final String MODULE_FINISH_MESSAGE_ADMIN = "Discounts data update has finished";
 
     private final Module3DPlasticDataSearcher searcher;
     private final Module3DPlasticDataApplyer applyer;
@@ -104,12 +104,12 @@ public class DiscountsOn3DPlasticModule implements Module {
      */
     private String prepareStartMessage() {
         return new StringBuilder()
-                .append("🔥").append("🔥").append("🔥").append("\n")
+                .append("🔥🔥🔥").append("\n")
                 .append("<b>")
                 .append(DiscountsOn3DPlasticModule.class.getSimpleName()).append("\n")
                 .append(MODULE_START_MESSAGE_ADMIN)
                 .append("</b>").append("\n")
-                .append("🔥").append("🔥").append("🔥")
+                .append("🔥🔥🔥")
                 .toString();
     }
 
@@ -118,14 +118,14 @@ public class DiscountsOn3DPlasticModule implements Module {
      */
     private String prepareFinishMessage(String swData) {
         return new StringBuilder()
-                .append("💥").append("💥").append("💥").append("\n")
+                .append("💥💥💥").append("\n")
                 .append("<b>")
                 .append(DiscountsOn3DPlasticModule.class.getSimpleName()).append("\n")
                 .append(MODULE_FINISH_MESSAGE_ADMIN).append("\n")
                 .append("</b>")
                 .append(swData.replaceAll("-----------------------------------------",
                                           "---------------------------------------"))
-                .append("💥").append("💥").append("💥")
+                .append("💥💥💥")
                 .toString();
     }
 

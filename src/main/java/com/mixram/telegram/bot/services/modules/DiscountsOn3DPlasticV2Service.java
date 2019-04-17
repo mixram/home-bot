@@ -42,12 +42,19 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
     @Override
     public Data3DPlastic search() {
         List<ParseData> data = new ArrayList<>(urls.size());
+        List<ParseData> brokenUrls = new ArrayList<>();
 
         LocalDateTime nextTime = LocalDateTime.now();
         for (ParseData url : urls) {
             while (true) {
                 if (LocalDateTime.now().isAfter(nextTime)) {
-                    data.add(parser.parse(url));
+                    try {
+                        data.add(parser.parse(url));
+                    } catch (Exception e) {
+                        log.warn("Exception of html-page parsing!", e);
+
+                        brokenUrls.add(url);
+                    }
 
                     nextTime = LocalDateTime.now().plus(waitTime, ChronoUnit.MILLIS);
 
@@ -56,17 +63,9 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
             }
         }
 
-
-        urls.forEach(u -> {
-            try {
-                data.add(parser.parse(u));
-            } catch (Exception e) {
-                log.warn("Exception of html-page parsing!", e);
-            }
-        });
-
         return Data3DPlastic.builder()
                             .data(data)
+                            .brokenUrls(brokenUrls)
                             .build();
     }
 

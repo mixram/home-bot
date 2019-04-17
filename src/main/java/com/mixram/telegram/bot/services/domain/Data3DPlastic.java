@@ -23,6 +23,7 @@ public class Data3DPlastic implements Serializable {
     private static final long serialVersionUID = 0L;
 
     private List<ParseData> data;
+    private List<ParseData> brokenUrls;
 
     @Override
     public String toString() {

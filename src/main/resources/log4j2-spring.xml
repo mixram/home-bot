@@ -4,6 +4,7 @@
     <Properties>
         <Property name="pattern1">%p %d{HH:mm:ss,SSS} [%t] %C: %m%n</Property>
         <Property name="pattern2">[%-5level] [%d{HH:mm:ss.SSS}] [%25.25t] [%25.25c{1}:%-4L] - %m%n</Property>
+        <Property name="basePath">logs</Property>
         <Property name="logLevel">debug</Property>
         <Property name="logLevelSpring">info</Property>
         <Property name="logLevelSpringSecurity">info</Property>
@@ -16,6 +17,22 @@
             <PatternLayout pattern="${pattern2}" />
         </Console>
 
+        <RollingFile
+                name="rollingFile"
+                fileName="${basePath}/application.log"
+                filePattern="${basePath}/application.%d{dd-MMM}.log.gz"
+                ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>${pattern2}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+
     </Appenders>
 
     <Loggers>
@@ -23,25 +40,31 @@
         <!-- main log -->
         <Logger name="com.mixram.telegram.bot" level="${logLevel}" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Logger>
         <Logger name="com.mixram.telegram.bot.config.security" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Logger>
         <Logger name="com.mixram.telegram.bot.utils.rest" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Logger>
 
         <!-- spring log -->
         <Logger name="org.springframework" level="${logLevelSpring}" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Logger>
         <Logger name="org.springframework.security" level="${logLevelSpringSecurity}" includeLocation="true"
                 additivity="false">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Logger>
 
         <Root level="${logLevelRoot}" includeLocation="true">
             <AppenderRef ref="STDOUT" />
+            <AppenderRef ref="rollingFile" />
         </Root>
 
     </Loggers>
