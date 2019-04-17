@@ -289,6 +289,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         String commandDataString = text.split(" ")[0];
+        if (commandDataString.contains("@")) {
+            commandDataString = commandDataString.substring(0, commandDataString.indexOf("@"));
+        }
         String[] commandElements = commandDataString.split("_");
         Command command = Command.getByName(commandElements[1].toUpperCase());
         boolean full = commandElements.length == 3 && "f".equalsIgnoreCase(commandElements[2]);

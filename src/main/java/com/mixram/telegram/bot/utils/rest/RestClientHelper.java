@@ -272,7 +272,7 @@ abstract class RestClientHelper {
      * @since 0.1.3.0
      */
     private void proceedException(Exception e) {
-        if (e instanceof RestClientException) {
+        if (e instanceof HttpClientErrorException) {
             String error = ((HttpClientErrorException) e).getResponseBodyAsString();
             log.warn("Rest-error!\n{}", () -> JsonUtil.fromJson(error, ErrorDescr.class));
         }
