@@ -27,7 +27,7 @@ public enum Command {
     /**
      * Discounts for https://monofilament.com.ua.
      */
-    //    D_MF(Shop3D.SHOP_MONOFILAMENT, "MONO"),
+    D_MF(Shop3D.SHOP_MONOFILAMENT, "MONO"),
     /**
      * Discounts for https://shop.plexiwire.com.ua.
      */

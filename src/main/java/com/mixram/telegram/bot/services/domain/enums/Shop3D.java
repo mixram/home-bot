@@ -10,7 +10,7 @@ public enum Shop3D {
 
     SHOP_3DUA("3DUA"),
     //    SHOP_U3DF("U3DF"),
-    //    SHOP_MONOFILAMENT("MonoFilament"),
+    SHOP_MONOFILAMENT("MonoFilament"),
     //    SHOP_PLEXIWIRE("Plexiwire"),
     SHOP_3DPLAST("3DPlast"),
     //    SHOP_DASPLAST("DASplast")

@@ -188,10 +188,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         switch (command) {
             case D_3DP:
             case D_3DUA:
+            case D_MF:
                 messageToSendString = full ? prepareAnswerText(plastic) : prepareAnswerTextShort(plastic);
 
                 break;
-            //            case D_MF:
             //            case D_DAS:
             //            case D_PLEX:
             //            case D_U3DF:
@@ -230,7 +230,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.0.0.0
      */
     private String alignText(String text) {
-        return String.format("%-6s", text);
+        return String.format("%-8s", text);
     }
 
     /**

@@ -8,8 +8,6 @@ import org.jsoup.select.Elements;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-04-15.
@@ -23,7 +21,6 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
     private final String oldPriceClassName;
     private final String newPriceClassName;
     private final String productAvailableSelectorName;
-    private final String productAvailableTextName;
 
     // </editor-fold>
 
@@ -31,17 +28,14 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     public HtmlPageShopParser(@NotNull String oldPriceClassName,
                               @NotNull String newPriceClassName,
-                              @NotNull String productAvailableSelectorName,
-                              @NotNull String productAvailableTextName) {
+                              @NotNull String productAvailableSelectorName) {
         this.oldPriceClassName = oldPriceClassName;
         this.newPriceClassName = newPriceClassName;
         this.productAvailableSelectorName = productAvailableSelectorName;
-        this.productAvailableTextName = productAvailableTextName;
 
         Validate.notBlank(this.oldPriceClassName, "oldPriceClassName is not specified!");
         Validate.notBlank(this.newPriceClassName, "oldPriceClassName is not specified!");
         Validate.notBlank(this.productAvailableSelectorName, "oldPriceClassName is not specified!");
-        Validate.notBlank(this.productAvailableTextName, "oldPriceClassName is not specified!");
     }
 
     // </editor-fold>
@@ -59,12 +53,12 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
             data.setPageTitle(doc.title());
             data.setProductUrl(parseData.getProductUrl());
 
-            Elements oldPriceElements = doc.getElementsByClass(oldPriceClassName);
+            Elements oldPriceElements = doc.select(oldPriceClassName);
             if (!oldPriceElements.isEmpty()) {
                 data.setProductOldPrice(parsePrice(oldPriceElements));
             }
 
-            Elements salePriceElements = doc.getElementsByClass(newPriceClassName);
+            Elements salePriceElements = doc.select(newPriceClassName);
             if (!salePriceElements.isEmpty()) {
                 data.setProductSalePrice(parsePrice(salePriceElements));
             }
@@ -84,22 +78,23 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
         }
     }
 
-    private boolean checkPresence(Elements presenceElements) {
-        Pattern pattern = Pattern.compile(productAvailableTextName.toUpperCase());
-        Matcher matcher = pattern.matcher(presenceElements.first().text().trim().toUpperCase());
-
-        return matcher.matches();
-    }
-
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
-     * @since 0.2.0.0
+     * @since 1.0.0.0
      */
     protected abstract String getProductName(Document doc);
 
+    /**
+     * @since 1.0.0.0
+     */
     protected abstract BigDecimal parsePrice(Elements elements);
+
+    /**
+     * @since 1.1.0.0
+     */
+    protected abstract boolean checkPresence(Elements elements);
 
     // </editor-fold>
 

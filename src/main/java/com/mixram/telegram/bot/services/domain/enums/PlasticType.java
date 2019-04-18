@@ -21,6 +21,10 @@ public enum PlasticType {
      */
     ABS_PLUS("ABS+"),
     /**
+     * ABS ECO.
+     */
+    ABS_ECO("ABS ECO"),
+    /**
      * PLA.
      */
     PLA("PLA"),
