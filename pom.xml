@@ -6,7 +6,7 @@
 
     <groupId>com.mixram.telegram.bot</groupId>
     <artifactId>universal-bot</artifactId>
-    <version>1.2.0.0</version>
+    <version>1.2.1.0</version>
     <packaging>jar</packaging>
 
     <name>universal-bot</name>
@@ -21,9 +21,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <guava.version>27.0.1-jre</guava.version>
         <modelmapper.version>1.1.0</modelmapper.version>
         <lombok.version>1.18.4</lombok.version>
@@ -148,6 +148,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <mainClass>com.mixram.telegram.bot.UniversalBotApplication</mainClass>
                     <executable>true</executable>
                 </configuration>
                 <executions>
