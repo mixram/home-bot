@@ -4,11 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
+import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author mixram on 2019-03-29.
@@ -30,7 +33,7 @@ class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
     public DiscountsOn3DPlastic3DPlastService(@Value("${parser.3dplast.urls}") String urls,
                                               @Value("${parser.common.time-to-wait-till-parse-new-url}") long waitTime,
                                               @Qualifier("htmlPage3DPlastParserV2") HtmlPageParser parser) {
-        super(JsonUtil.fromJson(urls, new TypeReference<>() {}), waitTime, parser);
+        super(JsonUtil.fromJson(urls, new TypeReference<List<ParseData>>() {}), waitTime, parser);
     }
 
     // </editor-fold>

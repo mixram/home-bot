@@ -18,23 +18,23 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private final String oldPriceClassName;
-    private final String newPriceClassName;
+    private final String oldPriceSelectorName;
+    private final String newPriceSelectorName;
     private final String productAvailableSelectorName;
 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
-    public HtmlPageShopParser(@NotNull String oldPriceClassName,
-                              @NotNull String newPriceClassName,
+    public HtmlPageShopParser(@NotNull String oldPriceSelectorName,
+                              @NotNull String newPriceSelectorName,
                               @NotNull String productAvailableSelectorName) {
-        this.oldPriceClassName = oldPriceClassName;
-        this.newPriceClassName = newPriceClassName;
+        this.oldPriceSelectorName = oldPriceSelectorName;
+        this.newPriceSelectorName = newPriceSelectorName;
         this.productAvailableSelectorName = productAvailableSelectorName;
 
-        Validate.notBlank(this.oldPriceClassName, "oldPriceClassName is not specified!");
-        Validate.notBlank(this.newPriceClassName, "oldPriceClassName is not specified!");
+        Validate.notBlank(this.oldPriceSelectorName, "oldPriceClassName is not specified!");
+        Validate.notBlank(this.newPriceSelectorName, "oldPriceClassName is not specified!");
         Validate.notBlank(this.productAvailableSelectorName, "oldPriceClassName is not specified!");
     }
 
@@ -53,12 +53,12 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
             data.setPageTitle(doc.title());
             data.setProductUrl(parseData.getProductUrl());
 
-            Elements oldPriceElements = doc.select(oldPriceClassName);
+            Elements oldPriceElements = doc.select(oldPriceSelectorName);
             if (!oldPriceElements.isEmpty()) {
                 data.setProductOldPrice(parsePrice(oldPriceElements));
             }
 
-            Elements salePriceElements = doc.select(newPriceClassName);
+            Elements salePriceElements = doc.select(newPriceSelectorName);
             if (!salePriceElements.isEmpty()) {
                 data.setProductSalePrice(parsePrice(salePriceElements));
             }

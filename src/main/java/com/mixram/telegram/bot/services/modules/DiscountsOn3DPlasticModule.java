@@ -63,15 +63,8 @@ public class DiscountsOn3DPlasticModule implements Module {
         sw.stop();
 
         sw.start("Parse data");
-        Map<Shop3D, Data3DPlastic> plastics = new HashMap<>(Shop3D.values().length);
-        Map<Shop3D, CompletableFuture<Data3DPlastic>> plasticsFromFuture = new HashMap<>(Shop3D.values().length);
-        for (Shop3D shop : Shop3D.values()) {
-            plasticsFromFuture.put(shop,
-                                   ConcurrentUtilites.supplyAsyncWithLocalThreadContext(aVoid -> searcher.search(shop)));
-        }
-        for (Map.Entry<Shop3D, CompletableFuture<Data3DPlastic>> futureEntry : plasticsFromFuture.entrySet()) {
-            plastics.put(futureEntry.getKey(), futureEntry.getValue().join());
-        }
+        Map<Shop3D, Data3DPlastic> plastics = getPlastics();
+        //        Map<Shop3D, Data3DPlastic> plastics = getPlasticsAsync();
         sw.stop();
 
         sw.start("Apply data");
@@ -87,6 +80,37 @@ public class DiscountsOn3DPlasticModule implements Module {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.2.1.0
+     */
+    private Map<Shop3D, Data3DPlastic> getPlasticsAsync() {
+        Map<Shop3D, Data3DPlastic> plastics = new HashMap<>(Shop3D.values().length);
+
+        Map<Shop3D, CompletableFuture<Data3DPlastic>> plasticsFromFuture = new HashMap<>(Shop3D.values().length);
+        for (Shop3D shop : Shop3D.values()) {
+            plasticsFromFuture.put(shop,
+                                   ConcurrentUtilites.supplyAsyncWithLocalThreadContext(aVoid -> searcher.search(shop)));
+        }
+        for (Map.Entry<Shop3D, CompletableFuture<Data3DPlastic>> futureEntry : plasticsFromFuture.entrySet()) {
+            plastics.put(futureEntry.getKey(), futureEntry.getValue().join());
+        }
+
+        return plastics;
+    }
+
+    /**
+     * @since 1.2.1.0
+     */
+    private Map<Shop3D, Data3DPlastic> getPlastics() {
+        Map<Shop3D, Data3DPlastic> plastics = new HashMap<>(Shop3D.values().length);
+
+        for (Shop3D shop : Shop3D.values()) {
+            plastics.put(shop, searcher.search(shop));
+        }
+
+        return plastics;
+    }
 
     /**
      * @since 1.0.0.0

@@ -215,7 +215,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 byName.entrySet().stream()
                       .collect(Collectors.toMap(Map.Entry :: getKey,
                                                 e -> e.getValue().stream()
-                                                      .anyMatch(p -> p.getProductOldPrice() != null)));
+                                                      .anyMatch(this :: mayUsePlastic)));
 
         StringBuilder answer = new StringBuilder();
         discountsState.forEach((k, v) -> {
@@ -230,7 +230,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.0.0.0
      */
     private String alignText(String text) {
-        return String.format("%-8s", text);
+        return String.format("%-9s", text);
     }
 
     /**
@@ -249,7 +249,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         int counter = 0;
         StringBuilder answer = new StringBuilder();
         for (ParseData datum : data) {
-            if (datum.isInStock() && datum.getProductOldPrice() != null) {
+            if (mayUsePlastic(datum)) {
                 answer
                         .append("<b>").append(datum.getProductName()).append("</b>").append("\n")
                         .append("Обычная цена: ").append(datum.getProductOldPrice()).append("грн;\n")
@@ -270,6 +270,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         return answer.toString();
+    }
+
+    /**
+     * @since 1.2.0.0
+     */
+    private boolean mayUsePlastic(ParseData datum) {
+        return datum.isInStock() && datum.getProductOldPrice() != null && datum.getProductSalePrice() != null;
     }
 
     /**

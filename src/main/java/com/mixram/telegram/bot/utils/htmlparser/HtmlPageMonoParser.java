@@ -62,8 +62,9 @@ public class HtmlPageMonoParser extends HtmlPageShopParser {
      */
     @Override
     protected BigDecimal parsePrice(Elements elements) {
-        String priceText = elements.first().attr(attributeName);
-        String sumString = priceText.replace(",", ".");
+        String priceText = elements.first().text();
+        String priceString = priceText.substring(0, priceText.indexOf("г")).trim();
+        String sumString = priceString.replace(",", ".").replace(" ", "");
 
         return new BigDecimal(sumString);
     }

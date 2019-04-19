@@ -23,11 +23,23 @@ public enum PlasticType {
     /**
      * ABS ECO.
      */
-    ABS_ECO("ABS ECO"),
+    ABS_ECO("ABS-ECO"),
+    /**
+     * ABS FLEX.
+     */
+    ABS_FLEX("ABS-FLEX"),
+    /**
+     * ABS PRO.
+     */
+    ABS_PRO("ABS-PRO"),
     /**
      * PLA.
      */
     PLA("PLA"),
+    /**
+     * PLA PLUS.
+     */
+    PLA_PLUS("PLA+"),
     /**
      * FLEX.
      */
@@ -47,7 +59,39 @@ public enum PlasticType {
     /**
      * Nylon.
      */
-    NYLON("Nylon");
+    NYLON("Nylon"),
+    /**
+     * ELASTAN.
+     */
+    ELASTAN("ELASTAN"),
+    /**
+     * PET.
+     */
+    PET("PET"),
+    /**
+     * PA.
+     */
+    PA("PA"),
+    /**
+     * PBT.
+     */
+    PBT("PBT"),
+    /**
+     * ASA.
+     */
+    ASA("ASA"),
+    /**
+     * PLA CCF.
+     */
+    PLA_CCF("PLA-CCF"),
+    /**
+     * PLA-CCU.
+     */
+    PLA_CCU("PLA-CCU"),
+    /**
+     * PLA-СG+.
+     */
+    PLA_CG_PLUS("PLA-CG+");
 
     @Getter
     String name;
