@@ -31,7 +31,7 @@ class DiscountsOn3DPlasticMonofilamentService extends DiscountsOn3DPlasticV2Serv
 
     @Autowired
     public DiscountsOn3DPlasticMonofilamentService(@Value("${parser.mono.urls}") String urls,
-                                                   @Value("${parser.common.time-to-wait-till-parse-new-url}") long waitTime,
+                                                   @Value("${parser.mono.time-to-wait-till-parse-new-url}") long waitTime,
                                                    @Qualifier("htmlPageMonoParser") HtmlPageParser parser) {
         super(JsonUtil.fromJson(urls, new TypeReference<List<ParseData>>() {}), waitTime, parser);
     }
