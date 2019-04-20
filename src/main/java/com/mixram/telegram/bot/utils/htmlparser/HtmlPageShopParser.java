@@ -46,7 +46,16 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
         log.debug("URL to parse: '{}'", () -> parseData);
 
         try {
-            Document doc = Jsoup.connect(parseData.getProductUrl()).get();
+            Document doc =
+                    Jsoup.connect(parseData.getProductUrl())
+                         .header("accept",
+                                 "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+                         .header("accept-encoding", "gzip, deflate, br")
+                         .header("accept-language", "en-US,en;q=0.9")
+                         .header("cache-control", "max-age=0")
+                         .header("user-agent",
+                                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36")
+                         .get();
 
             ParseData data = new ParseData();
             data.setType(parseData.getType());

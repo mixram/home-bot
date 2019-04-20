@@ -46,7 +46,7 @@ public class ModulesScheduler implements Scheduler {
     @PostConstruct
     public void init() {
         if (doWorkOnStart) {
-            schedule();
+            doSchedule();
         }
     }
 
@@ -60,17 +60,22 @@ public class ModulesScheduler implements Scheduler {
             return;
         }
 
+        doSchedule();
+    }
+
+
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.2.2.0
+     */
+    private void doSchedule() {
         modules.forEach(lp -> asyncHelper.doAsync((Supplier<Void>) () -> {
             lp.execute();
 
             return null;
         }));
     }
-
-
-    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
-
-    //
 
     // </editor-fold>
 }
