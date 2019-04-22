@@ -41,7 +41,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private static final String PARSE_PATTERN_STRING = "^/SALES_.*";
+    private static final String START_PATTERN_STRING = "^/START.*";
     private static final Pattern PARSE_PATTERN = Pattern.compile(PARSE_PATTERN_STRING);
+    private static final Pattern START_PATTERN = Pattern.compile(START_PATTERN_STRING);
     private static final String NO_WORK_WITH_SHOP = "К сожалению, я еще не работаю с этим магазином... \uD83D\uDE10";
     private static final String NO_DATA_FOR_SHOP = "У меня пока что нет данных о скидках в этом магазине... \uD83D\uDE1E";
     private static final String NO_DISCOUNTS = "Скидок нет, к сожалению";
@@ -111,6 +113,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             return null;
         }
+        if (startCommand(message.getText())) {
+            return prepareStartAnswer();
+        }
 
         final CommandHolder command;
         try {
@@ -126,6 +131,32 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.3.2.0
+     */
+    private MessageData prepareStartAnswer() {
+        StringBuilder builder = new StringBuilder()
+                .append("<b>").append("Привет!").append("</b>").append("\n")
+                .append("Я слежу за скидками на 3d-пластик в основных магазинах (список магазинов и пластиков постепенно пополняется) и готов информировать тебя о них 😊")
+                .append("\n")
+                .append("Справа в меню Телеграм есть кнопка с символом \"/\" - нажми на нее и увидишь список всех поддерживаемых мною команд.")
+                .append("\n").append("\n")
+                .append("Удачных покупок 👍");
+
+        return MessageData.builder()
+                          .message(builder.toString())
+                          .toAdmin(false)
+                          .toResponse(false)
+                          .build();
+    }
+
+    /**
+     * @since 1.3.2.0
+     */
+    private boolean startCommand(String text) {
+        return START_PATTERN.matcher(text.toUpperCase()).matches();
+    }
 
     /**
      * @since 1.3.0.0
@@ -166,7 +197,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     .append("<b>").append("Chat:").append("</b>").append("\n")
                     .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
 
-            communicationComponent.sendMessageToAdmin(builder.toString());
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, builder.toString()));
         } catch (Exception e) {
             log.warn("Error ==> infoAdmin", e);
         }
@@ -178,6 +209,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private MessageData prepareMisunderstandingMessage() {
         return MessageData.builder()
                           .toAdmin(false)
+                          .toResponse(false)
                           .message(MISUNDERSTANDING_MESSAGE.get(random.nextInt(MISUNDERSTANDING_MESSAGE.size())))
                           .build();
     }
@@ -243,6 +275,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         return MessageData.builder()
                           .toAdmin(false)
+                          .toResponse(false)
                           .message(messageToSendString)
                           .build();
     }

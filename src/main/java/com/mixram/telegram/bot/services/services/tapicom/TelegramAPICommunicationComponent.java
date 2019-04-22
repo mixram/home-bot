@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.services.services.tapicom;
 
 import com.mixram.telegram.bot.services.domain.entity.Update;
+import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,25 +32,27 @@ public class TelegramAPICommunicationComponent {
 
 
     /**
-     * @see TelegramAPICommunicationServices#sendMessage(Update, String)
+     * @see TelegramAPICommunicationServices#sendMessageToAdmin(MessageData)
      * @since 1.3.0.0
      */
     public void sendMessage(Update update,
-                            String message) {
+                            MessageData messageData) {
         Validate.notNull(update, "Update is not specified!");
-        Validate.notBlank(message, "Message is not specified!");
+        Validate.notNull(messageData, "Message data is not specified!");
+        Validate.notBlank(messageData.getMessage(), "Message is not specified!");
 
-        services.sendMessage(update, message);
+        services.sendMessage(update, messageData);
     }
 
     /**
-     * @see TelegramAPICommunicationServices#sendMessageToAdmin(String)
+     * @see TelegramAPICommunicationServices#sendMessageToAdmin(MessageData)
      * @since 1.3.0.0
      */
-    public void sendMessageToAdmin(String message) {
-        Validate.notBlank(message, "Message is not specified!");
+    public void sendMessageToAdmin(MessageData messageData) {
+        Validate.notNull(messageData, "Message data is not specified!");
+        Validate.notBlank(messageData.getMessage(), "Message is not specified!");
 
-        services.sendMessageToAdmin(message);
+        services.sendMessageToAdmin(messageData);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
@@ -99,7 +100,7 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
      */
     private void sendMessageToAdmin(String message) {
         asyncHelper.doAsync((Supplier<Void>) () -> {
-            communicationComponent.sendMessageToAdmin(message);
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, message));
 
             return null;
         });

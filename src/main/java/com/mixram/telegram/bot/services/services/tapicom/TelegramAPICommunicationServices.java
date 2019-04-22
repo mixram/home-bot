@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
 import com.mixram.telegram.bot.services.services.bot.Bot3DLongPooling;
+import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.entity.SendMessageData;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
 import com.mixram.telegram.bot.utils.rest.RestClient;
@@ -78,7 +79,7 @@ class TelegramAPICommunicationServices {
      * @since 0.1.3.0
      */
     protected void sendMessage(Update update,
-                               String message) {
+                               MessageData message) {
         if (update == null || message == null) {
             return;
         }
@@ -97,7 +98,7 @@ class TelegramAPICommunicationServices {
             try {
                 SendMessageData data = createSendMessageData(update);
 
-                doSendMessage(data.getChatId(), data.getMessageId(), ERROR_MESSAGE);
+                doSendMessage(data.getChatId(), data.getMessageId(), new MessageData(false, true, ERROR_MESSAGE));
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -105,19 +106,20 @@ class TelegramAPICommunicationServices {
     }
 
     /**
-     * To send message to Telegram API for bot admin.
+     * To send messageData to Telegram API for bot admin.
      *
-     * @param message message to send to Telegram API.
+     * @param messageData messageData to send to Telegram API.
      *
      * @since 0.1.3.0
      */
-    protected void sendMessageToAdmin(String message) {
-        Validate.notBlank(message, "Message for admin is not specified!");
+    protected void sendMessageToAdmin(MessageData messageData) {
+        Validate.notNull(messageData, "Message data for admin is not specified!");
+        Validate.notBlank(messageData.getMessage(), "Message for admin is not specified!");
 
         try {
-            log.debug("sendMessage => : message={}", () -> message);
+            log.debug("sendMessage => : messageData={}", () -> messageData);
 
-            doSendMessage(Integer.valueOf(adminName), null, message);
+            doSendMessage(Integer.valueOf(adminName), null, messageData);
         } catch (Exception e) {
             log.warn("", e);
         }
@@ -218,15 +220,17 @@ class TelegramAPICommunicationServices {
      */
     private void doSendMessage(Integer chatId,
                                Integer messageId,
-                               String message) {
-        SendMessage messageToSend = SendMessage.builder()
-                                               .chatId(chatId.toString())
-                                               .text(message)
-                                               .parseMode("HTML")
-                                               .disableWebPagePreview(false)
-                                               .disableNotification(false)
-                                               .replyToMessageId(messageId)
-                                               .build();
+                               MessageData message) {
+        SendMessage.SendMessageBuilder builder = SendMessage.builder()
+                                                            .chatId(chatId.toString())
+                                                            .text(message.getMessage())
+                                                            .parseMode("HTML")
+                                                            .disableWebPagePreview(false)
+                                                            .disableNotification(false);
+        if (message.isToResponse()) {
+            builder
+                    .replyToMessageId(messageId);
+        }
 
         String url = mainUrlPart + SEND_MESSAGE_URL;
         HttpHeaders headers = CommonHeadersBuilder.newInstance()
@@ -234,7 +238,7 @@ class TelegramAPICommunicationServices {
                                                   .build();
 
         AnswerResponse answerResponse =
-                restClient.post(url, headers.toSingleValueMap(), messageToSend, AnswerResponse.class);
+                restClient.post(url, headers.toSingleValueMap(), builder.build(), AnswerResponse.class);
         Validate.notNull(answerResponse, "Empty message!");
         Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
 

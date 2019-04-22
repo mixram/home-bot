@@ -59,9 +59,9 @@ public class Bot3DLongPooling implements LongPooling {
         answers.forEach((k, v) -> {
             MessageData join = v.join();
             if (join.isToAdmin()) {
-                communicationComponent.sendMessageToAdmin(join.getMessage());
+                communicationComponent.sendMessageToAdmin(join);
             } else {
-                communicationComponent.sendMessage(k, join.getMessage());
+                communicationComponent.sendMessage(k, join);
             }
         });
 

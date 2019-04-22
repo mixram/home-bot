@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class MessageData {
 
     private boolean toAdmin;
+    private boolean toResponse;
     private String message;
 
     @Override
