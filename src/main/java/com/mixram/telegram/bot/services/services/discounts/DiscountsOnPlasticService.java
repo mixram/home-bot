@@ -1,6 +1,6 @@
-package com.mixram.telegram.bot.services.modules;
+package com.mixram.telegram.bot.services.services.discounts;
 
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 
 /**
  * @author mixram on 2019-04-15.

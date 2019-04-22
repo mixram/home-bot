@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.modules;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;

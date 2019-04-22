@@ -1,7 +1,7 @@
-package com.mixram.telegram.bot.services.modules;
+package com.mixram.telegram.bot.services.services.discounts;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Log4j2
 @Service
-class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
+class DiscountsOn3DPlasticMonofilamentService extends DiscountsOn3DPlasticV2Service {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -30,9 +30,9 @@ class DiscountsOn3DPlastic3DPlastService extends DiscountsOn3DPlasticV2Service {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public DiscountsOn3DPlastic3DPlastService(@Value("${parser.3dplast.urls}") String urls,
-                                              @Value("${parser.3dplast.time-to-wait-till-parse-new-url}") long waitTime,
-                                              @Qualifier("htmlPage3DPlastParserV2") HtmlPageParser parser) {
+    public DiscountsOn3DPlasticMonofilamentService(@Value("${parser.mono.urls}") String urls,
+                                                   @Value("${parser.mono.time-to-wait-till-parse-new-url}") long waitTime,
+                                                   @Qualifier("htmlPageMonoParser") HtmlPageParser parser) {
         super(JsonUtil.fromJson(urls, new TypeReference<List<ParseData>>() {}), waitTime, parser);
     }
 

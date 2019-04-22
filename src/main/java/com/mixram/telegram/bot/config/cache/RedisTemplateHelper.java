@@ -1,6 +1,6 @@
 package com.mixram.telegram.bot.config.cache;
 
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;

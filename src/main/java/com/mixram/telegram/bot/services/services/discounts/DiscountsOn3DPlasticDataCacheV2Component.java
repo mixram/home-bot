@@ -1,8 +1,9 @@
-package com.mixram.telegram.bot.services.modules;
+package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

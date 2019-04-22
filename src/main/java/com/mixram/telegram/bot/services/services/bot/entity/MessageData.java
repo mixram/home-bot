@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.services.services.entity;
+package com.mixram.telegram.bot.services.services.bot.entity;
 
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;

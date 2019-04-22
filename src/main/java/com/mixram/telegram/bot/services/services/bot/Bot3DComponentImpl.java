@@ -1,13 +1,12 @@
-package com.mixram.telegram.bot.services.services;
+package com.mixram.telegram.bot.services.services.bot;
 
 import com.google.common.collect.ImmutableList;
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
-import com.mixram.telegram.bot.services.services.entity.MessageData;
+import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;

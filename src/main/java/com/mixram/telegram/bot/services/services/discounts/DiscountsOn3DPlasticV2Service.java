@@ -1,6 +1,6 @@
-package com.mixram.telegram.bot.services.modules;
+package com.mixram.telegram.bot.services.services.discounts;
 
-import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;

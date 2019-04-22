@@ -1,7 +1,6 @@
 package com.mixram.telegram.bot.services.shedulers;
 
 import com.mixram.telegram.bot.services.domain.LongPooling;
-import com.mixram.telegram.bot.utils.AsyncHelper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +24,6 @@ public class LongPoolingScheduler implements Scheduler {
     private final boolean doSchedule;
 
     private final Set<LongPooling> longPoolings;
-    private final AsyncHelper asyncHelper;
 
     // </editor-fold>
 
@@ -33,11 +31,9 @@ public class LongPoolingScheduler implements Scheduler {
 
     @Autowired
     public LongPoolingScheduler(@Value("${bot.settings.scheduler.long-pooling.enable}") boolean doSchedule,
-                                Set<LongPooling> longPoolings,
-                                AsyncHelper asyncHelper) {
+                                Set<LongPooling> longPoolings) {
         this.doSchedule = doSchedule;
         this.longPoolings = longPoolings;
-        this.asyncHelper = asyncHelper;
     }
 
     // </editor-fold>

@@ -3,7 +3,7 @@ package com.mixram.telegram.bot.services.services.tapicom;
 import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
-import com.mixram.telegram.bot.services.services.Bot3DLongPooling;
+import com.mixram.telegram.bot.services.services.bot.Bot3DLongPooling;
 import com.mixram.telegram.bot.services.services.tapicom.entity.SendMessageData;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
 import com.mixram.telegram.bot.utils.rest.RestClient;
