@@ -7,6 +7,9 @@ import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
+import com.mixram.telegram.bot.services.services.entity.MessageData;
+import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
+import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.AllArgsConstructor;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -52,6 +56,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final Random random;
 
     private final Module3DPlasticDataSearcher searcher;
+    private final TelegramAPICommunicationComponent communicationComponent;
+    private final AsyncHelper asyncHelper;
 
 
     @Data
@@ -60,7 +66,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     @NoArgsConstructor
     private static class CommandHolder {
 
+        /**
+         * Command to execute.
+         */
         private Command command;
+        /**
+         * true - need full message content, false - need short message content.
+         */
         private boolean full;
 
         @Override
@@ -75,9 +87,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     @Autowired
     public Bot3DComponentImpl(@Value("${bot.settings.other.max-quantity-for-full-view}") Integer maxQuantity,
-                              @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher) {
+                              @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher,
+                              TelegramAPICommunicationComponent communicationComponent,
+                              AsyncHelper asyncHelper) {
         this.maxQuantity = maxQuantity;
         this.searcher = searcher;
+        this.communicationComponent = communicationComponent;
+        this.asyncHelper = asyncHelper;
+
         this.random = new Random();
     }
 
@@ -85,7 +102,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // </editor-fold>
 
     @Override
-    public String proceedUpdate(Update update) {
+    public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
 
         Message message = update.getMessage();
@@ -102,6 +119,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return prepareMisunderstandingMessage();
         }
 
+        infoAdmin(update);
+
         return prepareAnswerWithCommand(command.getCommand(), command.isFull());
     }
 
@@ -109,10 +128,58 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * @since 1.3.0.0
+     */
+    private void infoAdmin(Update update) {
+        asyncHelper.doAsync((Supplier<Void>) () -> {
+            doInfoAdmin(update);
+
+            return null;
+        });
+    }
+
+    /**
+     * @since 1.3.0.0
+     */
+    private void doInfoAdmin(Update update) {
+        try {
+            Message message = update.getMessage();
+
+            User user = message.getUser();
+            if (user != null && communicationComponent.getAdminName().equals(user.getId().toString())) {
+                return;
+            }
+            Integer adminName = message.getChat().getChatId();
+            if (communicationComponent.getAdminName().equals(adminName.toString())) {
+                return;
+            }
+
+            StringBuilder builder = new StringBuilder()
+                    .append("<b>").append("Bot has called by user! 😊").append("</b>").append("\n");
+
+            if (user != null) {
+                builder
+                        .append("<b>").append("User:").append("</b>").append("\n")
+                        .append(JsonUtil.toPrettyJson(user)).append("\n");
+            }
+            builder
+                    .append("<b>").append("Chat:").append("</b>").append("\n")
+                    .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
+
+            communicationComponent.sendMessageToAdmin(builder.toString());
+        } catch (Exception e) {
+            log.warn("Error ==> infoAdmin", e);
+        }
+    }
+
+    /**
      * @since 1.0.0.0
      */
-    private String prepareMisunderstandingMessage() {
-        return MISUNDERSTANDING_MESSAGE.get(random.nextInt(MISUNDERSTANDING_MESSAGE.size()));
+    private MessageData prepareMisunderstandingMessage() {
+        return MessageData.builder()
+                          .toAdmin(false)
+                          .message(MISUNDERSTANDING_MESSAGE.get(random.nextInt(MISUNDERSTANDING_MESSAGE.size())))
+                          .build();
     }
 
     /**
@@ -145,8 +212,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private String prepareAnswerWithCommand(Command command,
-                                            boolean full) {
+    private MessageData prepareAnswerWithCommand(Command command,
+                                                 boolean full) {
         Validate.notNull(command, "Command is not specified!");
 
         String messageToSendString;
@@ -174,7 +241,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             messageToSendString = NO_DISCOUNTS;
         }
 
-        return messageToSendString;
+        return MessageData.builder()
+                          .toAdmin(false)
+                          .message(messageToSendString)
+                          .build();
     }
 
     /**
@@ -189,12 +259,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_3DP:
             case D_3DUA:
             case D_MF:
+            case D_U3DF:
                 messageToSendString = full ? prepareAnswerText(plastic) : prepareAnswerTextShort(plastic);
 
                 break;
             //            case D_DAS:
             //            case D_PLEX:
-            //            case D_U3DF:
             default:
                 messageToSendString = NO_WORK_WITH_SHOP;
         }
@@ -230,7 +300,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.0.0.0
      */
     private String alignText(String text) {
-        return String.format("%-9s", text);
+        return String.format("%-12s", text);
     }
 
     /**

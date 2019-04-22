@@ -25,6 +25,7 @@ public class DiscountsOn3DPlasticDataV2Component implements Module3DPlasticDataS
     private final DiscountsOnPlasticService d3DPlastService;
     private final DiscountsOnPlasticService d3DUAService;
     private final DiscountsOnPlasticService dMonoService;
+    private final DiscountsOnPlasticService dU3DFService;
     private final RedisTemplateHelper redisTemplate;
 
     // </editor-fold>
@@ -36,10 +37,12 @@ public class DiscountsOn3DPlasticDataV2Component implements Module3DPlasticDataS
             @Qualifier("discountsOn3DPlastic3DPlastService") DiscountsOnPlasticService d3DPlastService,
             @Qualifier("discountsOn3DPlastic3DUAService") DiscountsOnPlasticService d3DUAService,
             @Qualifier("discountsOn3DPlasticMonofilamentService") DiscountsOnPlasticService dMonoService,
+            @Qualifier("discountsOn3DPlasticU3DFService") DiscountsOnPlasticService dU3DFService,
             RedisTemplateHelper redisTemplate) {
         this.d3DPlastService = d3DPlastService;
         this.d3DUAService = d3DUAService;
         this.dMonoService = dMonoService;
+        this.dU3DFService = dU3DFService;
         this.redisTemplate = redisTemplate;
     }
 
@@ -77,7 +80,8 @@ public class DiscountsOn3DPlasticDataV2Component implements Module3DPlasticDataS
                 return d3DUAService.search();
             case SHOP_MONOFILAMENT:
                 return dMonoService.search();
-            //            case SHOP_U3DF:
+            case SHOP_U3DF:
+                return dU3DFService.search();
             //            case SHOP_DASPLAST:
             //            case SHOP_PLEXIWIRE:
             //                //                throw new UnsupportedOperationException(String.format("The shop '%s' is has not been realized yet!", shop));

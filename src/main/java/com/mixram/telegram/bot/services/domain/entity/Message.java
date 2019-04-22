@@ -33,7 +33,7 @@ public class Message implements TelegramApiEntity {
      *
      * @since 0.1.2.0
      */
-    @JsonProperty("user")
+    @JsonProperty("from")
     private User user;
     /**
      * Date the message was sent in Unix time.

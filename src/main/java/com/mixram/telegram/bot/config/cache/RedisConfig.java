@@ -3,6 +3,7 @@ package com.mixram.telegram.bot.config.cache;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
+import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,15 +45,16 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, Data3DPlastic> data3DPlasticRedisTemplate() {
-        RedisSerializer<Object> jacksonSerializer = genericJackson2JsonRedisSerializer();
-        RedisSerializer<String> stringSerializer = stringRedisSerializer();
-
         RedisTemplate<String, Data3DPlastic> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(stringSerializer);
-        template.setHashKeySerializer(stringSerializer);
-        template.setValueSerializer(jacksonSerializer);
-        template.setHashValueSerializer(jacksonSerializer);
+        updateTemplate(template);
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, StatData> dataStatDataRedisTemplate() {
+        RedisTemplate<String, StatData> template = new RedisTemplate<>();
+        updateTemplate(template);
 
         return template;
     }
@@ -75,7 +77,19 @@ public class RedisConfig {
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
-    //
+    /**
+     * @since 1.3.0.0
+     */
+    private void updateTemplate(RedisTemplate<?, ?> template) {
+        RedisSerializer<Object> jacksonSerializer = genericJackson2JsonRedisSerializer();
+        RedisSerializer<String> stringSerializer = stringRedisSerializer();
+
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setValueSerializer(jacksonSerializer);
+        template.setHashValueSerializer(jacksonSerializer);
+    }
 
     // </editor-fold>
 

@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
-import com.mixram.telegram.bot.services.services.Bot3DLongPooling;
+import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
@@ -33,7 +33,7 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
     private static final String BROKEN_URLS_MESSAGE_ADMIN = "\"Broken\" links have found!";
 
     private final AsyncHelper asyncHelper;
-    private final Bot3DLongPooling bot3DLongPooling;
+    private final TelegramAPICommunicationComponent communicationComponent;
 
     // </editor-fold>
 
@@ -41,9 +41,9 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
 
     @Autowired
     public Module3DPlasticDataComponent(AsyncHelper asyncHelper,
-                                        Bot3DLongPooling bot3DLongPooling) {
+                                        TelegramAPICommunicationComponent communicationComponent) {
         this.asyncHelper = asyncHelper;
-        this.bot3DLongPooling = bot3DLongPooling;
+        this.communicationComponent = communicationComponent;
     }
 
 
@@ -99,7 +99,7 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
      */
     private void sendMessageToAdmin(String message) {
         asyncHelper.doAsync((Supplier<Void>) () -> {
-            bot3DLongPooling.sendMessageToAdmin(message);
+            communicationComponent.sendMessageToAdmin(message);
 
             return null;
         });

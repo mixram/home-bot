@@ -19,28 +19,36 @@ import java.util.regex.Pattern;
 public class Tttest {
 
     public static void main(String[] args) throws IOException {
-        final String url = "https://monofilament.com.ua/products/standartnye-materialy/abs-eco/abs-eco-chernyj";
+        final String url = "https://cs2734145.prom.ua/p915909169-utsenka-nylon-175.html";
 
-        Document doc = Jsoup.connect(url).get();
+        Document doc = Jsoup.connect(url)
+                            .header("accept",
+                                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+                            .header("accept-encoding", "gzip, deflate, br")
+                            .header("accept-language", "en-US,en;q=0.9")
+                            .header("cache-control", "max-age=0")
+                            .header("user-agent",
+                                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.80 Safari/537.36")
+                            .get();
 
         ParseData data = new ParseData();
-        data.setType(PlasticType.ABS);
+        data.setType(PlasticType.NYLON);
         data.setPageTitle(doc.title());
         data.setProductUrl(url);
 
-        Elements oldPriceElements = doc.select("[property=\"product:price:amount\"]");
+        Elements oldPriceElements = doc.select("[class=\"b-product-cost__old-price\"]");
         if (!oldPriceElements.isEmpty()) {
             data.setProductOldPrice(parsePrice(oldPriceElements));
         }
 
-        Elements salePriceElements = doc.select("[property=\"product:sale_price:amount\"]");
+        Elements salePriceElements = doc.select("[class=\"b-product-cost__price\"]");
         if (!salePriceElements.isEmpty()) {
             data.setProductSalePrice(parsePrice(salePriceElements));
         }
 
         data.setProductName(getProductName(doc));
 
-        Elements presenceElements = doc.select("[property=\"product:availability\"]");
+        Elements presenceElements = doc.select("[data-qaid=\"presence_data\"]");
         if (!presenceElements.isEmpty()) {
             data.setInStock(checkPresence(presenceElements));
         }
@@ -49,7 +57,7 @@ public class Tttest {
     }
 
     private static BigDecimal parsePrice(Elements elements) {
-        String priceText = elements.first().attr("content");
+        String priceText = elements.first().text();
         String[] split = priceText.split(" ");
         String sumString = split[0].replace(",", ".");
 
@@ -57,14 +65,15 @@ public class Tttest {
     }
 
     private static String getProductName(Document doc) {
-        Elements nameElements = doc.select("[property=\"og:title\"]");
+        Elements nameElements = doc.select("[data-qaid=\"product_name\"]");
 
-        return nameElements.isEmpty() ? null : nameElements.first().attr("content");
+        return nameElements.isEmpty() ? null : nameElements.first().text();
     }
 
     private static boolean checkPresence(Elements presenceElements) {
-        Pattern pattern = Pattern.compile("pending|instock".toUpperCase());
-        Matcher matcher = pattern.matcher(presenceElements.first().attr("content").trim().toUpperCase());
+        Pattern pattern = Pattern.compile(
+                "\u0412 \u043D\u0430\u043B\u0438\u0447\u0438\u0438|\u0417\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u0435\u0442\u0441\u044F".toUpperCase());
+        Matcher matcher = pattern.matcher(presenceElements.first().text().trim().toUpperCase());
 
         return matcher.matches();
     }

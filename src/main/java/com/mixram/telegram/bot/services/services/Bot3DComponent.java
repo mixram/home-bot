@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.services.services;
 
 import com.mixram.telegram.bot.services.domain.entity.Update;
+import com.mixram.telegram.bot.services.services.entity.MessageData;
 
 /**
  * @author mixram on 2019-04-10.
@@ -8,5 +9,5 @@ import com.mixram.telegram.bot.services.domain.entity.Update;
  */
 public interface Bot3DComponent {
 
-    String proceedUpdate(Update update);
+    MessageData proceedUpdate(Update update);
 }

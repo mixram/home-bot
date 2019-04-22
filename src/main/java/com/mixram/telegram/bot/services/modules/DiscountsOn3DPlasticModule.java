@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.modules;
 
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
-import com.mixram.telegram.bot.services.services.Bot3DLongPooling;
+import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.ConcurrentUtilites;
 import lombok.extern.log4j.Log4j2;
@@ -32,7 +32,7 @@ public class DiscountsOn3DPlasticModule implements Module {
     private final Module3DPlasticDataSearcher searcher;
     private final Module3DPlasticDataApplyer applyer;
     private final AsyncHelper asyncHelper;
-    private final Bot3DLongPooling bot3DLongPooling;
+    private final TelegramAPICommunicationComponent communicationComponent;
 
     // </editor-fold>
 
@@ -42,11 +42,11 @@ public class DiscountsOn3DPlasticModule implements Module {
     public DiscountsOn3DPlasticModule(Module3DPlasticDataSearcher searcher,
                                       @Qualifier("module3DPlasticDataComponent") Module3DPlasticDataApplyer applyer,
                                       AsyncHelper asyncHelper,
-                                      Bot3DLongPooling bot3DLongPooling) {
+                                      TelegramAPICommunicationComponent communicationComponent) {
         this.searcher = searcher;
         this.applyer = applyer;
         this.asyncHelper = asyncHelper;
-        this.bot3DLongPooling = bot3DLongPooling;
+        this.communicationComponent = communicationComponent;
     }
 
     // </editor-fold>
@@ -117,7 +117,7 @@ public class DiscountsOn3DPlasticModule implements Module {
      */
     private void sendMessageToAdmin(String message) {
         asyncHelper.doAsync((Supplier<Void>) () -> {
-            bot3DLongPooling.sendMessageToAdmin(message);
+            communicationComponent.sendMessageToAdmin(message);
 
             return null;
         });

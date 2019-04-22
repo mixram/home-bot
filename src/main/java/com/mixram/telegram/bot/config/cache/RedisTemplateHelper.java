@@ -2,6 +2,7 @@ package com.mixram.telegram.bot.config.cache;
 
 import com.mixram.telegram.bot.services.domain.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,19 +19,23 @@ public class RedisTemplateHelper {
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private static final String PLASTIC_SHOP_PREFIX = "plastic_shop";
+    private static final String STAT_PREFIX = "statistics";
 
     private final String prefix;
 
-    private final RedisTemplate<String, Data3DPlastic> redisTemplate;
+    private final RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic;
+    private final RedisTemplate<String, StatData> redisTemplateStatData;
 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public RedisTemplateHelper(@Qualifier("data3DPlasticRedisTemplate") RedisTemplate<String, Data3DPlastic> redisTemplate,
+    public RedisTemplateHelper(@Qualifier("data3DPlasticRedisTemplate") RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic,
+                               @Qualifier("dataStatDataRedisTemplate") RedisTemplate<String, StatData> redisTemplateStatData,
                                @Value("${spring.redis.prefix}") String prefix) {
-        this.redisTemplate = redisTemplate;
+        this.redisTemplate3DPlastic = redisTemplate3DPlastic;
+        this.redisTemplateStatData = redisTemplateStatData;
         this.prefix = prefix;
     }
 
@@ -47,7 +52,7 @@ public class RedisTemplateHelper {
      */
     public void storePlasticToRedis(Data3DPlastic plastic,
                                     Shop3D key) {
-        redisTemplate.opsForValue().set(prepareKey(key), plastic);
+        redisTemplate3DPlastic.opsForValue().set(prepareKey(key, PLASTIC_SHOP_PREFIX), plastic);
     }
 
     /**
@@ -58,7 +63,7 @@ public class RedisTemplateHelper {
      * @since 0.1.3.0
      */
     public void deletePlasticFromRedis(Shop3D key) {
-        redisTemplate.delete(prepareKey(key));
+        redisTemplate3DPlastic.delete(prepareKey(key, PLASTIC_SHOP_PREFIX));
     }
 
     /**
@@ -71,7 +76,45 @@ public class RedisTemplateHelper {
      * @since 0.1.3.0
      */
     public Data3DPlastic getPlasticFromRedis(Shop3D key) {
-        return redisTemplate.opsForValue().get(prepareKey(key));
+        return redisTemplate3DPlastic.opsForValue().get(prepareKey(key, PLASTIC_SHOP_PREFIX));
+    }
+
+
+    /**
+     * To save statistics in redis.
+     *
+     * @param stat statistics to save.
+     * @param key  key to save with.
+     *
+     * @since 1.3.0.0
+     */
+    public void storeStatisticsToRedis(StatData stat,
+                                       String key) {
+        redisTemplateStatData.opsForValue().set(prepareKey(key, STAT_PREFIX), stat);
+    }
+
+    /**
+     * To delete statistics from redis.
+     *
+     * @param key key to delete with.
+     *
+     * @since 1.3.0.0
+     */
+    public void deleteStatisticsFromRedis(String key) {
+        redisTemplateStatData.delete(prepareKey(key, STAT_PREFIX));
+    }
+
+    /**
+     * To get statistics from redis.
+     *
+     * @param key key to get with.
+     *
+     * @return data or null.
+     *
+     * @since 1.3.0.0
+     */
+    public StatData getStatisticsFromRedis(String key) {
+        return redisTemplateStatData.opsForValue().get(prepareKey(key, STAT_PREFIX));
     }
 
 
@@ -80,8 +123,9 @@ public class RedisTemplateHelper {
     /**
      * @since 0.1.3.0
      */
-    private String prepareKey(Shop3D key) {
-        return prefix + "::" + PLASTIC_SHOP_PREFIX + "::" + key;
+    private String prepareKey(Object key,
+                              String prefixCustom) {
+        return prefix + "::" + prefixCustom + "::" + key;
     }
 
     // </editor-fold>

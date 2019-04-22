@@ -23,7 +23,7 @@ public enum Command {
     /**
      * Discounts for https://u3df.com.ua.
      */
-    //    D_U3DF(Shop3D.SHOP_U3DF, "U3DF"),
+    D_U3DF(Shop3D.SHOP_U3DF, "U3DF"),
     /**
      * Discounts for https://monofilament.com.ua.
      */

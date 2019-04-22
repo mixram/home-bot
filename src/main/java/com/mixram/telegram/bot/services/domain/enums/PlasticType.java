@@ -33,6 +33,14 @@ public enum PlasticType {
      */
     ABS_PRO("ABS-PRO"),
     /**
+     * ABS X.
+     */
+    ABS_X("ABS-X"),
+    /**
+     * ABS Premium.
+     */
+    ABS_P("ABS Premium"),
+    /**
      * PLA.
      */
     PLA("PLA"),
@@ -40,6 +48,10 @@ public enum PlasticType {
      * PLA PLUS.
      */
     PLA_PLUS("PLA+"),
+    /**
+     * APLA.
+     */
+    APLA("APLA"),
     /**
      * FLEX.
      */
@@ -52,6 +64,10 @@ public enum PlasticType {
      * PC.
      */
     PC("PC"),
+    /**
+     * PC+ABS.
+     */
+    PC_ABS("PC+ABS"),
     /**
      * HIPS.
      */
@@ -68,6 +84,10 @@ public enum PlasticType {
      * PET.
      */
     PET("PET"),
+    /**
+     * PETG.
+     */
+    PETG("PETG"),
     /**
      * PA.
      */
@@ -91,7 +111,8 @@ public enum PlasticType {
     /**
      * PLA-СG+.
      */
-    PLA_CG_PLUS("PLA-CG+");
+    PLA_CG_PLUS("PLA-CG+"),
+    SUBSTANDARD("Уценка");
 
     @Getter
     String name;
