@@ -10,6 +10,7 @@ import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.domain.enums.WorkType;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
+import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
@@ -495,23 +496,24 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                        .filter(ParseData :: isInStock)
                        .collect(Collectors.groupingBy(ParseData :: getType, HashMap ::new,
                                                       Collectors.toCollection(ArrayList ::new)));
-        Map<PlasticType, Boolean> discountsState =
+        Map<PlasticType, PlasticPresenceState> discountsState =
                 byName.entrySet().stream()
                       .collect(Collectors.toMap(Map.Entry :: getKey,
-                                                e -> e.getValue().stream()
-                                                      .anyMatch(this :: mayUsePlastic)));
+                                                e -> definePlasticState(e.getValue())));
 
         StringBuilder answer = new StringBuilder();
-        discountsState.forEach((k, v) -> {
-            String text = alignText(k.getName() + ":");
-            answer
-                    .append("<code>").append(text).append("</code>").append(" ")
-                    .append(getDiscountText(v))
-                    //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
-                    //                    .append("🔗")
-                    //                    .append("</a>")
-                    .append("\n");
-        });
+        discountsState.entrySet().stream()
+                      .sorted(Comparator.comparing(Map.Entry :: getValue))
+                      .forEach(s -> {
+                          String text = alignText(s.getKey().getName() + ":");
+                          answer
+                                  .append("<code>").append(text).append("</code>").append(" ")
+                                  .append(getDiscountText(s.getValue()))
+                                  //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
+                                  //                    .append("🔗")
+                                  //                    .append("</a>")
+                                  .append("\n");
+                      });
 
         return answer.toString();
     }
@@ -526,8 +528,18 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private String getDiscountText(Boolean hasDiscount) {
-        return hasDiscount ? "✅" : "❌";
+    private String getDiscountText(PlasticPresenceState presenceState) {
+        switch (presenceState) {
+            case DISCOUNT:
+                return "💰";
+            case IN_STOCK:
+                return "🏢";
+            case NOT_IN_STOCK:
+                return "🤷‍♂";
+            default:
+                throw new UnsupportedOperationException(
+                        String.format("Unexpected plastic presence state: '%s'!", presenceState));
+        }
     }
 
     /**
@@ -568,6 +580,34 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private boolean mayUsePlastic(ParseData datum) {
         return datum.isInStock() && datum.getProductOldPrice() != null && datum.getProductSalePrice() != null;
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private PlasticPresenceState definePlasticState(List<ParseData> data) {
+        Set<PlasticPresenceState> states = new HashSet<>(PlasticPresenceState.values().length);
+        data.forEach(d -> states.add(plasticState(d)));
+
+        if (states.contains(PlasticPresenceState.DISCOUNT)) {
+            return PlasticPresenceState.DISCOUNT;
+        } else if (states.contains(PlasticPresenceState.IN_STOCK)) {
+            return PlasticPresenceState.IN_STOCK;
+        } else {
+            return PlasticPresenceState.NOT_IN_STOCK;
+        }
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private PlasticPresenceState plasticState(ParseData datum) {
+        if (!datum.isInStock()) {
+            return PlasticPresenceState.NOT_IN_STOCK;
+        }
+
+        return datum.getProductOldPrice() != null && datum.getProductSalePrice() != null ? PlasticPresenceState.DISCOUNT :
+               PlasticPresenceState.IN_STOCK;
     }
 
     /**
