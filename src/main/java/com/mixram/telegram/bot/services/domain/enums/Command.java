@@ -39,8 +39,19 @@ public enum Command {
     /**
      * Discounts for https://dasplast.com.
      */
-    //    D_DAS(Shop3D.SHOP_DASPLAST, "DAS")
-    ;
+    //    D_DAS(Shop3D.SHOP_DASPLAST, "DAS"),
+    /**
+     * Info about bot.
+     */
+    INFO(null, "INFO"),
+    /**
+     * Info about bot version, etc (for admin only).
+     */
+    INFO_ADMIN(null, "INFO-ADMIN"),
+    /**
+     * Start command.
+     */
+    START(null, "START");
 
     @Getter
     Shop3D shop;

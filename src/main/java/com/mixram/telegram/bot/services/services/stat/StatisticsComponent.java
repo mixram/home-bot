@@ -61,7 +61,7 @@ public class StatisticsComponent {
             if (stat == null) {
                 redisTemplateHelper.storeStatisticsToRedis(createNew(chat), STATISTICS_KEY_NAME);
             } else {
-                Map<Integer, StatData.StatDataInner> data = stat.getData();
+                Map<Long, StatData.StatDataInner> data = stat.getData();
                 if (data.containsKey(chat.getChatId())) {
                     StatData.StatDataInner dataInner = data.get(chat.getChatId());
                     dataInner.setCounter(dataInner.getCounter() + 1);
@@ -81,7 +81,7 @@ public class StatisticsComponent {
      * @since 1.3.0.0
      */
     private StatData createNew(Chat chat) {
-        Integer chatId = chat.getChatId();
+        Long chatId = chat.getChatId();
 
         return StatData.builder()
                        .data(ImmutableMap.of(chatId,

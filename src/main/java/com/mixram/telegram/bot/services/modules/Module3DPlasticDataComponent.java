@@ -100,7 +100,7 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
      */
     private void sendMessageToAdmin(String message) {
         asyncHelper.doAsync((Supplier<Void>) () -> {
-            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, message));
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, true, message));
 
             return null;
         });

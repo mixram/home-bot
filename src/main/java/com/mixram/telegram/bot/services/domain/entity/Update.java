@@ -29,7 +29,7 @@ public class Update implements TelegramApiEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("update_id")
-    private Integer updateId;
+    private Long updateId;
     /**
      * New incoming message of any kind — text, photo, sticker, etc.<br>
      *

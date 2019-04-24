@@ -41,10 +41,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String PARSE_PATTERN_STRING = "^/SALES_.*";
-    private static final String START_PATTERN_STRING = "^/START.*";
-    private static final Pattern PARSE_PATTERN = Pattern.compile(PARSE_PATTERN_STRING);
-    private static final Pattern START_PATTERN = Pattern.compile(START_PATTERN_STRING);
+    private static final String SALES_PATTERN_STRING = "^/SALES_.*";
+    private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
+    private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
+    private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
     private static final String NO_WORK_WITH_SHOP = "К сожалению, я еще не работаю с этим магазином... \uD83D\uDE10";
     private static final String NO_DATA_FOR_SHOP = "У меня пока что нет данных о скидках в этом магазине... \uD83D\uDE1E";
     private static final String NO_DISCOUNTS = "Скидок нет, к сожалению";
@@ -121,24 +121,21 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         if (noNeedToAnswer(message)) {
-            log.debug("No need to answer - ignore.");
-
             return null;
-        }
-        if (startCommand(message.getText())) {
-            return prepareStartAnswer();
         }
 
         final CommandHolder command;
         try {
             command = defineCommand(message.getText());
         } catch (Exception e) {
+            log.warn(String.format("Error in command defining: %s!", message.getText()), e);
+
             return prepareMisunderstandingMessage();
         }
 
         infoAdmin(update);
 
-        return prepareAnswerWithCommand(command.getCommand(), command.isFull());
+        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType());
     }
 
 
@@ -223,14 +220,30 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                           .message(builder.toString())
                           .toAdmin(false)
                           .toResponse(false)
+                          .userResponse(true)
                           .build();
     }
 
     /**
-     * @since 1.3.2.0
+     * @since 1.4.0.0
      */
-    private boolean startCommand(String text) {
-        return START_PATTERN.matcher(text.toUpperCase()).matches();
+    private MessageData prepareInfoAnswer() {
+        StringBuilder builder = new StringBuilder()
+                .append("<b>").append("Привет!").append("</b>").append("\n")
+                .append("Я слежу за скидками на 3d-пластик в основных магазинах (список магазинов и пластиков постепенно пополняется) и готов информировать тебя о них 😊")
+                .append("\n")
+                .append("Как только будет появляться что-то новое - я сам напишу в этот чат, меня не нужно вызывать.")
+                .append("\n")
+                .append("Если же нужно \"тет-а-тет\" общение - обратись к моему коллеге @Nerd3dBot.")
+                .append("\n").append("\n")
+                .append("Удачных покупок 👍");
+
+        return MessageData.builder()
+                          .message(builder.toString())
+                          .toAdmin(false)
+                          .toResponse(false)
+                          .userResponse(false)
+                          .build();
     }
 
     /**
@@ -255,7 +268,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             if (user != null && communicationComponent.getAdminName().equals(user.getId().toString())) {
                 return;
             }
-            Integer adminName = message.getChat().getChatId();
+            Long adminName = message.getChat().getChatId();
             if (communicationComponent.getAdminName().equals(adminName.toString())) {
                 return;
             }
@@ -272,7 +285,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     .append("<b>").append("Chat:").append("</b>").append("\n")
                     .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
 
-            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, builder.toString()));
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, true, builder.toString()));
         } catch (Exception e) {
             log.warn("Error ==> infoAdmin", e);
         }
@@ -294,18 +307,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private boolean noNeedToAnswer(Message message) {
         User user = message.getUser();
-        if (user != null && user.getIsBot()) {
+        if (user.getIsBot()) {
             log.debug("Message from bot - ignore.");
 
             return true;
         }
 
-        //TODO: private bot should answer only to "tet-a-tet" questions + only to allowed commands
-        //TODO: group bot should answer only on "/info" command in group chat only
-
         Chat chat = message.getChat();
-        if (chat != null && "private".equalsIgnoreCase(chat.getType())) {
-            return false;
+        if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(chat.getType()))) {
+            log.debug("Chat type '{}' does not correspond to allowed type '{}'.",
+                      chat :: getType,
+                      () -> workType);
+
+            return true;
         }
 
         List<MessageEntity> entities = message.getEntities();
@@ -314,6 +328,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return false;
         }
 
+        log.debug("noNeedToAnswer method ==> deafault behaviour ==> ignore.");
+
         return true;
     }
 
@@ -321,41 +337,83 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 0.1.3.0
      */
     private MessageData prepareAnswerWithCommand(Command command,
-                                                 boolean full) {
+                                                 boolean full,
+                                                 String chatType) {
         Validate.notNull(command, "Command is not specified!");
 
-        String messageToSendString;
+        //TODO: private bot should answer only to "tet-a-tet" questions + only to allowed commands
 
-        if (Command.D_ALL == command) {
-            StringBuilder builder = new StringBuilder();
-            for (Shop3D shop : Shop3D.values()) {
-                Data3DPlastic plastic = searcher.search(shop);
-                String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-                                                 NO_DATA_FOR_SHOP + "\n" :
-                                                 prepareMessageToSendString(Command.getByShop(shop), full, plastic, shop);
+        switch (workType) {
+            case G:
+                if (Command.INFO == command) {
+                    if (isGroup(chatType)) {
+                        return prepareInfoAnswer();
+                    } else {
+                        log.debug("Command '{}' is allowed in group chats bot only!",
+                                  () -> command);
 
-                builder.append("<b>").append("***").append(shop.getName()).append("***").append("</b>").append("\n")
-                       .append(messageToSendStringTemp).append("\n");
-            }
+                        return null;
+                    }
+                } else {
+                    log.debug("Command '{}' is not allowed in group chats bot!",
+                              () -> command);
 
-            messageToSendString = builder.toString();
-        } else {
-            Shop3D shop = command.getShop();
-            Data3DPlastic plastic = searcher.search(shop);
+                    return null;
+                }
+            case P:
+                if (Command.START == command) {
+                    if (isPrivate(chatType)) {
+                        return prepareStartAnswer();
+                    } else {
+                        log.debug("Command '{}' is allowed in \"tet-a-tet\" bot only!",
+                                  () -> command);
 
-            messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? NO_DATA_FOR_SHOP :
-                                  prepareMessageToSendString(command, full, plastic, shop);
+                        return null;
+                    }
+                } else if (Command.INFO == command) {
+                    log.debug("Command '{}' is allowed in group chats bot only!",
+                              () -> command);
+
+                    return null;
+                }
+            case B:
+                String messageToSendString;
+
+                if (Command.D_ALL == command) {
+                    StringBuilder builder = new StringBuilder();
+                    for (Shop3D shop : Shop3D.values()) {
+                        Data3DPlastic plastic = searcher.search(shop);
+                        String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
+                                                         NO_DATA_FOR_SHOP + "\n" :
+                                                         prepareMessageToSendString(Command.getByShop(shop), full, plastic,
+                                                                                    shop);
+
+                        builder.append("<b>").append("***").append(shop.getName()).append("***").append("</b>").append("\n")
+                               .append(messageToSendStringTemp).append("\n");
+                    }
+
+                    messageToSendString = builder.toString();
+                } else {
+                    Shop3D shop = command.getShop();
+                    Data3DPlastic plastic = searcher.search(shop);
+
+                    messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? NO_DATA_FOR_SHOP :
+                                          prepareMessageToSendString(command, full, plastic, shop);
+                }
+
+                if (StringUtils.isBlank(messageToSendString)) {
+                    messageToSendString = NO_DISCOUNTS;
+                }
+
+                return MessageData.builder()
+                                  .toAdmin(false)
+                                  .toResponse(false)
+                                  .userResponse(WorkType.P == workType)
+                                  .message(messageToSendString)
+                                  .build();
+            default:
+                throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
         }
-
-        if (StringUtils.isBlank(messageToSendString)) {
-            messageToSendString = NO_DISCOUNTS;
-        }
-
-        return MessageData.builder()
-                          .toAdmin(false)
-                          .toResponse(false)
-                          .message(messageToSendString)
-                          .build();
     }
 
     /**
@@ -474,26 +532,49 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 0.1.3.0
      */
     private CommandHolder defineCommand(String text) {
-        if (!PARSE_PATTERN.matcher(text.toUpperCase()).matches()) {
-            throw new UnsupportedOperationException(String.format("Unexpected pattern! '%s'", text));
+        text = text.toUpperCase();
+        if (OTHER_PATTERN.matcher(text).matches()) {
+            String commandDataString = parseCommandDataString(text);
+            commandDataString = commandDataString.replaceAll("/", "");
+            Command command = Command.getByName(commandDataString);
+            if (command == null) {
+                throw new UnsupportedOperationException(String.format("Unexpected command! '%s'", text));
+            }
+
+            return CommandHolder.builder()
+                                .command(command)
+                                .full(false)
+                                .build();
+        }
+        if (SALES_PATTERN.matcher(text).matches()) {
+            String commandDataString = parseCommandDataString(text);
+            String[] commandElements = commandDataString.split("_");
+            Command command = Command.getByName(commandElements[1].toUpperCase());
+            boolean full = commandElements.length == 3 && "f".equalsIgnoreCase(commandElements[2]);
+
+            if (command == null) {
+                throw new UnsupportedOperationException(String.format("Unexpected command! '%s'", text));
+            }
+
+            return CommandHolder.builder()
+                                .command(command)
+                                .full(full)
+                                .build();
         }
 
+        throw new UnsupportedOperationException(String.format("Unexpected pattern! '%s'", text));
+    }
+
+    /**
+     * 1.4.0.0
+     */
+    private String parseCommandDataString(String text) {
         String commandDataString = text.split(" ")[0];
         if (commandDataString.contains("@")) {
             commandDataString = commandDataString.substring(0, commandDataString.indexOf("@"));
         }
-        String[] commandElements = commandDataString.split("_");
-        Command command = Command.getByName(commandElements[1].toUpperCase());
-        boolean full = commandElements.length == 3 && "f".equalsIgnoreCase(commandElements[2]);
 
-        if (command == null) {
-            throw new UnsupportedOperationException(String.format("Unexpected command! '%s'", text));
-        }
-
-        return CommandHolder.builder()
-                            .command(command)
-                            .full(full)
-                            .build();
+        return commandDataString;
     }
 
     // </editor-fold>

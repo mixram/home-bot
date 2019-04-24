@@ -28,7 +28,7 @@ public class Chat implements TelegramApiEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("id")
-    private Integer chatId;
+    private Long chatId;
     /**
      * Type of chat, can be either “private”, “group”, “supergroup” or “channel”.
      *

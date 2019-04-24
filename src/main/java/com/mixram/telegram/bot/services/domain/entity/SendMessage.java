@@ -61,7 +61,7 @@ public class SendMessage implements TelegramApiEntity {
      * @since 0.1.3.0
      */
     @JsonProperty("reply_to_message_id")
-    private Integer replyToMessageId;
+    private Long replyToMessageId;
     /**
      * Optional. Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard,
      * instructions to remove reply keyboard or to force a reply from the user.

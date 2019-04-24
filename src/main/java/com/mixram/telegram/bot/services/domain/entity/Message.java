@@ -27,7 +27,7 @@ public class Message implements TelegramApiEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("message_id")
-    private Integer messageId;
+    private Long messageId;
     /**
      * Optional. Sender, empty for messages sent to channels.
      *
@@ -41,7 +41,7 @@ public class Message implements TelegramApiEntity {
      * @since 0.1.0.0
      */
     @JsonProperty("date")
-    private Integer timestamp;
+    private Long timestamp;
     /**
      * Conversation the message belongs to.
      *
@@ -69,7 +69,7 @@ public class Message implements TelegramApiEntity {
      * @since 0.1.2.0
      */
     @JsonProperty("forward_from_message_id")
-    private Integer forwardFromMessageId;
+    private Long forwardFromMessageId;
     /**
      * Optional. For messages forwarded from channels, signature of the post author if present.
      *
@@ -83,7 +83,7 @@ public class Message implements TelegramApiEntity {
      * @since 0.1.2.0
      */
     @JsonProperty("forward_date")
-    private Integer forwardDate;
+    private Long forwardDate;
     /**
      * Optional. For replies, the original message. Note that the Message object in this field will not contain further
      * reply_to_message fields even if it itself is a reply.
@@ -98,7 +98,7 @@ public class Message implements TelegramApiEntity {
      * @since 0.1.2.0
      */
     @JsonProperty("edit_date")
-    private Integer editDate;
+    private Long editDate;
     /**
      * Optional. The unique identifier of a media message group this message belongs to.
      *

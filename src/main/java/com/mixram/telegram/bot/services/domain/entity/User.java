@@ -19,7 +19,7 @@ public class User {
      * @since 0.1.2.0
      */
     @JsonProperty("id")
-    private Integer id;
+    private Long id;
     /**
      * True, if this user is a bot.
      *

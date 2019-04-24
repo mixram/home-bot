@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SendMessageData {
 
-    private Integer chatId;
-    private Integer messageId;
+    private Long chatId;
+    private Long messageId;
 
     @Override
     public String toString() {

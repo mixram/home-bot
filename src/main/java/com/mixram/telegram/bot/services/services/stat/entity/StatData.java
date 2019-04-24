@@ -19,7 +19,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class StatData {
 
-    private Map<Integer, StatDataInner> data;
+    private Map<Long, StatDataInner> data;
     private LocalDateTime updated;
 
     @Override
@@ -34,7 +34,7 @@ public class StatData {
     @NoArgsConstructor
     public static class StatDataInner {
 
-        private Integer id;
+        private Long id;
         private String username;
         private Integer counter;
         private LocalDateTime updated;

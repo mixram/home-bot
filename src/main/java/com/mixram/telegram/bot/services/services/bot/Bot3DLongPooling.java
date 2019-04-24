@@ -58,6 +58,11 @@ public class Bot3DLongPooling implements LongPooling {
                 aVoid -> bot3DComponent.proceedUpdate(u))));
         answers.forEach((k, v) -> {
             MessageData join = v.join();
+            if (join == null) {
+                log.debug("No need to answer on the question! See logs or underlying code for details.");
+
+                return;
+            }
             if (join.isToAdmin()) {
                 communicationComponent.sendMessageToAdmin(join);
             } else {

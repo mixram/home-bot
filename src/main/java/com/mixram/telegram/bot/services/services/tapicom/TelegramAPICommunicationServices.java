@@ -17,7 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author mixram on 2019-04-22.
@@ -49,7 +49,7 @@ class TelegramAPICommunicationServices {
      * offset can be specified to retrieve updates starting from -offset update from the end of the updates queue. All
      * previous updates will forgotten.
      */
-    private AtomicInteger offset;
+    private AtomicLong offset;
 
     // </editor-fold>
 
@@ -91,7 +91,7 @@ class TelegramAPICommunicationServices {
                       () -> update,
                       () -> message);
 
-            SendMessageData data = createSendMessageData(update);
+            SendMessageData data = createSendMessageData(update, message.isUserResponse());
 
             doSendMessage(data.getChatId(), data.getMessageId(), message);
 
@@ -106,9 +106,10 @@ class TelegramAPICommunicationServices {
             log.warn("", e);
 
             try {
-                SendMessageData data = createSendMessageData(update);
+                SendMessageData data = createSendMessageData(update, message.isUserResponse());
 
-                doSendMessage(data.getChatId(), data.getMessageId(), new MessageData(false, true, false, ERROR_MESSAGE));
+                doSendMessage(data.getChatId(), data.getMessageId(),
+                              new MessageData(false, true, false, message.isUserResponse(), ERROR_MESSAGE));
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -129,7 +130,7 @@ class TelegramAPICommunicationServices {
         try {
             log.debug("sendMessage => : messageData={}", () -> message);
 
-            doSendMessage(Integer.valueOf(adminName), null, message);
+            doSendMessage(Long.valueOf(adminName), null, message);
 
             if (message.isLeaveChat()) {
                 log.warn("Can not 'leave chat' from admin messages sending logic!");
@@ -168,7 +169,7 @@ class TelegramAPICommunicationServices {
             offset = updates.stream()
                             .map(Update :: getUpdateId)
                             .max(Comparator.naturalOrder())
-                            .map(AtomicInteger ::new)
+                            .map(AtomicLong ::new)
                             .orElse(null);
 
             result = updatesHolder.getData();
@@ -239,11 +240,19 @@ class TelegramAPICommunicationServices {
     /**
      * @since 1.0.0.0
      */
-    private SendMessageData createSendMessageData(Update update) {
+    private SendMessageData createSendMessageData(Update update,
+                                                  boolean userResponse) {
         Message mess = update.getMessage();
-        Integer chatId = mess.getChat()
-                             .getChatId();
-        Integer messageId = mess.getMessageId();
+
+        Long messageId = mess.getMessageId();
+        Long chatId;
+        if (userResponse) {
+            chatId = mess.getUser()
+                         .getId();
+        } else {
+            chatId = mess.getChat()
+                         .getChatId();
+        }
 
         return new SendMessageData(chatId, messageId);
     }
@@ -251,8 +260,8 @@ class TelegramAPICommunicationServices {
     /**
      * @since 0.1.3.0
      */
-    private void doSendMessage(Integer chatId,
-                               Integer messageId,
+    private void doSendMessage(Long chatId,
+                               Long messageId,
                                MessageData message) {
         SendMessage.SendMessageBuilder builder = SendMessage.builder()
                                                             .chatId(chatId.toString())

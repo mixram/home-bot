@@ -19,6 +19,7 @@ public class MessageData {
     private boolean toAdmin;
     private boolean toResponse;
     private boolean leaveChat;
+    private boolean userResponse;
     private String message;
 
     @Override
