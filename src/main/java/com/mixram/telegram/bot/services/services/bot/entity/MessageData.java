@@ -16,10 +16,26 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MessageData {
 
+    /**
+     * To send the answer to admin only.
+     */
     private boolean toAdmin;
+    /**
+     * To send message as response to incoming message.
+     */
     private boolean toResponse;
+    /**
+     * To leave a chat.
+     */
     private boolean leaveChat;
+    /**
+     * To answer to user or group.
+     */
     private boolean userResponse;
+    /**
+     * To show URL`s preview or not.
+     */
+    private boolean showUrlPreview;
     private String message;
 
     @Override

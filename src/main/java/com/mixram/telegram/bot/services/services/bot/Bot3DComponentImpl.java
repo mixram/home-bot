@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.services.services.bot;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
@@ -60,6 +61,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final Integer maxQuantity;
     private final Random random;
     private final WorkType workType;
+    private final List<Long> allowedGroups;
+    private final String adminEmail;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -94,11 +97,15 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     @Autowired
     public Bot3DComponentImpl(@Value("${bot.settings.other.max-quantity-for-full-view}") Integer maxQuantity,
                               @Value("${bot.settings.work-with}") WorkType workType,
+                              @Value("${bot.settings.work-with-groups}") String allowedGroups,
+                              @Value("${bot.settings.admin-email}") String adminEmail,
                               @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
+        this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
+        this.adminEmail = adminEmail;
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
@@ -150,9 +157,23 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case P:
                 return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage();
             case G:
-                return isGroup(chat.getType()) ? null : prepareNoGroupChatMessage();
+                if (isGroup(chat.getType())) {
+                    if (allowedGroups.contains(chat.getChatId())) {
+                        return null;
+                    }
+                    return prepareConcreteGroupChatMessage();
+                } else {
+                    return prepareNoGroupChatMessage();
+                }
             case B:
-                return null;
+                if (isGroup(chat.getType())) {
+                    if (allowedGroups.contains(chat.getChatId())) {
+                        return null;
+                    }
+                    return prepareConcreteGroupChatMessage();
+                } else {
+                    return null;
+                }
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
         }
@@ -195,6 +216,24 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         StringBuilder builder = new StringBuilder()
                 .append("Добрый день!").append("\n")
                 .append("Я работаю только в групповых чатах. Пожалуйста, не подключайте меня к общению в формате \"тет-а-тет\".");
+
+        return MessageData.builder()
+                          .message(builder.toString())
+                          .toResponse(false)
+                          .toAdmin(false)
+                          .leaveChat(true)
+                          .build();
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private MessageData prepareConcreteGroupChatMessage() {
+        StringBuilder builder = new StringBuilder()
+                .append("Добрый день!").append("\n")
+                .append("Я работаю только в разрешенных групповых чатах. По вопросам добавления в Ваш чат пишите в почту: ")
+                .append(adminEmail)
+                .append(".");
 
         return MessageData.builder()
                           .message(builder.toString())
@@ -285,7 +324,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     .append("<b>").append("Chat:").append("</b>").append("\n")
                     .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
 
-            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, true, builder.toString()));
+            MessageData messageData = MessageData.builder()
+                                                 .message(builder.toString())
+                                                 .build();
+
+            communicationComponent.sendMessageToAdmin(messageData);
         } catch (Exception e) {
             log.warn("Error ==> infoAdmin", e);
         }
@@ -409,6 +452,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                   .toAdmin(false)
                                   .toResponse(false)
                                   .userResponse(WorkType.P == workType)
+                                  .showUrlPreview(false)
                                   .message(messageToSendString)
                                   .build();
             default:
@@ -460,7 +504,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         StringBuilder answer = new StringBuilder();
         discountsState.forEach((k, v) -> {
             String text = alignText(k.getName() + ":");
-            answer.append("<code>").append(text).append("</code>").append(" ").append(getDiscountText(v)).append("\n");
+            answer
+                    .append("<code>").append(text).append("</code>").append(" ")
+                    .append(getDiscountText(v))
+                    //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
+                    //                    .append("🔗")
+                    //                    .append("</a>")
+                    .append("\n");
         });
 
         return answer.toString();

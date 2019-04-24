@@ -107,9 +107,13 @@ class TelegramAPICommunicationServices {
 
             try {
                 SendMessageData data = createSendMessageData(update, message.isUserResponse());
+                MessageData messageData = MessageData.builder()
+                                                     .toResponse(true)
+                                                     .message(ERROR_MESSAGE)
+                                                     .userResponse(message.isUserResponse())
+                                                     .build();
 
-                doSendMessage(data.getChatId(), data.getMessageId(),
-                              new MessageData(false, true, false, message.isUserResponse(), ERROR_MESSAGE));
+                doSendMessage(data.getChatId(), data.getMessageId(), messageData);
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -267,7 +271,7 @@ class TelegramAPICommunicationServices {
                                                             .chatId(chatId.toString())
                                                             .text(message.getMessage())
                                                             .parseMode("HTML")
-                                                            .disableWebPagePreview(false)
+                                                            .disableWebPagePreview(!message.isShowUrlPreview())
                                                             .disableNotification(false);
         if (message.isToResponse()) {
             builder

@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.domain.entity;
 
+import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class Data3DPlastic implements Serializable {
 
     private static final long serialVersionUID = 0L;
 
+    private Shop3D shop;
     private List<ParseData> data;
     private List<ParseData> brokenUrls;
 

@@ -59,6 +59,7 @@ public class DiscountsOn3DPlasticDataV2Component implements Module3DPlasticDataS
 
         redisTemplate.deletePlasticFromRedis(shop);
         if (result != null) {
+            result.setShop(shop);
             redisTemplate.storePlasticToRedis(result, shop);
         }
 

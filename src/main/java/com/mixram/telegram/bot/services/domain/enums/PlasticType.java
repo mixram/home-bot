@@ -112,6 +112,9 @@ public enum PlasticType {
      * PLA-СG+.
      */
     PLA_CG_PLUS("PLA-CG+"),
+    /**
+     * Substandard.
+     */
     SUBSTANDARD("Уценка");
 
     @Getter
