@@ -12,6 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ class TelegramAPICommunicationServices {
     private static final String GET_ME_URL = "/getMe";
     private static final String GET_UPDATES_URL = "/getUpdates";
     private static final String SEND_MESSAGE_URL = "/sendMessage";
+    private static final String LEAVE_CHAT_URL = "/leaveChat";
 
     private final String botName;
     private final String adminName;
@@ -92,13 +94,21 @@ class TelegramAPICommunicationServices {
             SendMessageData data = createSendMessageData(update);
 
             doSendMessage(data.getChatId(), data.getMessageId(), message);
+
+            if (message.isLeaveChat()) {
+                try {
+                    leaveChat(update.getMessage().getChat().getChatId().toString());
+                } catch (Exception e) {
+                    log.warn("Chat leaving error!", e);
+                }
+            }
         } catch (Exception e) {
             log.warn("", e);
 
             try {
                 SendMessageData data = createSendMessageData(update);
 
-                doSendMessage(data.getChatId(), data.getMessageId(), new MessageData(false, true, ERROR_MESSAGE));
+                doSendMessage(data.getChatId(), data.getMessageId(), new MessageData(false, true, false, ERROR_MESSAGE));
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -108,18 +118,22 @@ class TelegramAPICommunicationServices {
     /**
      * To send messageData to Telegram API for bot admin.
      *
-     * @param messageData messageData to send to Telegram API.
+     * @param message messageData to send to Telegram API.
      *
      * @since 0.1.3.0
      */
-    protected void sendMessageToAdmin(MessageData messageData) {
-        Validate.notNull(messageData, "Message data for admin is not specified!");
-        Validate.notBlank(messageData.getMessage(), "Message for admin is not specified!");
+    protected void sendMessageToAdmin(MessageData message) {
+        Validate.notNull(message, "Message data for admin is not specified!");
+        Validate.notBlank(message.getMessage(), "Message for admin is not specified!");
 
         try {
-            log.debug("sendMessage => : messageData={}", () -> messageData);
+            log.debug("sendMessage => : messageData={}", () -> message);
 
-            doSendMessage(Integer.valueOf(adminName), null, messageData);
+            doSendMessage(Integer.valueOf(adminName), null, message);
+
+            if (message.isLeaveChat()) {
+                log.warn("Can not 'leave chat' from admin messages sending logic!");
+            }
         } catch (Exception e) {
             log.warn("", e);
         }
@@ -204,6 +218,25 @@ class TelegramAPICommunicationServices {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * @since 1.4.0.0
+     */
+    private void leaveChat(String chatId) {
+        SendMessage.SendMessageBuilder builder = SendMessage.builder()
+                                                            .chatId(chatId);
+
+        String url = mainUrlPart + LEAVE_CHAT_URL;
+        HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                  .json()
+                                                  .build();
+
+        AnswerResponse<Boolean> answerResponse =
+                restClient.post(url, headers.toSingleValueMap(), builder.build(),
+                                new ParameterizedTypeReference<AnswerResponse<Boolean>>() {});
+        Validate.notNull(answerResponse, "Empty message!");
+        Validate.isTrue(answerResponse.getResult(), "An error in process of chat leaving! %s", answerResponse);
+    }
+
+    /**
      * @since 1.0.0.0
      */
     private SendMessageData createSendMessageData(Update update) {
@@ -237,8 +270,9 @@ class TelegramAPICommunicationServices {
                                                   .json()
                                                   .build();
 
-        AnswerResponse answerResponse =
-                restClient.post(url, headers.toSingleValueMap(), builder.build(), AnswerResponse.class);
+        AnswerResponse<Message> answerResponse =
+                restClient.post(url, headers.toSingleValueMap(), builder.build(),
+                                new ParameterizedTypeReference<AnswerResponse<Message>>() {});
         Validate.notNull(answerResponse, "Empty message!");
         Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
 

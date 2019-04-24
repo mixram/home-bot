@@ -118,7 +118,7 @@ public class DiscountsOn3DPlasticModule implements Module {
      */
     private void sendMessageToAdmin(String message) {
         asyncHelper.doAsync((Supplier<Void>) () -> {
-            communicationComponent.sendMessageToAdmin(new MessageData(true, true, message));
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, message));
 
             return null;
         });

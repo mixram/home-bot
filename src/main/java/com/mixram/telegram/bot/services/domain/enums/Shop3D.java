@@ -8,19 +8,23 @@ import lombok.Getter;
  */
 public enum Shop3D {
 
-    SHOP_3DUA("3DUA"),
-    SHOP_U3DF("U3DF"),
-    SHOP_MONOFILAMENT("MonoFilament"),
-    //    SHOP_PLEXIWIRE("Plexiwire"),
-    SHOP_3DPLAST("3DPlast"),
-    //    SHOP_DASPLAST("DASplast")
+    SHOP_3DUA("3DUA", "https://3dua.com.ua/plastik-dlya-3d-printera"),
+    SHOP_U3DF("U3DF", "https://cs2734145.prom.ua"),
+    SHOP_MONOFILAMENT("MonoFilament", "https://monofilament.com.ua/products/standartnye-materialy/"),
+    //    SHOP_PLEXIWIRE("Plexiwire", "https://shop.plexiwire.com.ua/plexiwire-filament/"),
+    SHOP_3DPLAST("3DPlast", "https://3dplast.biz"),
+    //    SHOP_DASPLAST("DASplast", "https://dasplast.com")
     ;
 
     @Getter
     String name;
+    @Getter
+    String url;
 
-    Shop3D(String name) {
+    Shop3D(String name,
+           String url) {
         this.name = name;
+        this.url = url;
     }
 
 }

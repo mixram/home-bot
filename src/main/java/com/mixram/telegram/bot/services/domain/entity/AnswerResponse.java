@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AnswerResponse {
+public class AnswerResponse<T> {
 
     @JsonProperty("ok")
     private Boolean result;
     @JsonProperty("result")
-    private Message data;
+    private T data;
 
     @Override
     public String toString() {

@@ -6,6 +6,7 @@ import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.domain.enums.WorkType;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
@@ -53,9 +54,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             "А можно чуток точнее? 🤓",
             "Абракадабра... 😎"
     );
+    private static final String PRIVATE_CHAT_NAME = "private";
+    private static final String GROUP_CHAT_NAME = "group";
 
     private final Integer maxQuantity;
     private final Random random;
+    private final WorkType workType;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -89,10 +93,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     @Autowired
     public Bot3DComponentImpl(@Value("${bot.settings.other.max-quantity-for-full-view}") Integer maxQuantity,
+                              @Value("${bot.settings.work-with}") WorkType workType,
                               @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper) {
         this.maxQuantity = maxQuantity;
+        this.workType = workType;
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
@@ -108,6 +114,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Validate.notNull(update, "Update is not specified!");
 
         Message message = update.getMessage();
+
+        MessageData workCheckMessage = checkMayWorkWith(message);
+        if (workCheckMessage != null) {
+            return workCheckMessage;
+        }
+
         if (noNeedToAnswer(message)) {
             log.debug("No need to answer - ignore.");
 
@@ -131,6 +143,69 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.4.0.0
+     */
+    private MessageData checkMayWorkWith(Message message) {
+        Chat chat = message.getChat();
+        switch (workType) {
+            case P:
+                return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage();
+            case G:
+                return isGroup(chat.getType()) ? null : prepareNoGroupChatMessage();
+            case B:
+                return null;
+            default:
+                throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
+        }
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private boolean isPrivate(String type) {
+        return PRIVATE_CHAT_NAME.equalsIgnoreCase(type);
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private boolean isGroup(String type) {
+        return GROUP_CHAT_NAME.equalsIgnoreCase(type);
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private MessageData prepareNoPrivateChatMessage() {
+        StringBuilder builder = new StringBuilder()
+                .append("Добрый день!").append("\n")
+                .append("Я работаю только в формате \"тет-а-тет\". Пожалуйста, не подключайте меня к групповым чатам.");
+
+        return MessageData.builder()
+                          .message(builder.toString())
+                          .toResponse(false)
+                          .toAdmin(false)
+                          .leaveChat(true)
+                          .build();
+    }
+
+    /**
+     * @since 1.4.0.0
+     */
+    private MessageData prepareNoGroupChatMessage() {
+        StringBuilder builder = new StringBuilder()
+                .append("Добрый день!").append("\n")
+                .append("Я работаю только в групповых чатах. Пожалуйста, не подключайте меня к общению в формате \"тет-а-тет\".");
+
+        return MessageData.builder()
+                          .message(builder.toString())
+                          .toResponse(false)
+                          .toAdmin(false)
+                          .leaveChat(true)
+                          .build();
+    }
 
     /**
      * @since 1.3.2.0
@@ -197,7 +272,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     .append("<b>").append("Chat:").append("</b>").append("\n")
                     .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
 
-            communicationComponent.sendMessageToAdmin(new MessageData(true, true, builder.toString()));
+            communicationComponent.sendMessageToAdmin(new MessageData(true, true, false, builder.toString()));
         } catch (Exception e) {
             log.warn("Error ==> infoAdmin", e);
         }
@@ -225,6 +300,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return true;
         }
 
+        //TODO: private bot should answer only to "tet-a-tet" questions + only to allowed commands
+        //TODO: group bot should answer only on "/info" command in group chat only
+
         Chat chat = message.getChat();
         if (chat != null && "private".equalsIgnoreCase(chat.getType())) {
             return false;
@@ -233,8 +311,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         List<MessageEntity> entities = message.getEntities();
         if (entities != null && entities.get(0).getType().equalsIgnoreCase("bot_command") && entities.get(
                 0).getOffset() == 0) {
-            log.debug("Message not a command - ignore.");
-
             return false;
         }
 
@@ -256,7 +332,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 Data3DPlastic plastic = searcher.search(shop);
                 String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
                                                  NO_DATA_FOR_SHOP + "\n" :
-                                                 prepareMessageToSendString(Command.getByShop(shop), full, plastic);
+                                                 prepareMessageToSendString(Command.getByShop(shop), full, plastic, shop);
 
                 builder.append("<b>").append("***").append(shop.getName()).append("***").append("</b>").append("\n")
                        .append(messageToSendStringTemp).append("\n");
@@ -264,9 +340,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             messageToSendString = builder.toString();
         } else {
-            Data3DPlastic plastic = searcher.search(command.getShop());
+            Shop3D shop = command.getShop();
+            Data3DPlastic plastic = searcher.search(shop);
+
             messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? NO_DATA_FOR_SHOP :
-                                  prepareMessageToSendString(command, full, plastic);
+                                  prepareMessageToSendString(command, full, plastic, shop);
         }
 
         if (StringUtils.isBlank(messageToSendString)) {
@@ -285,7 +363,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private String prepareMessageToSendString(Command command,
                                               boolean full,
-                                              Data3DPlastic plastic) {
+                                              Data3DPlastic plastic,
+                                              Shop3D shop) {
         String messageToSendString;
 
         switch (command) {
@@ -293,7 +372,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_3DUA:
             case D_MF:
             case D_U3DF:
-                messageToSendString = full ? prepareAnswerText(plastic) : prepareAnswerTextShort(plastic);
+                messageToSendString = full ? prepareAnswerText(plastic, shop) : prepareAnswerTextShort(plastic);
 
                 break;
             //            case D_DAS:
@@ -346,7 +425,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private String prepareAnswerText(Data3DPlastic plastic) {
+    private String prepareAnswerText(Data3DPlastic plastic,
+                                     Shop3D shop) {
         List<ParseData> data = plastic.getData();
 
         int counter = 0;
@@ -366,7 +446,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             if (counter == maxQuantity) {
                 answer
-                        .append("<b>").append("И еще есть...").append("</b>");
+                        .append("<b>").append("Смотри остальное тут ").append(shop.getUrl()).append("</b>");
 
                 break;
             }
