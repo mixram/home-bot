@@ -73,12 +73,16 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String SHORT_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.short.part";
     private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
+    private static final String SHORT_MESSAGE_LEGEND_MESSAGE = "telegram.bot.message.short-message-legend";
+    private static final String NEW_CHAT_MEMBERS_HALLOW_MESSAGE = "telegram.bot.message.new-chat-members-hallow";
 
     private final Integer maxQuantity;
     private final Random random;
     private final WorkType workType;
     private final List<Long> allowedGroups;
     private final String adminEmail;
+    private final String fleaMarket;
+    private final String pinnedMessage;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -116,6 +120,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.work-with}") WorkType workType,
                               @Value("${bot.settings.work-with-groups}") String allowedGroups,
                               @Value("${bot.settings.admin-email}") String adminEmail,
+                              @Value("${bot.settings.flea-market}") String fleaMarket,
+                              @Value("${bot.settings.pinned-message}") String pinnedMessage,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
@@ -124,6 +130,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.workType = workType;
         this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
         this.adminEmail = adminEmail;
+        this.fleaMarket = fleaMarket;
+        this.pinnedMessage = pinnedMessage;
+
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
@@ -146,6 +155,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         MessageData workCheckMessage = checkMayWorkWith(message, locale);
         if (workCheckMessage != null) {
             return workCheckMessage;
+        }
+
+        MessageData newChatMembersMessage = checkNewChatMembers(message, META.DEFAULT_LOCALE);
+        if (newChatMembersMessage != null) {
+            return newChatMembersMessage;
         }
 
         if (noNeedToAnswer(message)) {
@@ -196,11 +210,39 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                     messageToSendStringTemp));
         }
 
+        builder.append(messageSource.getMessage(SHORT_MESSAGE_LEGEND_MESSAGE, locale,
+                                                getDiscountText(PlasticPresenceState.DISCOUNT),
+                                                getDiscountText(PlasticPresenceState.IN_STOCK),
+                                                getDiscountText(PlasticPresenceState.NOT_IN_STOCK)));
+
         return builder.toString();
     }
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.4.1.0
+     */
+    private MessageData checkNewChatMembers(Message message,
+                                            Locale locale) {
+        List<User> newChatMembers = message.getNewChatMembers();
+        if (CollectionUtils.isEmpty(newChatMembers)) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        newChatMembers.forEach(u -> builder.append("@").append(u.getUsername()).append(", "));
+
+        //        newChatMembers.forEach(u -> builder
+        //                .append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(u.getUsername()).append("</a>")
+        //                .append(", "));
+
+        return MessageData.builder()
+                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HALLOW_MESSAGE, locale, builder.toString(),
+                                                            fleaMarket, pinnedMessage))
+                          .build();
+    }
 
     /**
      * @since 1.4.0.0
