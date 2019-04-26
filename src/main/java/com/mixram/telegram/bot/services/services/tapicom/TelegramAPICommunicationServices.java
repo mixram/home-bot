@@ -7,8 +7,11 @@ import com.mixram.telegram.bot.services.services.bot.Bot3DLongPooling;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.entity.SendMessageData;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
+import com.mixram.telegram.bot.utils.CustomMessageSource;
+import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.rest.RestClient;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +32,7 @@ class TelegramAPICommunicationServices {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String ERROR_MESSAGE = "Упс... Что-то пошло не так...\uD83D\uDE33";
+    private static final String SOMETHING_WRONG_MESSAGE = "telegram.bot.message.something-wrong";
 
     private static final String GET_ME_URL = "/getMe";
     private static final String GET_UPDATES_URL = "/getUpdates";
@@ -41,6 +44,7 @@ class TelegramAPICommunicationServices {
     private final String mainUrlPart;
 
     private final RestClient restClient;
+    private final CustomMessageSource messageSource;
 
     /**
      * Identifier of the first update to be returned. Must be greater by one than the highest among the identifiers of
@@ -60,9 +64,11 @@ class TelegramAPICommunicationServices {
                                      @Value("${bot.settings.bot-token}") String botToken,
                                      @Value("${bot.settings.bot-name}") String botName,
                                      @Value("${bot.settings.admin-username}") String adminName,
+                                     CustomMessageSource messageSource,
                                      RestClient restClient) {
         restClient.setAnchorForLog(Bot3DLongPooling.class.getSimpleName());
         this.restClient = restClient;
+        this.messageSource = messageSource;
 
         this.botName = botName;
         this.adminName = adminName;
@@ -73,29 +79,29 @@ class TelegramAPICommunicationServices {
 
 
     /**
-     * To send message to Telegram API.
+     * To send messageData to Telegram API.
      *
-     * @param update  "update" entity from Telegram API.
-     * @param message message to send to Telegram API.
+     * @param update      "update" entity from Telegram API.
+     * @param messageData messageData to send to Telegram API.
      *
      * @since 0.1.3.0
      */
     protected void sendMessage(Update update,
-                               MessageData message) {
-        if (update == null || message == null) {
+                               MessageData messageData) {
+        if (update == null || messageData == null) {
             return;
         }
 
         try {
-            log.debug("sendMessage => : update={}, message={}",
+            log.debug("sendMessage => : update={}, messageData={}",
                       () -> update,
-                      () -> message);
+                      () -> messageData);
 
-            SendMessageData data = createSendMessageData(update, message.isUserResponse());
+            SendMessageData data = createSendMessageData(update, messageData.isUserResponse());
 
-            doSendMessage(data.getChatId(), data.getMessageId(), message);
+            doSendMessage(data.getChatId(), data.getMessageId(), messageData);
 
-            if (message.isLeaveChat()) {
+            if (messageData.isLeaveChat()) {
                 try {
                     leaveChat(update.getMessage().getChat().getChatId().toString());
                 } catch (Exception e) {
@@ -106,14 +112,16 @@ class TelegramAPICommunicationServices {
             log.warn("", e);
 
             try {
-                SendMessageData data = createSendMessageData(update, message.isUserResponse());
-                MessageData messageData = MessageData.builder()
-                                                     .toResponse(true)
-                                                     .message(ERROR_MESSAGE)
-                                                     .userResponse(message.isUserResponse())
-                                                     .build();
+                SendMessageData data = createSendMessageData(update, messageData.isUserResponse());
+                MessageData messageDataNew =
+                        MessageData.builder()
+                                   .toResponse(true)
+                                   .message(messageSource.getMessage(SOMETHING_WRONG_MESSAGE,
+                                                                     defineLocale(update.getMessage().getUser())))
+                                   .userResponse(messageData.isUserResponse())
+                                   .build();
 
-                doSendMessage(data.getChatId(), data.getMessageId(), messageData);
+                doSendMessage(data.getChatId(), data.getMessageId(), messageDataNew);
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
@@ -221,6 +229,15 @@ class TelegramAPICommunicationServices {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.4.1.0
+     */
+    private Locale defineLocale(User user) {
+        String languageCode = user.getLanguageCode();
+
+        return StringUtils.isNotBlank(languageCode) ? new Locale(languageCode) : META.DEFAULT_LOCALE;
+    }
 
     /**
      * @since 1.4.0.0

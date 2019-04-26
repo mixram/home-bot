@@ -13,6 +13,8 @@ import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
+import com.mixram.telegram.bot.utils.CustomMessageSource;
+import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.AllArgsConstructor;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author mixram on 2019-04-10.
- * @since ...
+ * @since 1.4.1.0
  */
 @Log4j2
 @Component
@@ -43,21 +45,34 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
+    private static final String PRIVATE_CHAT_NAME = "private";
+    private static final String GROUP_CHAT_NAME = "group";
+
     private static final String SALES_PATTERN_STRING = "^/SALES_.*";
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
-    private static final String NO_WORK_WITH_SHOP = "К сожалению, я еще не работаю с этим магазином... \uD83D\uDE10";
-    private static final String NO_DATA_FOR_SHOP = "У меня пока что нет данных о скидках в этом магазине... \uD83D\uDE1E";
-    private static final String NO_DISCOUNTS = "Скидок нет, к сожалению";
-    private static final List<String> MISUNDERSTANDING_MESSAGE = ImmutableList.of(
-            "Моя твоя не понимать... 🤪",
-            "Какая-то не понятная команда... 🧐",
-            "А можно чуток точнее? 🤓",
-            "Абракадабра... 😎"
+
+    private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
+    private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
+    private static final String NO_DISCOUNTS = "telegram.bot.message.no-discounts";
+    private static final List<String> MISUNDERSTANDING_MESSAGES = ImmutableList.of(
+            "telegram.bot.message.misunderstanding-1",
+            "telegram.bot.message..misunderstanding-2",
+            "telegram.bot.message..misunderstanding-3",
+            "telegram.bot.message..misunderstanding-4"
     );
-    private static final String PRIVATE_CHAT_NAME = "private";
-    private static final String GROUP_CHAT_NAME = "group";
+    private static final String NO_PRIVATE_CHAT_MESSAGE = "telegram.bot.message.no-private-chat";
+    private static final String NO_GROUP_CHAT_MESSAGE = "telegram.bot.message.no-group-chat";
+    private static final String CONCRETE_GROUP_MESSAGE = "telegram.bot.message.concrete-group";
+    private static final String START_ANSWER_MESSAGE = "telegram.bot.message.start-answer";
+    private static final String INFO_ANSWER_MESSAGE = "telegram.bot.message.info-answer";
+    private static final String INFO_ANSWER_ALL_MESSAGE = "telegram.bot.message.info-answer.all";
+    private static final String USER_CALL_MESSAGE = "telegram.bot.message.user-call";
+    private static final String SHOP_MESSAGE_PART_MESSAGE = "telegram.bot.message.shop-message.part";
+    private static final String SHORT_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.short.part";
+    private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
+    private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
 
     private final Integer maxQuantity;
     private final Random random;
@@ -68,6 +83,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
     private final AsyncHelper asyncHelper;
+    private final CustomMessageSource messageSource;
 
 
     @Data
@@ -102,7 +118,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.admin-email}") String adminEmail,
                               @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
-                              AsyncHelper asyncHelper) {
+                              AsyncHelper asyncHelper,
+                              CustomMessageSource messageSource) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
         this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
@@ -110,6 +127,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
+        this.messageSource = messageSource;
 
         this.random = new Random();
     }
@@ -123,7 +141,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         Message message = update.getMessage();
 
-        MessageData workCheckMessage = checkMayWorkWith(message);
+        Locale locale = message.getUser() == null ? META.DEFAULT_LOCALE : new Locale(message.getUser().getLanguageCode());
+
+        MessageData workCheckMessage = checkMayWorkWith(message, locale);
         if (workCheckMessage != null) {
             return workCheckMessage;
         }
@@ -138,12 +158,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         } catch (Exception e) {
             log.warn(String.format("Error in command defining: %s!", message.getText()), e);
 
-            return prepareMisunderstandingMessage();
+            return prepareMisunderstandingMessage(locale);
         }
 
         infoAdmin(update);
 
-        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType());
+        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType(), locale);
     }
 
 
@@ -152,26 +172,27 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData checkMayWorkWith(Message message) {
+    private MessageData checkMayWorkWith(Message message,
+                                         Locale locale) {
         Chat chat = message.getChat();
         switch (workType) {
             case P:
-                return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage();
+                return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage(locale);
             case G:
                 if (isGroup(chat.getType())) {
                     if (allowedGroups.contains(chat.getChatId())) {
                         return null;
                     }
-                    return prepareConcreteGroupChatMessage();
+                    return prepareConcreteGroupChatMessage(locale);
                 } else {
-                    return prepareNoGroupChatMessage();
+                    return prepareNoGroupChatMessage(locale);
                 }
             case B:
                 if (isGroup(chat.getType())) {
                     if (allowedGroups.contains(chat.getChatId())) {
                         return null;
                     }
-                    return prepareConcreteGroupChatMessage();
+                    return prepareConcreteGroupChatMessage(locale);
                 } else {
                     return null;
                 }
@@ -197,13 +218,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData prepareNoPrivateChatMessage() {
-        StringBuilder builder = new StringBuilder()
-                .append("Добрый день!").append("\n")
-                .append("Я работаю только в формате \"тет-а-тет\". Пожалуйста, не подключайте меня к групповым чатам.");
-
+    private MessageData prepareNoPrivateChatMessage(Locale locale) {
         return MessageData.builder()
-                          .message(builder.toString())
+                          .message(messageSource.getMessage(NO_PRIVATE_CHAT_MESSAGE, locale))
                           .toResponse(false)
                           .toAdmin(false)
                           .leaveChat(true)
@@ -213,13 +230,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData prepareNoGroupChatMessage() {
-        StringBuilder builder = new StringBuilder()
-                .append("Добрый день!").append("\n")
-                .append("Я работаю только в групповых чатах. Пожалуйста, не подключайте меня к общению в формате \"тет-а-тет\".");
-
+    private MessageData prepareNoGroupChatMessage(Locale locale) {
         return MessageData.builder()
-                          .message(builder.toString())
+                          .message(messageSource.getMessage(NO_GROUP_CHAT_MESSAGE, locale))
                           .toResponse(false)
                           .toAdmin(false)
                           .leaveChat(true)
@@ -229,15 +242,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData prepareConcreteGroupChatMessage() {
-        StringBuilder builder = new StringBuilder()
-                .append("Добрый день!").append("\n")
-                .append("Я работаю только в разрешенных групповых чатах. По вопросам добавления в Ваш чат пишите в почту: ")
-                .append(adminEmail)
-                .append(".");
-
+    private MessageData prepareConcreteGroupChatMessage(Locale locale) {
         return MessageData.builder()
-                          .message(builder.toString())
+                          .message(messageSource.getMessage(CONCRETE_GROUP_MESSAGE, locale, adminEmail))
                           .toResponse(false)
                           .toAdmin(false)
                           .leaveChat(true)
@@ -247,17 +254,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.3.2.0
      */
-    private MessageData prepareStartAnswer() {
-        StringBuilder builder = new StringBuilder()
-                .append("<b>").append("Привет!").append("</b>").append("\n")
-                .append("Я слежу за скидками на 3d-пластик в основных магазинах (список магазинов и пластиков постепенно пополняется) и готов информировать тебя о них 😊")
-                .append("\n")
-                .append("Справа в меню Телеграм есть кнопка с символом \"/\" - нажми на нее и увидишь список всех поддерживаемых мною команд.")
-                .append("\n").append("\n")
-                .append("Удачных покупок 👍");
-
+    private MessageData prepareStartAnswer(Locale locale) {
         return MessageData.builder()
-                          .message(builder.toString())
+                          .message(messageSource.getMessage(START_ANSWER_MESSAGE, locale))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(true)
@@ -267,19 +266,21 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData prepareInfoAnswer() {
-        StringBuilder builder = new StringBuilder()
-                .append("<b>").append("Привет!").append("</b>").append("\n")
-                .append("Я слежу за скидками на 3d-пластик в основных магазинах (список магазинов и пластиков постепенно пополняется) и готов информировать тебя о них 😊")
-                .append("\n")
-                .append("Как только будет появляться что-то новое - я сам напишу в этот чат, меня не нужно вызывать.")
-                .append("\n")
-                .append("Если же нужно \"тет-а-тет\" общение - обратись к моему коллеге @Nerd3dBot.")
-                .append("\n").append("\n")
-                .append("Удачных покупок 👍");
-
+    private MessageData prepareInfoAnswer(Locale locale) {
         return MessageData.builder()
-                          .message(builder.toString())
+                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale))
+                          .toAdmin(false)
+                          .toResponse(false)
+                          .userResponse(false)
+                          .build();
+    }
+
+    /**
+     * @since 1.4.1.0
+     */
+    private MessageData prepareInfoAnswerAll(Locale locale) {
+        return MessageData.builder()
+                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -313,20 +314,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return;
             }
 
-            StringBuilder builder = new StringBuilder()
-                    .append("<b>").append("Bot has called by user! 😊").append("</b>").append("\n");
-
-            if (user != null) {
-                builder
-                        .append("<b>").append("User:").append("</b>").append("\n")
-                        .append(JsonUtil.toPrettyJson(user)).append("\n");
-            }
-            builder
-                    .append("<b>").append("Chat:").append("</b>").append("\n")
-                    .append(JsonUtil.toPrettyJson(message.getChat())).append("\n");
-
+            Locale locale = user == null ? META.DEFAULT_LOCALE : new Locale(user.getLanguageCode());
             MessageData messageData = MessageData.builder()
-                                                 .message(builder.toString())
+                                                 .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
+                                                                                   JsonUtil.toPrettyJson(message.getChat()),
+                                                                                   user == null ? "---" :
+                                                                                   JsonUtil.toPrettyJson(user)))
                                                  .build();
 
             communicationComponent.sendMessageToAdmin(messageData);
@@ -338,11 +331,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.0.0.0
      */
-    private MessageData prepareMisunderstandingMessage() {
+    private MessageData prepareMisunderstandingMessage(Locale locale) {
         return MessageData.builder()
                           .toAdmin(false)
                           .toResponse(false)
-                          .message(MISUNDERSTANDING_MESSAGE.get(random.nextInt(MISUNDERSTANDING_MESSAGE.size())))
+                          .message(messageSource.getMessage(
+                                  MISUNDERSTANDING_MESSAGES.get(random.nextInt(MISUNDERSTANDING_MESSAGES.size())), locale))
                           .build();
     }
 
@@ -382,7 +376,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareAnswerWithCommand(Command command,
                                                  boolean full,
-                                                 String chatType) {
+                                                 String chatType,
+                                                 Locale locale) {
         Validate.notNull(command, "Command is not specified!");
 
         //TODO: private bot should answer only to "tet-a-tet" questions + only to allowed commands
@@ -391,7 +386,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case G:
                 if (Command.INFO == command) {
                     if (isGroup(chatType)) {
-                        return prepareInfoAnswer();
+                        return prepareInfoAnswer(locale);
                     } else {
                         log.debug("Command '{}' is allowed in group chats bot only!",
                                   () -> command);
@@ -407,7 +402,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case P:
                 if (Command.START == command) {
                     if (isPrivate(chatType)) {
-                        return prepareStartAnswer();
+                        return prepareStartAnswer(locale);
                     } else {
                         log.debug("Command '{}' is allowed in \"tet-a-tet\" bot only!",
                                   () -> command);
@@ -423,17 +418,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case B:
                 String messageToSendString;
 
-                if (Command.D_ALL == command) {
+                if (Command.INFO == command) {
+                    return prepareInfoAnswerAll(locale);
+                } else if (Command.D_ALL == command) {
                     StringBuilder builder = new StringBuilder();
                     for (Shop3D shop : Shop3D.values()) {
                         Data3DPlastic plastic = searcher.search(shop);
                         String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-                                                         NO_DATA_FOR_SHOP + "\n" :
+                                                         messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
                                                          prepareMessageToSendString(Command.getByShop(shop), full, plastic,
-                                                                                    shop);
+                                                                                    shop, locale);
 
-                        builder.append("<b>").append("***").append(shop.getName()).append("***").append("</b>").append("\n")
-                               .append(messageToSendStringTemp).append("\n");
+                        builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
+                                                                messageToSendStringTemp));
                     }
 
                     messageToSendString = builder.toString();
@@ -441,12 +438,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     Shop3D shop = command.getShop();
                     Data3DPlastic plastic = searcher.search(shop);
 
-                    messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? NO_DATA_FOR_SHOP :
-                                          prepareMessageToSendString(command, full, plastic, shop);
+                    messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
+                                          messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
+                                          prepareMessageToSendString(command, full, plastic, shop, locale);
                 }
 
                 if (StringUtils.isBlank(messageToSendString)) {
-                    messageToSendString = NO_DISCOUNTS;
+                    messageToSendString = messageSource.getMessage(NO_DISCOUNTS, locale);
                 }
 
                 return MessageData.builder()
@@ -467,7 +465,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private String prepareMessageToSendString(Command command,
                                               boolean full,
                                               Data3DPlastic plastic,
-                                              Shop3D shop) {
+                                              Shop3D shop,
+                                              Locale locale) {
         String messageToSendString;
 
         switch (command) {
@@ -475,13 +474,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_3DUA:
             case D_MF:
             case D_U3DF:
-                messageToSendString = full ? prepareAnswerText(plastic, shop) : prepareAnswerTextShort(plastic);
+                messageToSendString =
+                        full ? prepareAnswerText(plastic, shop, locale) : prepareAnswerTextShort(plastic, locale);
 
                 break;
             //            case D_DAS:
             //            case D_PLEX:
             default:
-                messageToSendString = NO_WORK_WITH_SHOP;
+                messageToSendString = messageSource.getMessage(NO_WORK_WITH_SHOP, locale);
         }
 
         return messageToSendString;
@@ -490,7 +490,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private String prepareAnswerTextShort(Data3DPlastic plastic) {
+    private String prepareAnswerTextShort(Data3DPlastic plastic,
+                                          Locale locale) {
         Map<PlasticType, List<ParseData>> byName =
                 plastic.getData().stream()
                        .filter(ParseData :: isInStock)
@@ -505,14 +506,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         discountsState.entrySet().stream()
                       .sorted(Comparator.comparing(Map.Entry :: getValue))
                       .forEach(s -> {
-                          String text = alignText(s.getKey().getName() + ":");
-                          answer
-                                  .append("<code>").append(text).append("</code>").append(" ")
-                                  .append(getDiscountText(s.getValue()))
-                                  //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
-                                  //                    .append("🔗")
-                                  //                    .append("</a>")
-                                  .append("\n");
+                          answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale,
+                                                                 alignText(s.getKey().getName() + ":"),
+                                                                 getDiscountText(s.getValue())))
+                          //TODO: link need to be added not by appender, but into SHORT_DISCOUNT_PART_MESSAGE!!!
+                          //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
+                          //                    .append("🔗")
+                          //                    .append("</a>")
+                          ;
                       });
 
         return answer.toString();
@@ -531,11 +532,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private String getDiscountText(PlasticPresenceState presenceState) {
         switch (presenceState) {
             case DISCOUNT:
-                return "💰";
+                return "✅";
             case IN_STOCK:
-                return "🏢";
+                return "❌";
             case NOT_IN_STOCK:
-                return "🤷‍♂";
+                return "⛔️";
             default:
                 throw new UnsupportedOperationException(
                         String.format("Unexpected plastic presence state: '%s'!", presenceState));
@@ -546,27 +547,23 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 0.1.3.0
      */
     private String prepareAnswerText(Data3DPlastic plastic,
-                                     Shop3D shop) {
+                                     Shop3D shop,
+                                     Locale locale) {
         List<ParseData> data = plastic.getData();
 
         int counter = 0;
         StringBuilder answer = new StringBuilder();
         for (ParseData datum : data) {
             if (mayUsePlastic(datum)) {
-                answer
-                        .append("<b>").append(datum.getProductName()).append("</b>").append("\n")
-                        .append("Обычная цена: ").append(datum.getProductOldPrice()).append("грн;\n")
-                        .append("Цена со скидкой: ").append(datum.getProductSalePrice()).append("грн;\n")
-                        .append("Ссылка: ").append(datum.getProductUrl()).append(".\n")
-                        .append("\n")
-                ;
+                answer.append(messageSource.getMessage(FULL_DISCOUNT_PART_MESSAGE, locale, datum.getProductName(),
+                                                       datum.getProductOldPrice(),
+                                                       datum.getProductSalePrice(), datum.getProductUrl()));
 
                 counter++;
             }
 
             if (counter == maxQuantity) {
-                answer
-                        .append("<b>").append("Смотри остальное тут ").append(shop.getUrl()).append("</b>");
+                answer.append(messageSource.getMessage(FULL_DISCOUNT_OTHER_MESSAGE, locale, shop.getUrl()));
 
                 break;
             }

@@ -6,6 +6,7 @@ import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.ConcurrentUtilites;
+import com.mixram.telegram.bot.utils.CustomMessageSource;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
@@ -27,13 +29,14 @@ public class DiscountsOn3DPlasticModule implements Module {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String MODULE_START_MESSAGE_ADMIN = "Start discounts data update";
-    private static final String MODULE_FINISH_MESSAGE_ADMIN = "Discounts data update has finished";
+    private static final String DISCOUNTS_UPDATE_FINISH_MESSAGE = "telegram.bot.message.discounts-update.finish";
+    private static final String DISCOUNTS_UPDATE_START_MESSAGE = "telegram.bot.message.discounts-update.start";
 
     private final Module3DPlasticDataSearcher searcher;
     private final Module3DPlasticDataApplyer applyer;
     private final AsyncHelper asyncHelper;
     private final TelegramAPICommunicationComponent communicationComponent;
+    private final CustomMessageSource messageSource;
 
     // </editor-fold>
 
@@ -43,11 +46,13 @@ public class DiscountsOn3DPlasticModule implements Module {
     public DiscountsOn3DPlasticModule(Module3DPlasticDataSearcher searcher,
                                       @Qualifier("module3DPlasticDataComponent") Module3DPlasticDataApplyer applyer,
                                       AsyncHelper asyncHelper,
-                                      TelegramAPICommunicationComponent communicationComponent) {
+                                      TelegramAPICommunicationComponent communicationComponent,
+                                      CustomMessageSource messageSource) {
         this.searcher = searcher;
         this.applyer = applyer;
         this.asyncHelper = asyncHelper;
         this.communicationComponent = communicationComponent;
+        this.messageSource = messageSource;
     }
 
     // </editor-fold>
@@ -133,30 +138,16 @@ public class DiscountsOn3DPlasticModule implements Module {
      * @since 1.0.0.0
      */
     private String prepareStartMessage() {
-        return new StringBuilder()
-                .append("🔥🔥🔥").append("\n")
-                .append("<b>")
-                .append(DiscountsOn3DPlasticModule.class.getSimpleName()).append("\n")
-                .append(MODULE_START_MESSAGE_ADMIN)
-                .append("</b>").append("\n")
-                .append("🔥🔥🔥")
-                .toString();
+        return messageSource.getMessage(DISCOUNTS_UPDATE_START_MESSAGE, Locale.ENGLISH);
     }
 
     /**
      * @since 1.0.0.0
      */
     private String prepareFinishMessage(String swData) {
-        return new StringBuilder()
-                .append("💥💥💥").append("\n")
-                .append("<b>")
-                .append(DiscountsOn3DPlasticModule.class.getSimpleName()).append("\n")
-                .append(MODULE_FINISH_MESSAGE_ADMIN).append("\n")
-                .append("</b>")
-                .append(swData.replaceAll("-----------------------------------------",
-                                          "---------------------------------------"))
-                .append("💥💥💥")
-                .toString();
+        swData = swData.replaceAll("-----------------------------------------", "---------------------------------------");
+
+        return messageSource.getMessage(DISCOUNTS_UPDATE_FINISH_MESSAGE, Locale.ENGLISH, swData);
     }
 
     // </editor-fold>

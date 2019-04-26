@@ -7,6 +7,7 @@ import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
+import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -28,13 +30,15 @@ import java.util.stream.Collectors;
 @Log4j2
 @Component
 public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer {
+    ;
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String BROKEN_URLS_MESSAGE_ADMIN = "\"Broken\" links have found!";
+    private static final String BROKEN_URL_MESSAGE = "telegram.bot.message.broken-url";
 
     private final AsyncHelper asyncHelper;
     private final TelegramAPICommunicationComponent communicationComponent;
+    private final CustomMessageSource messageSource;
 
     // </editor-fold>
 
@@ -42,9 +46,11 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
 
     @Autowired
     public Module3DPlasticDataComponent(AsyncHelper asyncHelper,
-                                        TelegramAPICommunicationComponent communicationComponent) {
+                                        TelegramAPICommunicationComponent communicationComponent,
+                                        CustomMessageSource messageSource) {
         this.asyncHelper = asyncHelper;
         this.communicationComponent = communicationComponent;
+        this.messageSource = messageSource;
     }
 
 
@@ -82,17 +88,13 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
             return Lists.newArrayListWithExpectedSize(0);
         }
 
-        StringBuilder builder = new StringBuilder()
-                .append("❗❗❗️").append("\n")
-                .append("<b>")
-                .append(DiscountsOn3DPlasticModule.class.getSimpleName()).append("\n")
-                .append(BROKEN_URLS_MESSAGE_ADMIN)
-                .append("</b>").append("\n");
-
+        StringBuilder builder = new StringBuilder();
         urls.forEach(u -> builder.append(u).append("\n"));
-        builder.append("❗❗❗️");
 
-        return Lists.newArrayList(builder.toString());
+        String message = messageSource.getMessage(BROKEN_URL_MESSAGE, Locale.ENGLISH,
+                                                  DiscountsOn3DPlasticModule.class.getSimpleName(), builder.toString());
+
+        return Lists.newArrayList(message);
     }
 
     /**

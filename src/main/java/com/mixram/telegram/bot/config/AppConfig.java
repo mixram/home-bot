@@ -1,6 +1,9 @@
 package com.mixram.telegram.bot.config;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
 
 /**
  * Configuration for all app.
@@ -22,6 +25,17 @@ public class AppConfig {
     //
 
     // </editor-fold
+
+
+    @Bean(name = "messageSource")
+    public MessageSource messageSource() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setDefaultEncoding("utf-8");
+        messageSource.setBasename("i18n/messages");
+
+        return messageSource;
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
