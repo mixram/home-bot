@@ -88,10 +88,6 @@ class TelegramAPICommunicationServices {
      */
     protected void sendMessage(Update update,
                                MessageData messageData) {
-        if (update == null || messageData == null) {
-            return;
-        }
-
         try {
             log.debug("sendMessage => : update={}, messageData={}",
                       () -> update,
@@ -125,6 +121,27 @@ class TelegramAPICommunicationServices {
             } catch (TelegramApiException e1) {
                 log.warn("", e);
             }
+        }
+    }
+
+    /**
+     * To send messageData to concrete chat.
+     *
+     * @param chatId      chat ID.
+     * @param messageData messageData to send to Telegram API.
+     *
+     * @since 1.4.1.0
+     */
+    protected void sendMessageToChat(Long chatId,
+                                     MessageData messageData) {
+        try {
+            log.debug("sendMessage => : chatId={}, messageData={}",
+                      () -> chatId,
+                      () -> messageData);
+
+            doSendMessage(chatId, null, messageData);
+        } catch (Exception e) {
+            log.warn("sendMessageToChat ==> ERROR!", e);
         }
     }
 

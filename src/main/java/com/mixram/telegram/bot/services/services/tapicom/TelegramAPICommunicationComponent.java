@@ -32,7 +32,7 @@ public class TelegramAPICommunicationComponent {
 
 
     /**
-     * @see TelegramAPICommunicationServices#sendMessageToAdmin(MessageData)
+     * @see TelegramAPICommunicationServices#sendMessageToChat(Long, MessageData)
      * @since 1.3.0.0
      */
     public void sendMessage(Update update,
@@ -42,6 +42,18 @@ public class TelegramAPICommunicationComponent {
         Validate.notBlank(messageData.getMessage(), "Message is not specified!");
 
         services.sendMessage(update, messageData);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#sendMessageToChat(Long, MessageData)
+     * @since 1.3.0.0
+     */
+    public void sendMessageToChat(Long chatId,
+                                  MessageData messageData) {
+        Validate.notNull(chatId, "Chat ID is not specified!");
+        Validate.notNull(messageData, "Message data is not specified!");
+
+        services.sendMessageToChat(chatId, messageData);
     }
 
     /**

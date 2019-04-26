@@ -166,6 +166,39 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType(), locale);
     }
 
+    /**
+     * @since 1.4.1.0
+     */
+    public String prepareMessageForShopToSendString(Data3DPlastic plastic,
+                                                    Shop3D shop,
+                                                    Command command,
+                                                    boolean full,
+                                                    boolean onlyDiscounts,
+                                                    Locale locale) {
+        return plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
+               messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
+               doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
+    }
+
+    /**
+     * @since 1.4.1.0
+     */
+    public String prepareMessageForShopsToSendString(boolean full,
+                                                     boolean onlyDiscounts,
+                                                     Locale locale) {
+        StringBuilder builder = new StringBuilder();
+        for (Shop3D shop : Shop3D.values()) {
+            Data3DPlastic plastic = searcher.search(shop);
+            String messageToSendStringTemp =
+                    prepareMessageForShopToSendString(plastic, shop, Command.getByShop(shop), full, onlyDiscounts, locale);
+
+            builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
+                                                    messageToSendStringTemp));
+        }
+
+        return builder.toString();
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
@@ -421,26 +454,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 if (Command.INFO == command) {
                     return prepareInfoAnswerAll(locale);
                 } else if (Command.D_ALL == command) {
-                    StringBuilder builder = new StringBuilder();
-                    for (Shop3D shop : Shop3D.values()) {
-                        Data3DPlastic plastic = searcher.search(shop);
-                        String messageToSendStringTemp = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-                                                         messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
-                                                         prepareMessageToSendString(Command.getByShop(shop), full, plastic,
-                                                                                    shop, locale);
-
-                        builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
-                                                                messageToSendStringTemp));
-                    }
-
-                    messageToSendString = builder.toString();
+                    messageToSendString = prepareMessageForShopsToSendString(full, false, locale);
                 } else {
                     Shop3D shop = command.getShop();
                     Data3DPlastic plastic = searcher.search(shop);
 
-                    messageToSendString = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-                                          messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
-                                          prepareMessageToSendString(command, full, plastic, shop, locale);
+                    messageToSendString = prepareMessageForShopToSendString(plastic, shop, command, full, false, locale);
                 }
 
                 if (StringUtils.isBlank(messageToSendString)) {
@@ -462,11 +481,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private String prepareMessageToSendString(Command command,
-                                              boolean full,
-                                              Data3DPlastic plastic,
-                                              Shop3D shop,
-                                              Locale locale) {
+    private String doPrepareMessageToSendString(Command command,
+                                                boolean full,
+                                                boolean onlyDiscounts,
+                                                Data3DPlastic plastic,
+                                                Shop3D shop,
+                                                Locale locale) {
         String messageToSendString;
 
         switch (command) {
@@ -475,7 +495,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_MF:
             case D_U3DF:
                 messageToSendString =
-                        full ? prepareAnswerText(plastic, shop, locale) : prepareAnswerTextShort(plastic, locale);
+                        full ? prepareAnswerText(plastic, shop, locale) :
+                        prepareAnswerTextShort(plastic, onlyDiscounts, locale);
 
                 break;
             //            case D_DAS:
@@ -491,16 +512,23 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 0.1.3.0
      */
     private String prepareAnswerTextShort(Data3DPlastic plastic,
+                                          boolean onlyDiscounts,
                                           Locale locale) {
         Map<PlasticType, List<ParseData>> byName =
                 plastic.getData().stream()
-                       .filter(ParseData :: isInStock)
+                       //                       .filter(ParseData :: isInStock)
                        .collect(Collectors.groupingBy(ParseData :: getType, HashMap ::new,
                                                       Collectors.toCollection(ArrayList ::new)));
         Map<PlasticType, PlasticPresenceState> discountsState =
                 byName.entrySet().stream()
                       .collect(Collectors.toMap(Map.Entry :: getKey,
                                                 e -> definePlasticState(e.getValue())));
+
+        if (onlyDiscounts) {
+            discountsState = discountsState.entrySet().stream()
+                                           .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue())
+                                           .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
+        }
 
         StringBuilder answer = new StringBuilder();
         discountsState.entrySet().stream()
