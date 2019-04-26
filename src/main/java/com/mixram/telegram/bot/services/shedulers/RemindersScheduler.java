@@ -1,6 +1,6 @@
 package com.mixram.telegram.bot.services.shedulers;
 
-import com.mixram.telegram.bot.services.reminders.Reminder;
+import com.mixram.telegram.bot.services.reminders.DiscountsReminder;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ public class RemindersScheduler implements Scheduler {
 
     private final boolean doSchedule;
 
-    private final Set<Reminder> reminders;
+    private final Set<DiscountsReminder> reminders;
     private final AsyncHelper asyncHelper;
 
     // </editor-fold>
@@ -33,7 +33,7 @@ public class RemindersScheduler implements Scheduler {
 
     @Autowired
     public RemindersScheduler(@Value("${bot.settings.scheduler.reminders.enable}") boolean doSchedule,
-                              Set<Reminder> reminders,
+                              Set<DiscountsReminder> reminders,
                               AsyncHelper asyncHelper) {
         this.doSchedule = doSchedule;
         this.reminders = reminders;

@@ -10,4 +10,6 @@ import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 public interface Module3DPlasticDataSearcher {
 
     Data3DPlastic search(Shop3D shop);
+
+    Data3DPlastic searchOld(Shop3D shop);
 }

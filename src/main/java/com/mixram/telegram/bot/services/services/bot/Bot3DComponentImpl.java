@@ -69,7 +69,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String INFO_ANSWER_MESSAGE = "telegram.bot.message.info-answer";
     private static final String INFO_ANSWER_ALL_MESSAGE = "telegram.bot.message.info-answer.all";
     private static final String USER_CALL_MESSAGE = "telegram.bot.message.user-call";
-    private static final String SHOP_MESSAGE_PART_MESSAGE = "telegram.bot.message.shop-message.part";
+    public static final String SHOP_MESSAGE_PART_MESSAGE = "telegram.bot.message.shop-message.part";
     private static final String SHORT_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.short.part";
     private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
@@ -116,7 +116,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.work-with}") WorkType workType,
                               @Value("${bot.settings.work-with-groups}") String allowedGroups,
                               @Value("${bot.settings.admin-email}") String adminEmail,
-                              @Qualifier("discountsOn3DPlasticDataCacheV2Component") Module3DPlasticDataSearcher searcher,
+                              @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
                               CustomMessageSource messageSource) {

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @Log4j2
 @Component
-public class DiscountsOn3DPlasticDataCacheV2Component implements Module3DPlasticDataSearcher {
+public class DiscountsOn3DPlasticDataCacheComponent implements Module3DPlasticDataSearcher {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -25,7 +25,7 @@ public class DiscountsOn3DPlasticDataCacheV2Component implements Module3DPlastic
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public DiscountsOn3DPlasticDataCacheV2Component(RedisTemplateHelper redisTemplate) {
+    public DiscountsOn3DPlasticDataCacheComponent(RedisTemplateHelper redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -37,6 +37,10 @@ public class DiscountsOn3DPlasticDataCacheV2Component implements Module3DPlastic
         return redisTemplate.getPlasticFromRedis(shop);
     }
 
+    @Override
+    public Data3DPlastic searchOld(Shop3D shop) {
+        return redisTemplate.getOldPlasticFromRedis(shop);
+    }
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 

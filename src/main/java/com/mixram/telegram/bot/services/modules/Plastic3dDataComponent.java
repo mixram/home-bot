@@ -11,15 +11,12 @@ import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -29,8 +26,7 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 @Component
-public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer {
-    ;
+public class Plastic3dDataComponent implements PlasticApplier {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -39,18 +35,21 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
     private final AsyncHelper asyncHelper;
     private final TelegramAPICommunicationComponent communicationComponent;
     private final CustomMessageSource messageSource;
+    private final Module3DPlasticDataSearcher searcher;
 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public Module3DPlasticDataComponent(AsyncHelper asyncHelper,
-                                        TelegramAPICommunicationComponent communicationComponent,
-                                        CustomMessageSource messageSource) {
+    public Plastic3dDataComponent(AsyncHelper asyncHelper,
+                                  TelegramAPICommunicationComponent communicationComponent,
+                                  CustomMessageSource messageSource,
+                                  @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher) {
         this.asyncHelper = asyncHelper;
         this.communicationComponent = communicationComponent;
         this.messageSource = messageSource;
+        this.searcher = searcher;
     }
 
 
@@ -58,9 +57,8 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
 
 
     @Override
-    public void apply(Map<Shop3D, Data3DPlastic> plastics) {
-        Validate.notNull(plastics, "Plastic data is not specified!");
-
+    public void apply() {
+        Map<Shop3D, Data3DPlastic> plastics = getPlastics();
         log.info("PLASTICS: {}", () -> JsonUtil.toPrettyJson(plastics));
 
         List<String> messages = prepareBrokenUrlMessage(plastics);
@@ -73,6 +71,19 @@ public class Module3DPlasticDataComponent implements Module3DPlasticDataApplyer 
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.4.1.0
+     */
+    private Map<Shop3D, Data3DPlastic> getPlastics() {
+        Map<Shop3D, Data3DPlastic> plastics = new HashMap<>(Shop3D.values().length);
+
+        for (Shop3D shop : Shop3D.values()) {
+            plastics.put(shop, searcher.search(shop));
+        }
+
+        return plastics;
+    }
 
     /**
      * @since 1.0.0.0

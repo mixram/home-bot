@@ -19,6 +19,7 @@ public class RedisTemplateHelper {
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private static final String PLASTIC_SHOP_PREFIX = "plastic_shop";
+    private static final String PLASTIC_SHOP_OLD_PREFIX = "plastic_shop_old";
     private static final String STAT_PREFIX = "statistics";
 
     private final String prefix;
@@ -77,6 +78,44 @@ public class RedisTemplateHelper {
      */
     public Data3DPlastic getPlasticFromRedis(Shop3D key) {
         return redisTemplate3DPlastic.opsForValue().get(prepareKey(key, PLASTIC_SHOP_PREFIX));
+    }
+
+
+    /**
+     * To save old data about plastic in redis.
+     *
+     * @param plastic plastic data to save.
+     * @param key     key to save with.
+     *
+     * @since 1.4.1.0
+     */
+    public void storeOldPlasticToRedis(Data3DPlastic plastic,
+                                       Shop3D key) {
+        redisTemplate3DPlastic.opsForValue().set(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX), plastic);
+    }
+
+    /**
+     * To delete old data about plastic from redis.
+     *
+     * @param key key to delete with.
+     *
+     * @since 1.4.1.0
+     */
+    public void deleteOldPlasticFromRedis(Shop3D key) {
+        redisTemplate3DPlastic.delete(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX));
+    }
+
+    /**
+     * To get old data about plastic from redis.
+     *
+     * @param key key to get with.
+     *
+     * @return data or null.
+     *
+     * @since 1.4.1.0
+     */
+    public Data3DPlastic getOldPlasticFromRedis(Shop3D key) {
+        return redisTemplate3DPlastic.opsForValue().get(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX));
     }
 
 

@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.modules;
 
+import com.mixram.telegram.bot.services.domain.DiscountsListener;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
@@ -9,13 +10,13 @@ import com.mixram.telegram.bot.utils.ConcurrentUtilites;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -33,10 +34,11 @@ public class DiscountsOn3DPlasticModule implements Module {
     private static final String DISCOUNTS_UPDATE_START_MESSAGE = "telegram.bot.message.discounts-update.start";
 
     private final Module3DPlasticDataSearcher searcher;
-    private final Module3DPlasticDataApplyer applyer;
     private final AsyncHelper asyncHelper;
     private final TelegramAPICommunicationComponent communicationComponent;
     private final CustomMessageSource messageSource;
+    private final Set<PlasticApplier> appliers;
+    private final Set<DiscountsListener> listeners;
 
     // </editor-fold>
 
@@ -44,15 +46,17 @@ public class DiscountsOn3DPlasticModule implements Module {
 
     @Autowired
     public DiscountsOn3DPlasticModule(Module3DPlasticDataSearcher searcher,
-                                      @Qualifier("module3DPlasticDataComponent") Module3DPlasticDataApplyer applyer,
                                       AsyncHelper asyncHelper,
                                       TelegramAPICommunicationComponent communicationComponent,
-                                      CustomMessageSource messageSource) {
+                                      CustomMessageSource messageSource,
+                                      Set<PlasticApplier> appliers,
+                                      Set<DiscountsListener> listeners) {
         this.searcher = searcher;
-        this.applyer = applyer;
         this.asyncHelper = asyncHelper;
         this.communicationComponent = communicationComponent;
         this.messageSource = messageSource;
+        this.appliers = appliers;
+        this.listeners = listeners;
     }
 
     // </editor-fold>
@@ -60,7 +64,7 @@ public class DiscountsOn3DPlasticModule implements Module {
 
     @Override
     public void execute() {
-        log.info("{} is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
+        log.info("{}#execute() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
 
         StopWatch sw = new StopWatch();
 
@@ -69,12 +73,15 @@ public class DiscountsOn3DPlasticModule implements Module {
         sw.stop();
 
         sw.start("Parse data");
-        Map<Shop3D, Data3DPlastic> plastics = getPlastics();
-        //        Map<Shop3D, Data3DPlastic> plastics = getPlasticsAsync();
+        getPlastics();
         sw.stop();
 
-        sw.start("Apply data");
-        applyer.apply(plastics);
+        sw.start("Engage appliers");
+        appliers.forEach(PlasticApplier :: apply);
+        sw.stop();
+
+        sw.start("Engage listeners");
+        listeners.forEach(DiscountsListener :: discount);
         sw.stop();
 
         String swString = sw.prettyPrint();
