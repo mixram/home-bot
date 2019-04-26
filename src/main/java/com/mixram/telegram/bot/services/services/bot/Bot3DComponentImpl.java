@@ -234,10 +234,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         StringBuilder builder = new StringBuilder();
         newChatMembers.forEach(u -> builder.append("@").append(u.getUsername()).append(", "));
 
-        //        newChatMembers.forEach(u -> builder
-        //                .append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(u.getUsername()).append("</a>")
-        //                .append(", "));
-
         return MessageData.builder()
                           .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HALLOW_MESSAGE, locale, builder.toString(),
                                                             fleaMarket, pinnedMessage))
@@ -495,6 +491,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
                 if (Command.INFO == command) {
                     return prepareInfoAnswerAll(locale);
+                } else if (Command.START == command) {
+                    return prepareStartAnswer(locale);
                 } else if (Command.D_ALL == command) {
                     messageToSendString = prepareMessageForShopsToSendString(full, false, locale);
                 } else {

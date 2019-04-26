@@ -42,9 +42,9 @@ public class LocaleTest {
         String message2 = messageSource.getMessage(code, Locale.US);
         String message3 = messageSource.getMessage(code, new Locale("en"));
 
-        System.out.println("1: " + message1);
-        System.out.println("2: " + message2);
-        System.out.println("3: " + message3);
+        //        System.out.println("1: " + message1);
+        //        System.out.println("2: " + message2);
+        //        System.out.println("3: " + message3);
     }
 
 
