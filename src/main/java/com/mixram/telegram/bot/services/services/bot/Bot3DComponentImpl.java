@@ -3,6 +3,7 @@ package com.mixram.telegram.bot.services.services.bot;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
@@ -47,6 +48,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     private static final String PRIVATE_CHAT_NAME = "private";
     private static final String GROUP_CHAT_NAME = "group";
+    private static final String SUPER_GROUP_CHAT_NAME = "supergroup";
 
     private static final String SALES_PATTERN_STRING = "^/SALES_.*";
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
@@ -150,7 +152,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         Message message = update.getMessage();
 
-        Locale locale = message.getUser() == null ? META.DEFAULT_LOCALE : new Locale(message.getUser().getLanguageCode());
+        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
+                        new Locale(message.getUser().getLanguageCode());
 
         MessageData workCheckMessage = checkMayWorkWith(message, locale);
         if (workCheckMessage != null) {
@@ -226,7 +229,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData checkNewChatMembers(Message message,
                                             Locale locale) {
-        List<User> newChatMembers = message.getNewChatMembers();
+        List<User> newChatMembers =
+                Optional.ofNullable(message.getNewChatMembers()).orElse(Lists.newArrayListWithExpectedSize(0)).stream()
+                        .filter(u -> !u.getIsBot())
+                        .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newChatMembers)) {
             return null;
         }
@@ -283,7 +289,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.4.0.0
      */
     private boolean isGroup(String type) {
-        return GROUP_CHAT_NAME.equalsIgnoreCase(type);
+        return GROUP_CHAT_NAME.equalsIgnoreCase(type) || SUPER_GROUP_CHAT_NAME.equalsIgnoreCase(type);
     }
 
     /**
