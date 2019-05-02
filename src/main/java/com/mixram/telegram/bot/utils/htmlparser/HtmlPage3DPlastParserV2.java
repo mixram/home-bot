@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.utils.htmlparser;
 
+import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -14,7 +15,9 @@ import java.util.regex.Pattern;
 /**
  * @author mixram on 2019-04-09.
  * @since 0.1.1.0
+ * @deprecated legacy since 1.4.2.0, use 'v2'.
  */
+@Deprecated
 @Log4j2
 @Service
 public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {

@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.utils.htmlparser;
+package com.mixram.telegram.bot.utils.htmlparser.v2.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
@@ -29,10 +29,16 @@ public class ParseData implements Serializable {
     private String productName;
     @JsonProperty("url")
     private String productUrl;
+    @JsonProperty("commonUrl")
+    private String commonUrl;
+    @JsonProperty("shopUrl")
+    private String shopUrl;
     @JsonProperty("oldPrice")
     private BigDecimal productOldPrice;
     @JsonProperty("salePrice")
     private BigDecimal productSalePrice;
+    @JsonProperty("percent")
+    private BigDecimal productDiscountPercent;
     @JsonProperty("type")
     private PlasticType type;
     @JsonProperty("inStock")

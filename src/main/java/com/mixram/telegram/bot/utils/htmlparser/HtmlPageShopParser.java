@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.utils.htmlparser;
 
+import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.Validate;
 import org.jsoup.Jsoup;
@@ -11,8 +12,10 @@ import java.math.BigDecimal;
 
 /**
  * @author mixram on 2019-04-15.
- * @since ...
+ * @since 0.1.1.0
+ * @deprecated legacy since 1.4.2.0, use 'v2'.
  */
+@Deprecated
 @Log4j2
 abstract class HtmlPageShopParser implements HtmlPageParser {
 

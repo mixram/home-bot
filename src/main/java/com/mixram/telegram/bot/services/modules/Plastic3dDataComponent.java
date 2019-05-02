@@ -9,7 +9,7 @@ import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicatio
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

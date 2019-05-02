@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.domain.entity;
 
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

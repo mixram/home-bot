@@ -2,7 +2,7 @@ package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
-import com.mixram.telegram.bot.utils.htmlparser.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 
 import java.time.LocalDateTime;
