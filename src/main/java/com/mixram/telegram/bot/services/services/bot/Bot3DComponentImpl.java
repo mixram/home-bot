@@ -358,7 +358,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswer(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, pinnedMessage))
+                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, pinnedMessage,
+                                                            System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -370,7 +371,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswerAll(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, pinnedMessage))
+                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, pinnedMessage,
+                                                            System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -405,12 +407,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             }
 
             Locale locale = user == null ? META.DEFAULT_LOCALE : new Locale(user.getLanguageCode());
-            MessageData messageData = MessageData.builder()
-                                                 .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
-                                                                                   JsonUtil.toPrettyJson(message.getChat()),
-                                                                                   user == null ? "---" :
-                                                                                   JsonUtil.toPrettyJson(user)))
-                                                 .build();
+            MessageData messageData =
+                    MessageData.builder()
+                               .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
+                                                                 JsonUtil.toPrettyJson(message.getChat()),
+                                                                 user == null ? "---" : JsonUtil.toPrettyJson(user),
+                                                                 message.getText()))
+                               .build();
 
             communicationComponent.sendMessageToAdmin(messageData);
         } catch (Exception e) {

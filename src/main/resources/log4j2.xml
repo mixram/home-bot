@@ -14,9 +14,54 @@
         </Console>
 
         <RollingFile
-                name="rollingFile"
-                fileName="${basePath}/application.log"
-                filePattern="${basePath}/application.%d{yyyyMMdd}.log.gz"
+                name="commonFile"
+                fileName="${basePath}/common.log"
+                filePattern="${basePath}/common.%d{yyyyMMdd}.log.gz"
+                ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>${pattern2}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+        <RollingFile
+                name="securityFile"
+                fileName="${basePath}/security.log"
+                filePattern="${basePath}/security.%d{yyyyMMdd}.log.gz"
+                ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>${pattern2}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+        <RollingFile
+                name="restFile"
+                fileName="${basePath}/rest.log"
+                filePattern="${basePath}/rest.%d{yyyyMMdd}.log.gz"
+                ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>${pattern2}</Pattern>
+            </PatternLayout>
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="5" />
+        </RollingFile>
+        <RollingFile
+                name="springFile"
+                fileName="${basePath}/spring.log"
+                filePattern="${basePath}/spring.%d{yyyyMMdd}.log.gz"
                 ignoreExceptions="false">
             <PatternLayout>
                 <Pattern>${pattern2}</Pattern>
@@ -36,31 +81,34 @@
         <!-- main log -->
         <Logger name="com.mixram.telegram.bot" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
         </Logger>
         <Logger name="com.mixram.telegram.bot.config.security" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="securityFile" />
         </Logger>
         <Logger name="com.mixram.telegram.bot.utils.rest" level="info" includeLocation="true" additivity="false">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="restFile" />
         </Logger>
 
         <!-- spring log -->
         <Logger name="org.springframework" level="info" includeLocation="true" additivity="false">
             <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="springFile" />
         </Logger>
         <Logger name="org.springframework.security" level="info" includeLocation="true"
                 additivity="false">
             <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="springFile" />
         </Logger>
 
         <Root level="info" includeLocation="true">
             <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="rollingFile" />
+            <AppenderRef ref="commonFile" />
         </Root>
 
     </Loggers>
