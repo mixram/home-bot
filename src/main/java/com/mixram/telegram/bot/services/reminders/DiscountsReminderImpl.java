@@ -15,6 +15,7 @@ import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.ParseData;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,9 +73,12 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     @Override
     public void remind() {
-        String messagePart = bot3DComponentImpl.prepareMessageForShopsToSendString(false, true, META.DEFAULT_LOCALE);
-
-        doSendToChats(REMINDER_MESSAGE, messagePart, META.DEFAULT_LOCALE);
+        String messagePart = bot3DComponentImpl.prepareMessageForShopsToSendString(false, true, false, META.DEFAULT_LOCALE);
+        if (StringUtils.isNotBlank(messagePart)) {
+            doSendToChats(REMINDER_MESSAGE, messagePart, META.DEFAULT_LOCALE);
+        } else {
+            log.info("No discounts to remind the chat(s).");
+        }
     }
 
     @Override
@@ -142,7 +146,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                                                      .data(v)
                                                      .build();
                 String mess = bot3DComponentImpl.prepareMessageForShopToSendString(plastic, k, Command.getByShop(k), false,
-                                                                                   true, META.DEFAULT_LOCALE);
+                                                                                   true, true, META.DEFAULT_LOCALE);
                 builder
                         .append(messageSource.getMessage(Bot3DComponentImpl.SHOP_MESSAGE_PART_MESSAGE, META.DEFAULT_LOCALE,
                                                          k.getName(), mess));

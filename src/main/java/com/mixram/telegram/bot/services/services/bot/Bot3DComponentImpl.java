@@ -76,7 +76,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
     private static final String SHORT_MESSAGE_LEGEND_MESSAGE = "telegram.bot.message.short-message-legend";
-    private static final String NEW_CHAT_MEMBERS_HALLOW_MESSAGE = "telegram.bot.message.new-chat-members-hallow";
+    private static final String NEW_CHAT_MEMBERS_HALLOW_MESSAGE = "telegram.bot.message.new-chat-members-hellow";
 
     private final Integer maxQuantity;
     private final Random random;
@@ -151,6 +151,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Validate.notNull(update, "Update is not specified!");
 
         Message message = update.getMessage();
+        if (message == null) {
+            log.warn("Unexpected 'Update' structure! {}", () -> update);
+
+            return null;
+        }
 
         Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
                         new Locale(message.getUser().getLanguageCode());
@@ -191,9 +196,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                     Command command,
                                                     boolean full,
                                                     boolean onlyDiscounts,
+                                                    boolean noDataText,
                                                     Locale locale) {
         return plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-               messageSource.getMessage(NO_DATA_FOR_SHOP, locale) :
+               noDataText ? messageSource.getMessage(NO_DATA_FOR_SHOP, locale) : null :
                doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
     }
 
@@ -202,21 +208,27 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     public String prepareMessageForShopsToSendString(boolean full,
                                                      boolean onlyDiscounts,
+                                                     boolean noDataText,
                                                      Locale locale) {
         StringBuilder builder = new StringBuilder();
         for (Shop3D shop : Shop3D.values()) {
             Data3DPlastic plastic = searcher.search(shop);
             String messageToSendStringTemp =
-                    prepareMessageForShopToSendString(plastic, shop, Command.getByShop(shop), full, onlyDiscounts, locale);
+                    prepareMessageForShopToSendString(plastic, shop, Command.getByShop(shop), full, onlyDiscounts,
+                                                      noDataText, locale);
 
-            builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
-                                                    messageToSendStringTemp));
+            if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
+                builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
+                                                        messageToSendStringTemp));
+            }
         }
 
-        builder.append(messageSource.getMessage(SHORT_MESSAGE_LEGEND_MESSAGE, locale,
-                                                getDiscountText(PlasticPresenceState.DISCOUNT),
-                                                getDiscountText(PlasticPresenceState.IN_STOCK),
-                                                getDiscountText(PlasticPresenceState.NOT_IN_STOCK)));
+        if (builder.length() > 0) {
+            builder.append(messageSource.getMessage(SHORT_MESSAGE_LEGEND_MESSAGE, locale,
+                                                    getDiscountText(PlasticPresenceState.DISCOUNT),
+                                                    getDiscountText(PlasticPresenceState.IN_STOCK),
+                                                    getDiscountText(PlasticPresenceState.NOT_IN_STOCK)));
+        }
 
         return builder.toString();
     }
@@ -238,7 +250,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         StringBuilder builder = new StringBuilder();
-        newChatMembers.forEach(u -> builder.append("@").append(u.getUsername()).append(", "));
+        newChatMembers.forEach(u -> builder.append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(
+                u.getFirstName()).append("</a>").append(", ")); //<a href="tg://user?id=123456789">{user.first_name}</a>
 
         return MessageData.builder()
                           .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HALLOW_MESSAGE, locale, builder.toString(),
@@ -345,7 +358,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswer(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale))
+                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, pinnedMessage))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -357,7 +370,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswerAll(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale))
+                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, pinnedMessage))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -500,12 +513,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 } else if (Command.START == command) {
                     return prepareStartAnswer(locale);
                 } else if (Command.D_ALL == command) {
-                    messageToSendString = prepareMessageForShopsToSendString(full, false, locale);
+                    messageToSendString = prepareMessageForShopsToSendString(full, false, true, locale);
                 } else {
                     Shop3D shop = command.getShop();
                     Data3DPlastic plastic = searcher.search(shop);
 
-                    messageToSendString = prepareMessageForShopToSendString(plastic, shop, command, full, false, locale);
+                    messageToSendString = prepareMessageForShopToSendString(plastic, shop, command, full, false, true,
+                                                                            locale);
                 }
 
                 if (StringUtils.isBlank(messageToSendString)) {
