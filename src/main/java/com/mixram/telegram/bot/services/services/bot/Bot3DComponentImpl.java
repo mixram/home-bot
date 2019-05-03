@@ -301,7 +301,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         StringBuilder builder = new StringBuilder();
         newChatMembers.forEach(u -> builder.append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(
-                u.getFirstName()).append("</a>").append(", ")); //<a href="tg://user?id=123456789">{user.first_name}</a>
+                u.getFirstName()).append("</a>").append(", "));
 
         return MessageData.builder()
                           .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HALLOW_MESSAGE, locale, builder.toString(),

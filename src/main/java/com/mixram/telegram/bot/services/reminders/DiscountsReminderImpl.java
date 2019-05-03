@@ -109,9 +109,26 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
             for (Shop3D shop : Shop3D.values()) {
                 Data3DPlastic oldPlasticHolder = oldPlasticsData.get(shop);
                 Data3DPlastic newPlasticHolder = newPlasticsData.get(shop);
+                if (oldPlasticHolder == null || newPlasticHolder == null) {
+                    log.warn("oldPlasticHolder is null = {}, newPlasticHolder is null = {} for shop {}.",
+                             () -> oldPlasticHolder == null,
+                             () -> newPlasticHolder == null,
+                             () -> shop);
+
+                    continue;
+                }
 
                 List<ParseData> oldPlastics = oldPlasticHolder.getData();
                 List<ParseData> newPlastics = newPlasticHolder.getData();
+                if (oldPlastics == null || newPlastics == null) {
+                    log.warn("oldPlastics is null = {}, newPlastics is null = {} for shop {}.",
+                             () -> oldPlastics == null,
+                             () -> newPlastics == null,
+                             () -> shop);
+
+                    continue;
+                }
+
                 List<ParseData> newPlasticsWithD =
                         newPlastics.stream()
                                    .filter(np -> np.getProductOldPrice() != null)
