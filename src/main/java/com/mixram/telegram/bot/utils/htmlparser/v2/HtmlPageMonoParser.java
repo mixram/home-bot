@@ -14,11 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author mixram on 2019-05-02.
- * @since ...
+ * @since 1.4.2.0
  */
 @Log4j2
 @Service
@@ -54,9 +53,7 @@ public class HtmlPageMonoParser extends HtmlPageShopParser {
 
     @Override
     public List<ParseData> parse(ParseDataSettings parseData) {
-        return super.parse(parseData).stream()
-                    .filter(p -> p.getProductName() != null && p.getProductDiscountPercent() != null)
-                    .collect(Collectors.toList());
+        return super.parse(parseData);
     }
 
 
@@ -101,7 +98,7 @@ public class HtmlPageMonoParser extends HtmlPageShopParser {
      */
     @Override
     protected String parseProductName(Element plastic) {
-        String url = null;
+        String name = null;
 
         Elements productThumb = plastic.getElementsByClass(productNameClassName);
         if (!productThumb.isEmpty()) {
@@ -109,12 +106,12 @@ public class HtmlPageMonoParser extends HtmlPageShopParser {
             if (!caption.isEmpty()) {
                 Elements href = caption.first().getElementsByAttribute(productNameHrefAttrName);
                 if (!href.isEmpty()) {
-                    url = href.first().text();
+                    name = href.first().text();
                 }
             }
         }
 
-        return url;
+        return name;
     }
 
     /**

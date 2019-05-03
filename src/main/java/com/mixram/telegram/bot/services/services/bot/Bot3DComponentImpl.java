@@ -557,9 +557,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_3DUA:
             case D_MF:
             case D_U3DF:
-                messageToSendString =
-                        full ? prepareAnswerText(plastic, shop, locale) :
-                        prepareAnswerTextShort(plastic, onlyDiscounts, locale);
+                messageToSendString = full ? prepareAnswerText(plastic, shop, locale) :
+                                      prepareAnswerTextShort(plastic, onlyDiscounts, locale);
 
                 break;
             //            case D_DAS:
@@ -642,19 +641,34 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                      Locale locale) {
         List<ParseData> data = plastic.getData();
 
-        int counter = 0;
         StringBuilder answer = new StringBuilder();
+        List<PlasticType> borderTypeList = new ArrayList<>(maxQuantity);
+        List<String> borderUrlList = new ArrayList<>(maxQuantity);
         for (ParseData datum : data) {
-            if (mayUsePlastic(datum)) {
-                answer.append(messageSource.getMessage(FULL_DISCOUNT_PART_MESSAGE, locale, datum.getProductName(),
-                                                       datum.getProductOldPrice(),
-                                                       datum.getProductSalePrice(), datum.getProductUrl()));
+            if (mayUsePlastic(datum) && !borderTypeList.contains(datum.getType())) {
+                borderTypeList.add(datum.getType());
+                borderUrlList.add(datum.getProductUrl());
+
+                appendMainBody(answer, datum, locale);
+
+                if (borderTypeList.size() == maxQuantity) {
+                    appendFinishBody(answer, shop.getUrl(), locale);
+
+                    return answer.toString();
+                }
+            }
+        }
+
+        int counter = borderTypeList.size();
+        for (ParseData datum : data) {
+            if (mayUsePlastic(datum) && !borderUrlList.contains(datum.getProductUrl())) {
+                appendMainBody(answer, datum, locale);
 
                 counter++;
             }
 
             if (counter == maxQuantity) {
-                answer.append(messageSource.getMessage(FULL_DISCOUNT_OTHER_MESSAGE, locale, shop.getUrl()));
+                appendFinishBody(answer, shop.getUrl(), locale);
 
                 break;
             }
@@ -664,10 +678,34 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     }
 
     /**
+     * @since 1.4.2.0
+     */
+    private void appendFinishBody(StringBuilder answer,
+                                  String url,
+                                  Locale locale) {
+        answer.append(messageSource.getMessage(FULL_DISCOUNT_OTHER_MESSAGE, locale, url));
+    }
+
+    /**
+     * @since 1.4.2.0
+     */
+    private void appendMainBody(StringBuilder answer,
+                                ParseData datum,
+                                Locale locale) {
+        String oldPrice = datum.getProductOldPrice() == null ? "-" : datum.getProductOldPrice().toString();
+        String salePrice = datum.getProductSalePrice() == null ? "-" : datum.getProductSalePrice().toString();
+        String discountPercent =
+                datum.getProductDiscountPercent() == null ? "-" : datum.getProductDiscountPercent().toString();
+
+        answer.append(messageSource.getMessage(FULL_DISCOUNT_PART_MESSAGE, locale, datum.getProductName(), oldPrice,
+                                               salePrice, discountPercent, datum.getProductUrl()));
+    }
+
+    /**
      * @since 1.2.0.0
      */
     private boolean mayUsePlastic(ParseData datum) {
-        return datum.isInStock() && datum.getProductOldPrice() != null && datum.getProductSalePrice() != null;
+        return datum.isInStock() && ((datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum.getProductDiscountPercent() != null);
     }
 
     /**
@@ -694,8 +732,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return PlasticPresenceState.NOT_IN_STOCK;
         }
 
-        return datum.getProductOldPrice() != null && datum.getProductSalePrice() != null ? PlasticPresenceState.DISCOUNT :
-               PlasticPresenceState.IN_STOCK;
+        return (datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum.getProductDiscountPercent() != null ?
+               PlasticPresenceState.DISCOUNT : PlasticPresenceState.IN_STOCK;
     }
 
     /**

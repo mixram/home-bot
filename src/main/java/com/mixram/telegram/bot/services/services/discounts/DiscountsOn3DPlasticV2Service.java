@@ -1,7 +1,7 @@
 package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
-import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
+import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParserLegacy;
 import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 
@@ -13,16 +13,18 @@ import java.util.List;
 /**
  * @author mixram on 2019-04-15.
  * @since 0.2.0.0
+ * @deprecated legacy since 1.4.2.0, use 'v2' instead.
  */
+@Deprecated
 @Log4j2
-public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasticService {
+public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasticServiceLegacy {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
     private final List<ParseData> urls;
     private final long waitTime;
 
-    private final HtmlPageParser parser;
+    private final HtmlPageParserLegacy parser;
 
     // </editor-fold>
 
@@ -30,7 +32,7 @@ public abstract class DiscountsOn3DPlasticV2Service implements DiscountsOnPlasti
 
     public DiscountsOn3DPlasticV2Service(List<ParseData> urls,
                                          long waitTime,
-                                         HtmlPageParser parser) {
+                                         HtmlPageParserLegacy parser) {
         this.urls = urls;
         this.waitTime = waitTime;
         this.parser = parser;

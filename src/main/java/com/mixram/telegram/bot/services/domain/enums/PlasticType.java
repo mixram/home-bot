@@ -115,7 +115,11 @@ public enum PlasticType {
     /**
      * Substandard.
      */
-    SUBSTANDARD("Уценка");
+    SUBSTANDARD("Уценка"),
+    /**
+     * Composite.
+     */
+    COMPO("Composite");
 
     @Getter
     String name;

@@ -102,5 +102,9 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     protected abstract boolean parseInStock(Element plastic);
 
+    protected BigDecimal byModule(BigDecimal dec) {
+        return dec.signum() < 0 ? dec.negate() : dec;
+    }
+
     // </editor-fold>
 }

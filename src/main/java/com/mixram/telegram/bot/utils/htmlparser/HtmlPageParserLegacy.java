@@ -8,7 +8,7 @@ import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
  * @deprecated legacy since 1.4.2.0, use 'v2'.
  */
 @Deprecated
-public interface HtmlPageParser {
+public interface HtmlPageParserLegacy {
 
     /**
      * To parse page been specified by URL.

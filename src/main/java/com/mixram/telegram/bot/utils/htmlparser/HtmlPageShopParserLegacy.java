@@ -17,7 +17,7 @@ import java.math.BigDecimal;
  */
 @Deprecated
 @Log4j2
-abstract class HtmlPageShopParser implements HtmlPageParser {
+abstract class HtmlPageShopParserLegacy implements HtmlPageParserLegacy {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -29,9 +29,9 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
-    public HtmlPageShopParser(@NotNull String oldPriceSelectorName,
-                              @NotNull String newPriceSelectorName,
-                              @NotNull String productAvailableSelectorName) {
+    public HtmlPageShopParserLegacy(@NotNull String oldPriceSelectorName,
+                                    @NotNull String newPriceSelectorName,
+                                    @NotNull String productAvailableSelectorName) {
         this.oldPriceSelectorName = oldPriceSelectorName;
         this.newPriceSelectorName = newPriceSelectorName;
         this.productAvailableSelectorName = productAvailableSelectorName;

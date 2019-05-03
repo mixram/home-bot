@@ -6,21 +6,20 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author mixram on 2019-04-09.
- * @since 0.1.1.0
+ * @author mixram on 2019-04-20.
+ * @since 1.3.0.0
  * @deprecated legacy since 1.4.2.0, use 'v2'.
  */
 @Deprecated
 @Log4j2
-@Service
-public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
+//@Service
+public class HtmlPageU3DFParserLegacy extends HtmlPageShopParserLegacy {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -32,12 +31,12 @@ public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public HtmlPage3DPlastParserV2(
-            @Value("${parser.3dplast.search-names.old-price-selector-name.name}") String oldPriceSelectorName,
-            @Value("${parser.3dplast.search-names.new-price-selector-name.name}") String newPriceSelectorName,
-            @Value("${parser.3dplast.search-names.product-name-selector-name.name}") String productNameSelectorName,
-            @Value("${parser.3dplast.search-names.product-presence-selector-name.name}") String productAvailableSelectorName,
-            @Value("${parser.3dplast.search-names.product-presence-pattern-name.name}") String productAvailableTextName) {
+    public HtmlPageU3DFParserLegacy(
+            @Value("${parser.u3df.search-names.old-price-selector-name.name}") String oldPriceSelectorName,
+            @Value("${parser.u3df.search-names.new-price-selector-name.name}") String newPriceSelectorName,
+            @Value("${parser.u3df.search-names.product-name-selector-name.name}") String productNameSelectorName,
+            @Value("${parser.u3df.search-names.product-presence-selector-name.name}") String productAvailableSelectorName,
+            @Value("${parser.u3df.search-names.product-presence-pattern-name.name}") String productAvailableTextName) {
         super(oldPriceSelectorName, newPriceSelectorName, productAvailableSelectorName);
         this.productNameSelectorName = productNameSelectorName;
         this.productAvailableTextName = productAvailableTextName;
@@ -46,7 +45,7 @@ public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
     // </editor-fold>
 
     /**
-     * @since 0.1.0.0
+     * @since 1.3.0.0
      */
     @Override
     public ParseData parse(ParseData parseData) {
@@ -57,7 +56,7 @@ public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
-     * @since 0.1.0.0
+     * @since 1.3.0.0
      */
     @Override
     protected BigDecimal parsePrice(Elements elements) {
@@ -69,7 +68,7 @@ public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
     }
 
     /**
-     * @since 0.2.0.0
+     * @since 1.3.0.0
      */
     @Override
     protected String getProductName(Document doc) {
@@ -79,7 +78,7 @@ public class HtmlPage3DPlastParserV2 extends HtmlPageShopParser {
     }
 
     /**
-     * @since 1.1.0.0
+     * @since 1.3.0.0
      */
     @Override
     protected boolean checkPresence(Elements presenceElements) {

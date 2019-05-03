@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.services.services.discounts;
+package com.mixram.telegram.bot.services.services.discounts.v2;
 
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 /**
- * @author mixram on 2019-04-10.
- * @since 0.1.2.0
+ * @author mixram on 2019-05-03.
+ * @since 1.4.2.0
  */
 @Primary
 @Log4j2
@@ -83,7 +83,7 @@ public class DiscountsOn3DPlasticDataComponent implements Module3DPlasticDataSea
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
-     * @since 0.2.0.0
+     * @since 1.4.2.0
      */
     private Data3DPlastic doSearch(Shop3D shop) {
         switch (shop) {
