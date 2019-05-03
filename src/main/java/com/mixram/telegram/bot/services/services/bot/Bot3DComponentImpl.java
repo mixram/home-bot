@@ -9,6 +9,7 @@ import com.mixram.telegram.bot.services.domain.enums.Command;
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.domain.enums.WorkType;
+import com.mixram.telegram.bot.services.modules.DiscountsOn3DPlasticModule;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -60,8 +62,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String NO_DISCOUNTS = "telegram.bot.message.no-discounts";
     private static final List<String> MISUNDERSTANDING_MESSAGES = ImmutableList.of(
             "telegram.bot.message.misunderstanding-1",
-            "telegram.bot.message..misunderstanding-2",
-            "telegram.bot.message..misunderstanding-3",
+            "telegram.bot.message.misunderstanding-2",
+            "telegram.bot.message.misunderstanding-3",
             "telegram.bot.message..misunderstanding-4"
     );
     private static final String NO_PRIVATE_CHAT_MESSAGE = "telegram.bot.message.no-private-chat";
@@ -77,6 +79,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
     private static final String SHORT_MESSAGE_LEGEND_MESSAGE = "telegram.bot.message.short-message-legend";
     private static final String NEW_CHAT_MEMBERS_HALLOW_MESSAGE = "telegram.bot.message.new-chat-members-hellow";
+    private static final String VERSION_UPDATE_MESSAGE = "telegram.bot.message.version-info";
 
     private final Integer maxQuantity;
     private final Random random;
@@ -85,6 +88,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final String adminEmail;
     private final String fleaMarket;
     private final String pinnedMessage;
+    private final boolean versionInform;
+    private final Set<String> chatsIds;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -113,6 +118,21 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class PlasticPresenceDto {
+
+        private PlasticPresenceState presenceState;
+        private String mainUrl;
+
+        @Override
+        public String toString() {
+            return JsonUtil.toJson(this);
+        }
+    }
+
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
@@ -124,6 +144,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.admin-email}") String adminEmail,
                               @Value("${bot.settings.flea-market}") String fleaMarket,
                               @Value("${bot.settings.pinned-message}") String pinnedMessage,
+                              @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
+                              @Value("${bot.settings.work-with-groups}") String chatsIds,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
@@ -134,6 +156,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.adminEmail = adminEmail;
         this.fleaMarket = fleaMarket;
         this.pinnedMessage = pinnedMessage;
+        this.versionInform = versionInform;
+        this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
@@ -141,6 +165,27 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.messageSource = messageSource;
 
         this.random = new Random();
+    }
+
+    @PostConstruct
+    public void init() {
+        if (!versionInform) {
+            log.info("Reminder about version updates is switched off!");
+
+            return;
+        }
+        log.info("{}#remindVersion() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
+
+        try {
+            String message = messageSource.getMessage(VERSION_UPDATE_MESSAGE, META.DEFAULT_LOCALE);
+            MessageData data = MessageData.builder()
+                                          .message(message)
+                                          .build();
+
+            chatsIds.forEach(c -> communicationComponent.sendMessageToChat(Long.valueOf(c), data));
+        } catch (Exception ex) {
+            log.warn("", ex);
+        }
     }
 
 
@@ -184,6 +229,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         infoAdmin(update);
+
+        //        if (isPrivate(message.getChat().getType())) {
+        //            saveNewUser();
+        //        }
 
         return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType(), locale);
     }
@@ -474,8 +523,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                  Locale locale) {
         Validate.notNull(command, "Command is not specified!");
 
-        //TODO: private bot should answer only to "tet-a-tet" questions + only to allowed commands
-
         switch (workType) {
             case G:
                 if (Command.INFO == command) {
@@ -582,30 +629,24 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                        //                       .filter(ParseData :: isInStock)
                        .collect(Collectors.groupingBy(ParseData :: getType, HashMap ::new,
                                                       Collectors.toCollection(ArrayList ::new)));
-        Map<PlasticType, PlasticPresenceState> discountsState =
+        Map<PlasticType, PlasticPresenceDto> discountsState =
                 byName.entrySet().stream()
                       .collect(Collectors.toMap(Map.Entry :: getKey,
                                                 e -> definePlasticState(e.getValue())));
 
         if (onlyDiscounts) {
             discountsState = discountsState.entrySet().stream()
-                                           .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue())
+                                           .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue().getPresenceState())
                                            .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
         }
 
         StringBuilder answer = new StringBuilder();
         discountsState.entrySet().stream()
-                      .sorted(Comparator.comparing(Map.Entry :: getValue))
-                      .forEach(s -> {
-                          answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale,
-                                                                 alignText(s.getKey().getName() + ":"),
-                                                                 getDiscountText(s.getValue())))
-                          //TODO: link need to be added not by appender, but into SHORT_DISCOUNT_PART_MESSAGE!!!
-                          //                    .append("<a href=\"").append("https://www.ebay.com").append("\">")
-                          //                    .append("🔗")
-                          //                    .append("</a>")
-                          ;
-                      });
+                      .sorted(Comparator.comparing(o -> o.getValue().getPresenceState()))
+                      .forEach(s -> answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale,
+                                                                           alignText(s.getKey().getName() + ":"),
+                                                                           getDiscountText(s.getValue().getPresenceState()),
+                                                                           s.getValue().getMainUrl())));
 
         return answer.toString();
     }
@@ -712,17 +753,23 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private PlasticPresenceState definePlasticState(List<ParseData> data) {
+    private PlasticPresenceDto definePlasticState(List<ParseData> data) {
         Set<PlasticPresenceState> states = new HashSet<>(PlasticPresenceState.values().length);
         data.forEach(d -> states.add(plasticState(d)));
 
+        PlasticPresenceState state;
         if (states.contains(PlasticPresenceState.DISCOUNT)) {
-            return PlasticPresenceState.DISCOUNT;
+            state = PlasticPresenceState.DISCOUNT;
         } else if (states.contains(PlasticPresenceState.IN_STOCK)) {
-            return PlasticPresenceState.IN_STOCK;
+            state = PlasticPresenceState.IN_STOCK;
         } else {
-            return PlasticPresenceState.NOT_IN_STOCK;
+            state = PlasticPresenceState.NOT_IN_STOCK;
         }
+
+        return PlasticPresenceDto.builder()
+                                 .presenceState(state)
+                                 .mainUrl(data.get(0).getCommonUrl())
+                                 .build();
     }
 
     /**

@@ -41,6 +41,10 @@ public enum PlasticType {
      */
     ABS_P("ABS Premium"),
     /**
+     * ABS engineering.
+     */
+    ABS_E("ABS-ENGIN"),
+    /**
      * PLA.
      */
     PLA("PLA"),
@@ -115,11 +119,15 @@ public enum PlasticType {
     /**
      * Substandard.
      */
-    SUBSTANDARD("Уценка"),
+    SUBSTANDARD("Substandard"),
     /**
      * Composite.
      */
-    COMPO("Composite");
+    COMPO("Composite"),
+    /**
+     * Other.
+     */
+    OTHER("Other");
 
     @Getter
     String name;

@@ -45,7 +45,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
     private final Module3DPlasticDataSearcher searcher;
 
     private final Set<String> chatsIds;
-    private final boolean enableNewDscountsReminder;
+    private final boolean enableNewDiscountsReminder;
 
     // </editor-fold>
 
@@ -54,7 +54,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
     @Autowired
     public DiscountsReminderImpl(
             @Value("${bot.settings.work-with-groups}") String chatsIds,
-            @Value("${bot.settings.scheduler.reminders.new-discount.enable}") boolean enableNewDscountsReminder,
+            @Value("${bot.settings.scheduler.reminders.new-discount.enable}") boolean enableNewDiscountsReminder,
             @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
             Bot3DComponentImpl bot3DComponentImpl,
             TelegramAPICommunicationComponent communicationComponent,
@@ -65,7 +65,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
         this.searcher = searcher;
 
         this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
-        this.enableNewDscountsReminder = enableNewDscountsReminder;
+        this.enableNewDiscountsReminder = enableNewDiscountsReminder;
     }
 
     // </editor-fold>
@@ -83,8 +83,10 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     @Override
     public void discount() {
-        if (!enableNewDscountsReminder) {
+        if (!enableNewDiscountsReminder) {
             log.info("Reminder about new discounts is switched off!");
+
+            return;
         }
         log.info("{}#discount() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
 

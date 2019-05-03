@@ -63,6 +63,7 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
                         data.setProductSalePrice(parseSalePrice(plastic));
                         data.setProductName(parseProductName(plastic));
                         data.setProductUrl(parseProductUrl(plastic));
+                        data.setCommonUrl(parseData.getCommonUrl());
                         data.setProductDiscountPercent(parseProductDiscountPercent(plastic));
                         data.setInStock(parseInStock(plastic));
 
