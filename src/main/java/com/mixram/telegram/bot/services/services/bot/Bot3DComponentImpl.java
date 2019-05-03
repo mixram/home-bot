@@ -218,8 +218,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                       noDataText, locale);
 
             if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
-                builder.append(messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shop.getName(),
-                                                        messageToSendStringTemp));
+                builder.append(
+                        messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, plastic.getData().get(0).getShopUrl(),
+                                                 shop.getName(), messageToSendStringTemp));
             }
         }
 
