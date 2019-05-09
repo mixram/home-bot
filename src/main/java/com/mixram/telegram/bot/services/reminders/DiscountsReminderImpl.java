@@ -108,7 +108,17 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                         newPlastics.stream()
                                    .filter(np -> {
                                        if (Shop3D.SHOP_MONOFILAMENT == shop && np.getProductDiscountPercent() != null) {
-                                           return true;
+                                           ParseData pl = oldPlastics.stream()
+                                                                     .filter(op -> np.getProductUrl().equals(
+                                                                             op.getProductUrl()))
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                           if (pl == null || pl.getProductDiscountPercent() == null) {
+                                               return true;
+                                           }
+
+                                           return np.getProductDiscountPercent() != null && np.getProductDiscountPercent().compareTo(
+                                                   pl.getProductDiscountPercent()) < 0;
                                        } else if (np.getProductOldPrice() != null) {
                                            ParseData pl = oldPlastics.stream()
                                                                      .filter(op -> np.getProductUrl().equals(
