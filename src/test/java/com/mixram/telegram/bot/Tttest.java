@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot;
 
-import java.math.BigDecimal;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-04-13.
@@ -9,23 +10,24 @@ import java.math.BigDecimal;
 public class Tttest {
 
     public static void main(String[] args) {
-        BigDecimal test1 = new BigDecimal("-1");
-        BigDecimal test2 = new BigDecimal("1");
-        BigDecimal test3 = new BigDecimal("0");
+        String test1 = "ere";
+        String test2 = "er4e";
+        String test3 = "от 450 грн";
+        String test4 = "32грн";
+        String test5 = "от 50 до 30 грн";
 
-        System.out.println("1: " + byModule(test1));
-        System.out.println("2: " + byModule(test2));
-        System.out.println("3: " + byModule(test3));
-    }
+        final Pattern pattern = Pattern.compile("\\d+");
 
-    private static BigDecimal byModule(BigDecimal dec) {
-        //        BigDecimal result;
-        //        if (signum < 0) {
-        //            result = dec.negate();
-        //        } else {
-        //            result = dec;
-        //        }
+        final Matcher matcher1 = pattern.matcher(test1);
+        final Matcher matcher2 = pattern.matcher(test2);
+        final Matcher matcher3 = pattern.matcher(test3);
+        final Matcher matcher4 = pattern.matcher(test4);
+        final Matcher matcher5 = pattern.matcher(test5);
 
-        return dec.signum() < 0 ? dec.negate() : dec;
+        System.out.println("1: " + (matcher1.find() ? matcher1.group(0) : null));
+        System.out.println("2: " + (matcher2.find() ? matcher2.group(0) : null));
+        System.out.println("3: " + (matcher3.find() ? matcher3.group(0) : null));
+        System.out.println("4: " + (matcher4.find() ? matcher4.group(0) : null));
+        System.out.println("5: " + (matcher5.find() ? matcher5.group(0) : null));
     }
 }

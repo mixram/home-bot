@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.services.reminders;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.DiscountsListener;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Command;
@@ -91,41 +92,48 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
         log.info("{}#discount() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
 
         Map<Shop3D, Data3DPlastic> oldPlasticsData = getOldPlastics();
-        if (oldPlasticsData == null) {
-            log.info("No old data about plastics - can not calculate discounts.");
-
-            return;
-        }
-
         Map<Shop3D, Data3DPlastic> newPlasticsData = getPlastics();
-        if (newPlasticsData == null) {
-            log.info("No new data about plastics - can not calculate discounts.");
-
-            return;
-        }
 
         try {
             Map<Shop3D, List<ParseData>> newPlasticsWithDMap = new HashMap<>(Shop3D.values().length);
             for (Shop3D shop : Shop3D.values()) {
                 Data3DPlastic oldPlasticHolder = oldPlasticsData.get(shop);
                 Data3DPlastic newPlasticHolder = newPlasticsData.get(shop);
+                List<ParseData> oldPlastics = oldPlasticHolder == null || oldPlasticHolder.getData() == null ?
+                                              Lists.newArrayListWithExpectedSize(0) : oldPlasticHolder.getData();
+                List<ParseData> newPlastics = newPlasticHolder == null || newPlasticHolder.getData() == null ?
+                                              Lists.newArrayListWithExpectedSize(0) : newPlasticHolder.getData();
 
-                List<ParseData> oldPlastics = oldPlasticHolder.getData();
-                List<ParseData> newPlastics = newPlasticHolder.getData();
                 List<ParseData> newPlasticsWithD =
                         newPlastics.stream()
-                                   .filter(np -> np.getProductOldPrice() != null)
                                    .filter(np -> {
-                                       ParseData pl = oldPlastics.stream()
-                                                                 .filter(op -> np.getProductUrl().equals(op.getProductUrl()))
-                                                                 .findFirst()
-                                                                 .orElse(null);
-                                       if (pl == null || pl.getProductOldPrice() == null) {
-                                           return true;
+                                       if (Shop3D.SHOP_MONOFILAMENT == shop && np.getProductDiscountPercent() != null) {
+                                           ParseData pl = oldPlastics.stream()
+                                                                     .filter(op -> np.getProductUrl().equals(
+                                                                             op.getProductUrl()))
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                           if (pl == null || pl.getProductDiscountPercent() == null) {
+                                               return true;
+                                           }
+
+                                           return np.getProductDiscountPercent() != null && np.getProductDiscountPercent().compareTo(
+                                                   pl.getProductDiscountPercent()) < 0;
+                                       } else if (np.getProductOldPrice() != null) {
+                                           ParseData pl = oldPlastics.stream()
+                                                                     .filter(op -> np.getProductUrl().equals(
+                                                                             op.getProductUrl()))
+                                                                     .findFirst()
+                                                                     .orElse(null);
+                                           if (pl == null || pl.getProductOldPrice() == null) {
+                                               return true;
+                                           }
+
+                                           return np.getProductSalePrice() != null && np.getProductSalePrice().compareTo(
+                                                   pl.getProductSalePrice()) < 0;
                                        }
 
-                                       return np.getProductSalePrice() != null && np.getProductSalePrice().compareTo(
-                                               pl.getProductSalePrice()) < 0;
+                                       return false;
 
                                    })
                                    .collect(Collectors.toList());
@@ -138,6 +146,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
             }
 
             if (newPlasticsWithDMap.isEmpty()) {
+                log.info("No new discounts to inform about");
+
                 return;
             }
 
@@ -151,7 +161,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                                                                                    true, true, META.DEFAULT_LOCALE);
                 builder
                         .append(messageSource.getMessage(Bot3DComponentImpl.SHOP_MESSAGE_PART_MESSAGE, META.DEFAULT_LOCALE,
-                                                         k.getName(), mess));
+                                                         k.getUrl(), k.getName(), mess));
             });
 
             doSendToChats(NEW_DISCOUNTS_AVAILABLE_MESSAGE, builder.toString(), META.DEFAULT_LOCALE);

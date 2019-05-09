@@ -119,7 +119,7 @@ public enum PlasticType {
     /**
      * Substandard.
      */
-    SUBSTANDARD("Substandard"),
+    SUBSTANDARD("Sale"),
     /**
      * Composite.
      */
