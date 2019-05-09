@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.services.services.discounts.v2;
+package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;

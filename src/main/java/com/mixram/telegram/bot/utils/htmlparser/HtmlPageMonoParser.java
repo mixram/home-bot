@@ -1,8 +1,8 @@
-package com.mixram.telegram.bot.utils.htmlparser.v2;
+package com.mixram.telegram.bot.utils.htmlparser;
 
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettings;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettings;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Attributes;

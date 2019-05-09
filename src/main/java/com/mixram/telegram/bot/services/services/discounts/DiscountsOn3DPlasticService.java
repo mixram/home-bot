@@ -1,10 +1,10 @@
-package com.mixram.telegram.bot.services.services.discounts.v2;
+package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
-import com.mixram.telegram.bot.utils.htmlparser.v2.HtmlPageParser;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettings;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettingsHolder;
+import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettings;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettingsHolder;
 import lombok.extern.log4j.Log4j2;
 
 import java.time.LocalDateTime;

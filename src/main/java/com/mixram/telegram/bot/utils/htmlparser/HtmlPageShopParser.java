@@ -1,15 +1,17 @@
-package com.mixram.telegram.bot.utils.htmlparser.v2;
+package com.mixram.telegram.bot.utils.htmlparser;
 
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettings;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettings;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -107,10 +109,9 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     protected abstract boolean parseInStock(Element plastic);
 
-    protected BigDecimal byModule(BigDecimal dec) {
-        return dec.signum() < 0 ? dec.negate() : dec;
-    }
-
+    /**
+     * @since 1.4.3.0
+     */
     protected BigDecimal parsePrice(String selectorName,
                                     Element plastic) {
         BigDecimal price = null;
@@ -124,6 +125,83 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
         }
 
         return price;
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    protected String doParseProductName(Element plastic,
+                                        String productNameSelectorName) {
+        String name = null;
+
+        Element element = plastic.selectFirst(productNameSelectorName);
+        if (element != null) {
+            name = element.text();
+        }
+
+        return name;
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    protected String parseProductWithSelectorAndAttr(Element plastic,
+                                                     String productNameSelectorName,
+                                                     String productNameHrefAttrName) {
+        String data = null;
+
+        Element element = plastic.selectFirst(productNameSelectorName);
+        if (element != null) {
+            Element dataAttr = element.getElementsByAttribute(productNameHrefAttrName).first();
+            if (dataAttr != null) {
+                data = dataAttr.attr(productNameHrefAttrName);
+            }
+        }
+
+        return StringUtils.isBlank(data) ? null : data;
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    protected BigDecimal doParseProductDiscountPercent(Element plastic) {
+        BigDecimal percent = null;
+
+        BigDecimal oldPrice = parseOldPrice(plastic);
+        BigDecimal salePrice = parseSalePrice(plastic);
+        if (oldPrice != null && salePrice != null) {
+            BigDecimal perc100 = new BigDecimal(100);
+            percent = byModule(salePrice
+                                       .multiply(perc100)
+                                       .divide(oldPrice, 1, RoundingMode.HALF_UP)
+                                       .subtract(perc100));
+        }
+
+        return percent;
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    protected boolean doParseInStock(Element plastic,
+                                     String productAvailableClassName,
+                                     String productAvailableTextName) {
+        Elements elements = plastic.getElementsByClass(productAvailableClassName);
+        if (!elements.isEmpty()) {
+            Pattern pattern = Pattern.compile(productAvailableTextName.toUpperCase());
+            Matcher matcher = pattern.matcher(elements.first().text().trim().toUpperCase());
+
+            return matcher.matches();
+        }
+
+        return false;
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    private BigDecimal byModule(BigDecimal dec) {
+        return dec.signum() < 0 ? dec.negate() : dec;
     }
 
     // </editor-fold>

@@ -6,16 +6,15 @@ import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
- * @author mixram on 2019-03-29.
- * @since 0.1.1.0
- * @deprecated legacy since 1.4.2.0, use 'v2' instead.
+ * @author mixram on 2019-05-03.
+ * @since 1.4.2.0
  */
-@Deprecated
 @Log4j2
-//@Component
-public class DiscountsOn3DPlasticDataCacheComponentLegacy implements Module3DPlasticDataSearcher {
+@Component
+public class DiscountsOn3DPlasticDataCacheComponent implements Module3DPlasticDataSearcher {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -26,7 +25,7 @@ public class DiscountsOn3DPlasticDataCacheComponentLegacy implements Module3DPla
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public DiscountsOn3DPlasticDataCacheComponentLegacy(RedisTemplateHelper redisTemplate) {
+    public DiscountsOn3DPlasticDataCacheComponent(RedisTemplateHelper redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

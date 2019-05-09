@@ -1,4 +1,4 @@
-package com.mixram.telegram.bot.utils.htmlparser.v2.entity;
+package com.mixram.telegram.bot.utils.htmlparser.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;

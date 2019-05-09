@@ -3,12 +3,10 @@ package com.mixram.telegram.bot.services.services.discounts;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 
 /**
- * @author mixram on 2019-04-15.
- * @since 0.2.0.0
- * @deprecated legacy since 1.4.2.0, use 'v2' instead.
+ * @author mixram on 2019-05-03.
+ * @since 1.4.2.0
  */
-@Deprecated
-public interface DiscountsOnPlasticServiceLegacy {
+public interface DiscountsOnPlasticService {
 
     Data3DPlastic search();
 }

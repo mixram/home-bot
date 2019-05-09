@@ -18,7 +18,7 @@ import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,9 +1,9 @@
-package com.mixram.telegram.bot.services.services.discounts.v2;
+package com.mixram.telegram.bot.services.services.discounts;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.v2.HtmlPageParser;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettingsHolder;
+import com.mixram.telegram.bot.utils.htmlparser.HtmlPageParser;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettingsHolder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
  */
 @Log4j2
 @Service
-public class DiscountsOn3DPlasticU3DFService extends DiscountsOn3DPlasticService {
+public class DiscountsOn3DPlastic3DUAService extends DiscountsOn3DPlasticService {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
@@ -27,9 +27,9 @@ public class DiscountsOn3DPlasticU3DFService extends DiscountsOn3DPlasticService
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public DiscountsOn3DPlasticU3DFService(@Value("${parser.u3df.settings}") String settings,
-                                           @Value("${parser.u3df.time-to-wait-till-parse-new-url}") long waitTime,
-                                           @Qualifier("htmlPageU3DFParser") HtmlPageParser parser) {
+    public DiscountsOn3DPlastic3DUAService(@Value("${parser.3dua.settings}") String settings,
+                                           @Value("${parser.3dua.time-to-wait-till-parse-new-url}") long waitTime,
+                                           @Qualifier("htmlPage3DUAParser") HtmlPageParser parser) {
         super(JsonUtil.fromJson(settings, ParseDataSettingsHolder.class), waitTime, parser);
     }
 

@@ -14,7 +14,7 @@ import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicatio
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

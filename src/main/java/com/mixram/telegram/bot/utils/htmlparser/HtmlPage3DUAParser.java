@@ -1,21 +1,16 @@
-package com.mixram.telegram.bot.utils.htmlparser.v2;
+package com.mixram.telegram.bot.utils.htmlparser;
 
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettings;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettings;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-05-03.
@@ -125,19 +120,7 @@ public class HtmlPage3DUAParser extends HtmlPageShopParser {
      */
     @Override
     protected BigDecimal parseProductDiscountPercent(Element plastic) {
-        BigDecimal percent = null;
-
-        BigDecimal oldPrice = parseOldPrice(plastic);
-        BigDecimal salePrice = parseSalePrice(plastic);
-        if (oldPrice != null && salePrice != null) {
-            BigDecimal perc100 = new BigDecimal(100);
-            percent = super.byModule(salePrice
-                                             .multiply(perc100)
-                                             .divide(oldPrice, 1, RoundingMode.HALF_UP)
-                                             .subtract(perc100));
-        }
-
-        return percent;
+        return super.doParseProductDiscountPercent(plastic);
     }
 
     /**
@@ -145,32 +128,7 @@ public class HtmlPage3DUAParser extends HtmlPageShopParser {
      */
     @Override
     protected boolean parseInStock(Element plastic) {
-        Elements elements = plastic.getElementsByClass(productAvailableClassName);
-        if (!elements.isEmpty()) {
-            Pattern pattern = Pattern.compile(productAvailableTextName.toUpperCase());
-            Matcher matcher = pattern.matcher(elements.first().text().trim().toUpperCase());
-
-            return matcher.matches();
-        }
-
-        return false;
-    }
-
-    /**
-     * @since 1.4.2.0
-     */
-    @Deprecated
-    private BigDecimal parsePriceV1(String selectorName,
-                                    Element plastic) {
-        BigDecimal price = null;
-
-        Element element = plastic.selectFirst(selectorName);
-        if (element != null) {
-            String sumString = element.text().replace(",", ".");
-            price = new BigDecimal(sumString);
-        }
-
-        return price;
+        return super.doParseInStock(plastic, productAvailableClassName, productAvailableTextName);
     }
 
     /**
@@ -178,17 +136,7 @@ public class HtmlPage3DUAParser extends HtmlPageShopParser {
      */
     private String parseProductData(String selectorName,
                                     Element plastic) {
-        String data = null;
-
-        Element element = plastic.selectFirst(productNameSelectorName);
-        if (element != null) {
-            Element attrElement = element.getElementsByAttribute(selectorName).first();
-            if (attrElement != null) {
-                data = attrElement.attr(selectorName);
-            }
-        }
-
-        return StringUtils.isBlank(data) ? null : data;
+        return super.parseProductWithSelectorAndAttr(plastic, productNameSelectorName, selectorName);
     }
 
     // </editor-fold>

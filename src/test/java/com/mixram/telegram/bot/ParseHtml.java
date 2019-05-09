@@ -2,7 +2,7 @@ package com.mixram.telegram.bot;
 
 import com.mixram.telegram.bot.services.domain.enums.PlasticType;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;

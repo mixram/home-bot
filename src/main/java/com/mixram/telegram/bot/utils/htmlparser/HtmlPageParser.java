@@ -1,7 +1,7 @@
-package com.mixram.telegram.bot.utils.htmlparser.v2;
+package com.mixram.telegram.bot.utils.htmlparser;
 
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseData;
-import com.mixram.telegram.bot.utils.htmlparser.v2.entity.ParseDataSettings;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
+import com.mixram.telegram.bot.utils.htmlparser.entity.ParseDataSettings;
 
 import java.util.List;
 
