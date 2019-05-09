@@ -12,6 +12,8 @@ import org.jsoup.select.Elements;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-05-02.
@@ -21,6 +23,8 @@ import java.util.List;
 abstract class HtmlPageShopParser implements HtmlPageParser {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
+
+    private final Pattern patternNumeric = Pattern.compile("\\d+");
 
     private final String mainElementClassName;
 
@@ -105,6 +109,21 @@ abstract class HtmlPageShopParser implements HtmlPageParser {
 
     protected BigDecimal byModule(BigDecimal dec) {
         return dec.signum() < 0 ? dec.negate() : dec;
+    }
+
+    protected BigDecimal parsePrice(String selectorName,
+                                    Element plastic) {
+        BigDecimal price = null;
+
+        Element element = plastic.selectFirst(selectorName);
+        if (element != null) {
+            Matcher matcher = patternNumeric.matcher(element.text());
+            String matched = matcher.find() ? matcher.group(0) : null;
+
+            price = matched == null ? null : new BigDecimal(matched);
+        }
+
+        return price;
     }
 
     // </editor-fold>

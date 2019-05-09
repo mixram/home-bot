@@ -90,7 +90,7 @@ public class HtmlPage3DPlastParser extends HtmlPageShopParser {
      */
     @Override
     protected BigDecimal parseOldPrice(Element plastic) {
-        return parsePrice(oldPriceSelectorName, plastic);
+        return super.parsePrice(oldPriceSelectorName, plastic);
     }
 
     /**
@@ -98,7 +98,7 @@ public class HtmlPage3DPlastParser extends HtmlPageShopParser {
      */
     @Override
     protected BigDecimal parseSalePrice(Element plastic) {
-        return parsePrice(newPriceSelectorName, plastic);
+        return super.parsePrice(newPriceSelectorName, plastic);
     }
 
     /**
@@ -173,8 +173,9 @@ public class HtmlPage3DPlastParser extends HtmlPageShopParser {
     /**
      * @since 1.4.2.0
      */
-    private BigDecimal parsePrice(String selectorName,
-                                  Element plastic) {
+    @Deprecated
+    private BigDecimal parsePriceV1(String selectorName,
+                                    Element plastic) {
         BigDecimal price = null;
 
         Element element = plastic.selectFirst(selectorName);
@@ -190,6 +191,7 @@ public class HtmlPage3DPlastParser extends HtmlPageShopParser {
     /**
      * @since 1.4.2.0
      */
+    @Deprecated
     private String parseProductData(String selectorName,
                                     Element plastic) {
         String data = null;
