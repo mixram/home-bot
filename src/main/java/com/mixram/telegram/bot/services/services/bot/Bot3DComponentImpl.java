@@ -269,7 +269,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
                 String shopUrl = plastic.getData().isEmpty() ? null : plastic.getData().get(0).getShopUrl();
                 builder.append(
-                        messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shopUrl, shop.getName(),
+                        messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shopUrl, shop.getNameAlt(),
                                                  messageToSendStringTemp));
             }
         }
@@ -606,12 +606,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_3DUA:
             case D_MF:
             case D_U3DF:
+            case D_DAS:
+            case D_PLEX:
                 messageToSendString = full ? prepareAnswerText(plastic, shop, locale) :
                                       prepareAnswerTextShort(plastic, onlyDiscounts, locale);
 
                 break;
-            //            case D_DAS:
-            //            case D_PLEX:
             default:
                 messageToSendString = messageSource.getMessage(NO_WORK_WITH_SHOP, locale);
         }
@@ -642,12 +642,30 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         StringBuilder answer = new StringBuilder();
-        discountsState.entrySet().stream()
-                      .sorted(Comparator.comparing(o -> o.getValue().getPresenceState()))
-                      .forEach(s -> answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale,
-                                                                           alignText(s.getKey().getName() + ":"),
-                                                                           getDiscountText(s.getValue().getPresenceState()),
-                                                                           s.getValue().getMainUrl())));
+        //        discountsState.entrySet().stream()
+        //                      .sorted(Comparator.comparing(o -> o.getValue().getPresenceState()))
+        //                      .forEach(s -> answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale,
+        //                                                                           alignText(s.getKey().getName()),
+        //                                                                           getDiscountText(s.getValue().getPresenceState()),
+        //                                                                           s.getValue().getMainUrl())));
+
+        List<Map.Entry<PlasticType, PlasticPresenceDto>> entryList =
+                discountsState.entrySet().stream()
+                              .sorted(Comparator.comparing(o -> o.getValue().getPresenceState()))
+                              .collect(Collectors.toList());
+        for (int i = 0; i < entryList.size(); i++) {
+            Map.Entry<PlasticType, PlasticPresenceDto> entry = entryList.get(i);
+            answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale, alignText(entry.getKey().getName()),
+                                                   getDiscountText(entry.getValue().getPresenceState()),
+                                                   entry.getValue().getMainUrl()));
+            if (i == entryList.size() - 1) {
+                answer.append("\n");
+            } else if ((i + 1) % 2 == 0) {
+                answer.append("\n");
+            } else {
+                answer.append("   ");
+            }
+        }
 
         return answer.toString();
     }
@@ -656,7 +674,15 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.0.0.0
      */
     private String alignText(String text) {
-        return String.format("%-12s", text);
+        return String.format("%-5s", text);
+    }
+
+    /**
+     * @since 1.4.3.0
+     */
+    private String getWhitespaces(String text) {
+        String textWithWhitespaces = String.format("%-5s", text);
+        return textWithWhitespaces.contains(" ") ? textWithWhitespaces.substring(textWithWhitespaces.indexOf(" ")) : "";
     }
 
     /**

@@ -11,7 +11,7 @@ public enum PlasticType {
     /**
      * CoPET(PET-G).
      */
-    COPET("coPET"),
+    COPET("COPET"),
     /**
      * ABS.
      */
@@ -23,15 +23,15 @@ public enum PlasticType {
     /**
      * ABS ECO.
      */
-    ABS_ECO("ABS-ECO"),
+    ABS_ECO("ABS-E"),
     /**
      * ABS FLEX.
      */
-    ABS_FLEX("ABS-FLEX"),
+    ABS_FLEX("ABS-F"),
     /**
      * ABS PRO.
      */
-    ABS_PRO("ABS-PRO"),
+    ABS_PRO("ABS-P"),
     /**
      * ABS X.
      */
@@ -39,11 +39,11 @@ public enum PlasticType {
     /**
      * ABS Premium.
      */
-    ABS_P("ABS Premium"),
+    ABS_P("ABS_P"),
     /**
      * ABS engineering.
      */
-    ABS_E("ABS-ENGIN"),
+    ABS_E("ABS-E"),
     /**
      * PLA.
      */
@@ -59,7 +59,7 @@ public enum PlasticType {
     /**
      * FLEX.
      */
-    FLEX("Flex"),
+    FLEX("FLEX"),
     /**
      * SAN.
      */
@@ -71,7 +71,7 @@ public enum PlasticType {
     /**
      * PC+ABS.
      */
-    PC_ABS("PC+ABS"),
+    PC_ABS("PC+A"),
     /**
      * HIPS.
      */
@@ -79,11 +79,11 @@ public enum PlasticType {
     /**
      * Nylon.
      */
-    NYLON("Nylon"),
+    NYLON("NYLON"),
     /**
      * ELASTAN.
      */
-    ELASTAN("ELASTAN"),
+    ELASTAN("ELAST"),
     /**
      * PET.
      */
@@ -107,27 +107,27 @@ public enum PlasticType {
     /**
      * PLA CCF.
      */
-    PLA_CCF("PLA-CCF"),
+    PLA_CCF("PLA-F"),
     /**
      * PLA-CCU.
      */
-    PLA_CCU("PLA-CCU"),
+    PLA_CCU("PLA-U"),
     /**
      * PLA-СG+.
      */
-    PLA_CG_PLUS("PLA-CG+"),
+    PLA_CG_PLUS("PLA-G"),
     /**
      * Substandard.
      */
-    SUBSTANDARD("Sale"),
+    SUBSTANDARD("SALE"),
     /**
      * Composite.
      */
-    COMPO("Composite"),
+    COMPO("COMP"),
     /**
      * Other.
      */
-    OTHER("Other");
+    OTHER("OTHER");
 
     @Getter
     String name;

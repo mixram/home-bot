@@ -161,7 +161,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                                                                                    true, true, META.DEFAULT_LOCALE);
                 builder
                         .append(messageSource.getMessage(Bot3DComponentImpl.SHOP_MESSAGE_PART_MESSAGE, META.DEFAULT_LOCALE,
-                                                         k.getUrl(), k.getName(), mess));
+                                                         k.getUrl(), k.getNameAlt(), mess));
             });
 
             doSendToChats(NEW_DISCOUNTS_AVAILABLE_MESSAGE, builder.toString(), META.DEFAULT_LOCALE);

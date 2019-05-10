@@ -27,6 +27,8 @@ public class DiscountsOn3DPlasticDataComponent implements Module3DPlasticDataSea
     private final DiscountsOnPlasticService d3DUAService;
     private final DiscountsOnPlasticService dMonoService;
     private final DiscountsOnPlasticService dU3DFService;
+    private final DiscountsOnPlasticService dDasPlastService;
+    private final DiscountsOnPlasticService dPlexiwireService;
     private final RedisTemplateHelper redisTemplate;
 
     // </editor-fold>
@@ -39,11 +41,16 @@ public class DiscountsOn3DPlasticDataComponent implements Module3DPlasticDataSea
             @Qualifier("discountsOn3DPlastic3DUAService") DiscountsOnPlasticService d3DUAService,
             @Qualifier("discountsOn3DPlasticMonofilamentService") DiscountsOnPlasticService dMonoService,
             @Qualifier("discountsOn3DPlasticU3DFService") DiscountsOnPlasticService dU3DFService,
+            @Qualifier("discountsOn3DPlasticDasPlastService") DiscountsOnPlasticService dDasPlastService,
+            @Qualifier("discountsOn3DPlasticPlexiwireService") DiscountsOnPlasticService dPlexiwireService,
             RedisTemplateHelper redisTemplate) {
         this.d3DPlastService = d3DPlastService;
         this.d3DUAService = d3DUAService;
         this.dMonoService = dMonoService;
         this.dU3DFService = dU3DFService;
+        this.dDasPlastService = dDasPlastService;
+        this.dPlexiwireService = dPlexiwireService;
+
         this.redisTemplate = redisTemplate;
     }
 
@@ -95,11 +102,10 @@ public class DiscountsOn3DPlasticDataComponent implements Module3DPlasticDataSea
                 return dMonoService.search();
             case SHOP_U3DF:
                 return dU3DFService.search();
-            //            case SHOP_DASPLAST:
-            //            case SHOP_PLEXIWIRE:
-            //                //                throw new UnsupportedOperationException(String.format("The shop '%s' is has not been realized yet!", shop));
-            //                log.info("The shop {} is has not been realized yet!", () -> shop);
-            //                return null;
+            case SHOP_DASPLAST:
+                return dDasPlastService.search();
+            case SHOP_PLEXIWIRE:
+                return dPlexiwireService.search();
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected shop: %s!", shop));
         }
