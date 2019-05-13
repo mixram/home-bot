@@ -92,7 +92,7 @@ public class Plastic3dDataComponent implements PlasticApplier {
         List<String> urls = Optional.ofNullable(plastics).orElse(Maps.newHashMapWithExpectedSize(0)).values().stream()
                                     .map(Data3DPlastic :: getBrokenUrls)
                                     .flatMap(List :: stream)
-                                    .map(ParseData :: getProductUrl)
+                                    .map(ParseData :: getCommonUrl)
                                     .collect(Collectors.toList());
 
         if (urls.isEmpty()) {
