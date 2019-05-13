@@ -457,7 +457,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return;
             }
 
-            Locale locale = user == null ? META.DEFAULT_LOCALE : new Locale(user.getLanguageCode());
+            Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
+                            new Locale(user.getLanguageCode());
             MessageData messageData =
                     MessageData.builder()
                                .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,

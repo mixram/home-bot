@@ -26,7 +26,7 @@ public class ParseHtml {
         Document doc = Jsoup.connect(url)
                             .header("accept",
                                     "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-                            .header("accept-encoding", "gzip, deflate, br")
+                            //                            .header("accept-encoding", "gzip, deflate, br") //causes parse error in Monofilament
                             .header("accept-language", "en-US,en;q=0.9")
                             .header("cache-control", "max-age=0")
                             .header("user-agent",
