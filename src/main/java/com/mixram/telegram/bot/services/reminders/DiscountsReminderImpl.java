@@ -106,38 +106,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
                 List<ParseData> newPlasticsWithD =
                         newPlastics.stream()
-                                   .filter(np -> {
-                                       if (Shop3D.SHOP_MONOFILAMENT == shop && np.getProductDiscountPercent() != null) {
-                                           ParseData pl = oldPlastics.stream()
-                                                                     .filter(op -> np.getProductUrl().equals(
-                                                                             op.getProductUrl()))
-                                                                     .findFirst()
-                                                                     .orElse(null);
-                                           if (pl == null || pl.getProductDiscountPercent() == null) {
-                                               return true;
-                                           }
-
-                                           return np.getProductDiscountPercent() != null && np.getProductDiscountPercent().compareTo(
-                                                   pl.getProductDiscountPercent()) < 0;
-                                       } else if (np.getProductOldPrice() != null) {
-                                           ParseData pl = oldPlastics.stream()
-                                                                     .filter(op -> np.getProductUrl().equals(
-                                                                             op.getProductUrl()))
-                                                                     .findFirst()
-                                                                     .orElse(null);
-                                           if (pl == null || pl.getProductOldPrice() == null) {
-                                               return true;
-                                           }
-
-                                           return np.getProductSalePrice() != null && np.getProductSalePrice().compareTo(
-                                                   pl.getProductSalePrice()) < 0;
-                                       }
-
-                                       return false;
-
-                                   })
+                                   .filter(np -> hasDiscount(np, oldPlastics, shop))
                                    .collect(Collectors.toList());
-
                 if (CollectionUtils.isEmpty(newPlasticsWithD)) {
                     continue;
                 }
@@ -182,6 +152,39 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.4.3.2
+     */
+    private boolean hasDiscount(ParseData newPlastic,
+                                List<ParseData> oldPlastics,
+                                Shop3D shop) {
+        if (Shop3D.SHOP_MONOFILAMENT == shop && newPlastic.getProductDiscountPercent() != null) {
+            ParseData pl = oldPlastics.stream()
+                                      .filter(op -> newPlastic.getProductUrl().equals(op.getProductUrl()))
+                                      .findFirst()
+                                      .orElse(null);
+            if (pl == null || pl.getProductDiscountPercent() == null) {
+                return true;
+            }
+
+            return newPlastic.getProductDiscountPercent() != null && newPlastic.getProductDiscountPercent().compareTo(
+                    pl.getProductDiscountPercent()) < 0;
+        } else if (newPlastic.getProductOldPrice() != null) {
+            ParseData pl = oldPlastics.stream()
+                                      .filter(op -> newPlastic.getProductUrl().equals(op.getProductUrl()))
+                                      .findFirst()
+                                      .orElse(null);
+            if (pl == null || pl.getProductOldPrice() == null) {
+                return true;
+            }
+
+            return newPlastic.getProductSalePrice() != null && newPlastic.getProductSalePrice().compareTo(
+                    pl.getProductSalePrice()) < 0;
+        }
+
+        return false;
+    }
 
     /**
      * @since 1.4.1.0

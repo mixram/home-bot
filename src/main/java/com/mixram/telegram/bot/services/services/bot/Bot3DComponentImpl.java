@@ -33,6 +33,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -267,7 +269,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                       noDataText, locale);
 
             if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
-                String shopUrl = plastic.getData().isEmpty() ? null : plastic.getData().get(0).getShopUrl();
+                String shopUrl = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? null :
+                                 plastic.getData().get(0).getShopUrl();
                 builder.append(
                         messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shopUrl, shop.getNameAlt(),
                                                  messageToSendStringTemp));
@@ -457,6 +460,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return;
             }
 
+            LocalDateTime ldt;
+            try {
+                ldt = LocalDateTime.ofEpochSecond(message.getTimestamp(), 0, ZoneOffset.UTC);
+            } catch (Exception e) {
+                log.warn("Can not convert timestamp to LocalDateTime!", e);
+                ldt = LocalDateTime.now();
+            }
             Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
                             new Locale(user.getLanguageCode());
             MessageData messageData =
@@ -464,7 +474,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
                                                                  JsonUtil.toPrettyJson(message.getChat()),
                                                                  user == null ? "---" : JsonUtil.toPrettyJson(user),
-                                                                 message.getText()))
+                                                                 message.getText(), ldt))
                                .build();
 
             communicationComponent.sendMessageToAdmin(messageData);
