@@ -33,6 +33,10 @@ public enum PlasticType {
      */
     ABS_PRO("ABS-P"),
     /**
+     * MBS.
+     */
+    MBS("MBS"),
+    /**
      * ABS X.
      */
     ABS_X("ABS-X"),
@@ -96,6 +100,10 @@ public enum PlasticType {
      * PA.
      */
     PA("PA"),
+    /**
+     * PA+.
+     */
+    PA_PLUS("PA+"),
     /**
      * PBT.
      */
