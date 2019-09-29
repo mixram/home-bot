@@ -13,6 +13,10 @@ public enum PlasticType {
      */
     COPET("COPET"),
     /**
+     * Eco CoPET(PET-G).
+     */
+    ECO_COPET("E_CPT"),
+    /**
      * ABS.
      */
     ABS("ABS"),
@@ -135,7 +139,11 @@ public enum PlasticType {
     /**
      * Other.
      */
-    OTHER("OTHER");
+    OTHER("OTHER"),
+    /**
+     * ReZin.
+     */
+    REZIN("REZIN");
 
     @Getter
     String name;
