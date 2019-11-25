@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot;
 
 import com.mixram.telegram.bot.utils.CustomMessageSource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,8 @@ import java.util.Locale;
  * @author mixram on 2019-04-26.
  * @since 1.4.1.0
  */
-@TestPropertySource("file:/Users/mixram/Documents/it/projects/universal-bot/configs/bootstrap.properties")
+@Ignore
+@TestPropertySource("file:/Users/mixram/Documents/Work/projects/universal-bot/configs/bootstrap.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class LocaleTest {
@@ -45,6 +47,8 @@ public class LocaleTest {
         //        System.out.println("1: " + message1);
         //        System.out.println("2: " + message2);
         //        System.out.println("3: " + message3);
+
+        System.out.println("OK --- " + new Object() {}.getClass().getEnclosingMethod().getName());
     }
 
 

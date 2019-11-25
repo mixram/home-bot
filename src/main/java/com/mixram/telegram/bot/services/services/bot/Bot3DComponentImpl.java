@@ -16,6 +16,7 @@ import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
+import com.mixram.telegram.bot.utils.DateTimeUtils;
 import com.mixram.telegram.bot.utils.META;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.PostConstruct;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
@@ -75,12 +75,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String INFO_ANSWER_MESSAGE = "telegram.bot.message.info-answer";
     private static final String INFO_ANSWER_ALL_MESSAGE = "telegram.bot.message.info-answer.all";
     private static final String USER_CALL_MESSAGE = "telegram.bot.message.user-call";
+    private static final String NEW_USER_MESSAGE = "telegram.bot.message.new-user";
     public static final String SHOP_MESSAGE_PART_MESSAGE = "telegram.bot.message.shop-message.part";
     private static final String SHORT_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.short.part";
     private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
     private static final String SHORT_MESSAGE_LEGEND_MESSAGE = "telegram.bot.message.short-message-legend";
-    private static final String NEW_CHAT_MEMBERS_HALLOW_MESSAGE = "telegram.bot.message.new-chat-members-hellow";
+    private static final String NEW_CHAT_MEMBERS_HELLO_MESSAGE = "telegram.bot.message.new-chat-members-hello";
     private static final String VERSION_UPDATE_MESSAGE = "telegram.bot.message.version-info";
 
     private final Integer maxQuantity;
@@ -214,6 +215,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         MessageData newChatMembersMessage = checkNewChatMembers(message, META.DEFAULT_LOCALE);
         if (newChatMembersMessage != null) {
+            infoAdmin(update);
+
             return newChatMembersMessage;
         }
 
@@ -295,11 +298,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData checkNewChatMembers(Message message,
                                             Locale locale) {
-        List<User> newChatMembers =
-                Optional.ofNullable(message.getNewChatMembers()).orElse(Lists.newArrayListWithExpectedSize(0)).stream()
-                        .filter(u -> !u.getIsBot())
-                        .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(newChatMembers)) {
+        List<User> newChatMembers = checkMessageForNewMembers(message);
+        if (newChatMembers == null) {
             return null;
         }
 
@@ -308,9 +308,21 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 u.getFirstName()).append("</a>").append(", "));
 
         return MessageData.builder()
-                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HALLOW_MESSAGE, locale, builder.toString(),
+                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, builder.toString(),
                                                             fleaMarket, pinnedMessage))
                           .build();
+    }
+
+    /**
+     * @since 1.6.1.1
+     */
+    private List<User> checkMessageForNewMembers(Message message) {
+        List<User> newChatMembers =
+                Optional.ofNullable(message.getNewChatMembers()).orElse(Lists.newArrayListWithExpectedSize(0)).stream()
+                        .filter(u -> !u.getIsBot())
+                        .collect(Collectors.toList());
+
+        return CollectionUtils.isEmpty(newChatMembers) ? null : newChatMembers;
     }
 
     /**
@@ -451,32 +463,39 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         try {
             Message message = update.getMessage();
 
+            List<User> users = checkMessageForNewMembers(message);
+
             User user = message.getUser();
-            if (user != null && communicationComponent.getAdminName().equals(user.getId().toString())) {
+            if (user != null && communicationComponent.getAdminName().equals(user.getId().toString()) && users == null) {
                 return;
             }
             Long adminName = message.getChat().getChatId();
-            if (communicationComponent.getAdminName().equals(adminName.toString())) {
+            if (communicationComponent.getAdminName().equals(adminName.toString()) && users == null) {
                 return;
             }
 
-            LocalDateTime ldt;
-            try {
-                ldt = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.getTimestamp()),
-                                              TimeZone.getDefault().toZoneId());
-            } catch (Exception e) {
-                log.warn("Can not convert timestamp to LocalDateTime!", e);
-                ldt = LocalDateTime.now();
-            }
+            LocalDateTime ldt = DateTimeUtils.getOperationDate(message.getTimestamp());
             Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
                             new Locale(user.getLanguageCode());
-            MessageData messageData =
-                    MessageData.builder()
-                               .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
-                                                                 JsonUtil.toPrettyJson(message.getChat()),
-                                                                 user == null ? "---" : JsonUtil.toPrettyJson(user),
-                                                                 message.getText(), ldt))
-                               .build();
+
+            MessageData messageData;
+            if (users == null) {
+                messageData =
+                        MessageData.builder()
+                                   .message(messageSource.getMessage(USER_CALL_MESSAGE, locale,
+                                                                     JsonUtil.toPrettyJson(message.getChat()),
+                                                                     user == null ? "---" : JsonUtil.toPrettyJson(user),
+                                                                     message.getText(), ldt))
+                                   .build();
+            } else {
+                messageData =
+                        MessageData.builder()
+                                   .message(messageSource.getMessage(NEW_USER_MESSAGE, locale,
+                                                                     JsonUtil.toPrettyJson(message.getChat()),
+                                                                     user == null ? "---" : JsonUtil.toPrettyJson(users),
+                                                                     ldt))
+                                   .build();
+            }
 
             communicationComponent.sendMessageToAdmin(messageData);
         } catch (Exception e) {
@@ -640,8 +659,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Map<PlasticType, List<ParseData>> byName =
                 plastic.getData().stream()
                        //                       .filter(ParseData :: isInStock)
-                       .collect(Collectors.groupingBy(ParseData :: getType, HashMap ::new,
-                                                      Collectors.toCollection(ArrayList ::new)));
+                       .collect(Collectors.groupingBy(ParseData :: getType, HashMap :: new,
+                                                      Collectors.toCollection(ArrayList :: new)));
         Map<PlasticType, PlasticPresenceDto> discountsState =
                 byName.entrySet().stream()
                       .collect(Collectors.toMap(Map.Entry :: getKey,
