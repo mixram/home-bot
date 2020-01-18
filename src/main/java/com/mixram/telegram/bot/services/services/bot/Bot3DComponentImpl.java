@@ -90,6 +90,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final List<Long> allowedGroups;
     private final String adminEmail;
     private final String fleaMarket;
+    private final String infoTable;
+    private final String wikiUrl;
     private final String pinnedMessage;
     private final boolean versionInform;
     private final Set<String> chatsIds;
@@ -146,6 +148,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.work-with-groups}") String allowedGroups,
                               @Value("${bot.settings.admin-email}") String adminEmail,
                               @Value("${bot.settings.flea-market}") String fleaMarket,
+                              @Value("${bot.settings.info-table}") String infoTable,
+                              @Value("${bot.settings.wiki-url}") String wikiUrl,
                               @Value("${bot.settings.pinned-message}") String pinnedMessage,
                               @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
                               @Value("${bot.settings.work-with-groups}") String chatsIds,
@@ -158,6 +162,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
         this.adminEmail = adminEmail;
         this.fleaMarket = fleaMarket;
+        this.infoTable = infoTable;
+        this.wikiUrl = wikiUrl;
         this.pinnedMessage = pinnedMessage;
         this.versionInform = versionInform;
         this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
@@ -205,8 +211,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return null;
         }
 
-        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
-                        new Locale(message.getUser().getLanguageCode());
+        //        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
+        //                        new Locale(message.getUser().getLanguageCode());
+        Locale locale = META.DEFAULT_LOCALE;
 
         MessageData workCheckMessage = checkMayWorkWith(message, locale);
         if (workCheckMessage != null) {
@@ -309,7 +316,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         return MessageData.builder()
                           .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, builder.toString(),
-                                                            fleaMarket, pinnedMessage))
+                                                            fleaMarket, infoTable, wikiUrl, pinnedMessage))
                           .build();
     }
 
@@ -424,8 +431,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswer(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, pinnedMessage,
-                                                            System.getProperty("product.version.full")))
+                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, infoTable, wikiUrl,
+                                                            pinnedMessage, System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -437,8 +444,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswerAll(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, pinnedMessage,
-                                                            System.getProperty("product.version.full")))
+                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, infoTable, wikiUrl,
+                                                            pinnedMessage, System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)

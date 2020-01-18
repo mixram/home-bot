@@ -3,7 +3,10 @@
 
     <Properties>
         <Property name="pattern1">%p %d{HH:mm:ss,SSS} [%t] %C: %m%n</Property>
-        <Property name="pattern2">[%-5level] [%d{HH:mm:ss.SSS}] [%25.25t] [%25.25c{1}:%-4L] - %m%n</Property>
+        <Property name="pattern2">%style{[%d{HH:mm:ss.SSS}]}{cyan} [%25.25c{1}:%-4L] - %highlight{%m}{FATAL=red blink,
+            ERROR=red, WARN=yellow bold, INFO=white, DEBUG=green bold, TRACE=blue} [%-5level]%n
+        </Property>
+        <Property name="pattern3">[%-5level] [%d{HH:mm:ss.SSS}] [%25.25t] [%25.25c{1}:%-4L] - %m%n</Property>
         <Property name="basePath">logs</Property>
     </Properties>
 
