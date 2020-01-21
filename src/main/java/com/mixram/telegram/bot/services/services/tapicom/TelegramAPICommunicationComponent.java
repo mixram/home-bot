@@ -91,6 +91,42 @@ public class TelegramAPICommunicationComponent {
         return services.getAdminName();
     }
 
+    /**
+     * @see TelegramAPICommunicationServices#kickUserFromChat(String, String)
+     * @since 1.7.0.0
+     */
+    public void kickUserFromGroup(String chatId,
+                                  String userId) {
+        Validate.notBlank(chatId, "Chat ID is not specified!");
+        Validate.notBlank(userId, "User ID is not specified!");
+
+        services.kickUserFromChat(chatId, userId);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#removeMessageFromChat(String, String)
+     * @since 1.7.0.0
+     */
+    public void removeMessageFromChat(String chatId,
+                                      String messageId) {
+        Validate.notBlank(chatId, "Chat ID is not specified!");
+        Validate.notBlank(messageId, "Message ID is not specified!");
+
+        services.removeMessageFromChat(chatId, messageId);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#unbanUserInChat(String, String)
+     * @since 1.7.0.0
+     */
+    public void unbanUserInChat(String chatId,
+                                String userId) {
+        Validate.notBlank(chatId, "Chat ID is not specified!");
+        Validate.notBlank(userId, "User ID is not specified!");
+
+        services.unbanUserInChat(chatId, userId);
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 

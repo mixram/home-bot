@@ -39,6 +39,15 @@ public class Update implements TelegramApiEntity {
      */
     @JsonProperty("message")
     private Message message;
+    /**
+     * This object represents an incoming callback query from a callback button in an inline keyboard.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#callbackquery">CallbackQuery</a>
+     * @since 1.7.0.0
+     */
+    @JsonProperty("callback_query")
+    private CallbackQuery callbackQuery;
 
     //TODO: to realize other response types
 

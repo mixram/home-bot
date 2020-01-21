@@ -9,5 +9,6 @@ import java.util.Locale;
 public final class META {
 
     public static final Locale DEFAULT_LOCALE = new Locale("uk");
+    public static final String NOT_A_BOT_TEXT = "i_am_real_man";
 
 }

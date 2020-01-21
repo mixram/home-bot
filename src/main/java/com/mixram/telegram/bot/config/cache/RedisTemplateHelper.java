@@ -2,12 +2,15 @@ package com.mixram.telegram.bot.config.cache;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.services.bot.entity.NewMemberTempData;
 import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 /**
  * @author mixram on 2019-04-14.
@@ -21,22 +24,27 @@ public class RedisTemplateHelper {
     private static final String PLASTIC_SHOP_PREFIX = "plastic_shop";
     private static final String PLASTIC_SHOP_OLD_PREFIX = "plastic_shop_old";
     private static final String STAT_PREFIX = "statistics";
+    private static final String NEW_MEMBER_PREFIX = "new_member";
 
     private final String prefix;
 
     private final RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic;
     private final RedisTemplate<String, StatData> redisTemplateStatData;
+    private final RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData;
 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public RedisTemplateHelper(@Qualifier("data3DPlasticRedisTemplate") RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic,
-                               @Qualifier("dataStatDataRedisTemplate") RedisTemplate<String, StatData> redisTemplateStatData,
-                               @Value("${spring.redis.prefix}") String prefix) {
+    public RedisTemplateHelper(
+            @Qualifier("data3DPlasticRedisTemplate") RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic,
+            @Qualifier("dataStatDataRedisTemplate") RedisTemplate<String, StatData> redisTemplateStatData,
+            @Qualifier("dataNewMemberTempDataRedisTemplate") RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData,
+            @Value("${spring.redis.prefix}") String prefix) {
         this.redisTemplate3DPlastic = redisTemplate3DPlastic;
         this.redisTemplateStatData = redisTemplateStatData;
+        this.redisTemplateNewMemberTempData = redisTemplateNewMemberTempData;
         this.prefix = prefix;
     }
 
@@ -154,6 +162,43 @@ public class RedisTemplateHelper {
      */
     public StatData getStatisticsFromRedis(String key) {
         return redisTemplateStatData.opsForValue().get(prepareKey(key, STAT_PREFIX));
+    }
+
+    /**
+     * To save new members temporary data in redis.
+     *
+     * @param data data to save.
+     * @param key  key to save with.
+     *
+     * @since 1.7.0.0
+     */
+    public void storeNewMembersTempDataToRedis(Map<String, NewMemberTempData> data,
+                                               String key) {
+        redisTemplateNewMemberTempData.opsForValue().set(prepareKey(key, NEW_MEMBER_PREFIX), data);
+    }
+
+    /**
+     * To delete new members temporary data from redis.
+     *
+     * @param key key to delete with.
+     *
+     * @since 1.3.0.0
+     */
+    public void deleteNewMembersTempDataFromRedis(String key) {
+        redisTemplateNewMemberTempData.delete(prepareKey(key, NEW_MEMBER_PREFIX));
+    }
+
+    /**
+     * To get new members temporary data from redis.
+     *
+     * @param key key to get with.
+     *
+     * @return data or null.
+     *
+     * @since 1.7.0.0
+     */
+    public Map<String, NewMemberTempData> getMembersTempDataFromRedis(String key) {
+        return redisTemplateNewMemberTempData.opsForValue().get(prepareKey(key, NEW_MEMBER_PREFIX));
     }
 
 

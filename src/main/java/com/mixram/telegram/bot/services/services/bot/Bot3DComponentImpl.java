@@ -11,6 +11,7 @@ import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.domain.enums.WorkType;
 import com.mixram.telegram.bot.services.modules.DiscountsOn3DPlasticModule;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
+import com.mixram.telegram.bot.services.services.antibot.AntiBot;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
@@ -95,11 +96,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final String pinnedMessage;
     private final boolean versionInform;
     private final Set<String> chatsIds;
+    private final boolean antiBotIsOn;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
     private final AsyncHelper asyncHelper;
     private final CustomMessageSource messageSource;
+    private final AntiBot antiBot;
 
 
     @Data
@@ -152,11 +155,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.wiki-url}") String wikiUrl,
                               @Value("${bot.settings.pinned-message}") String pinnedMessage,
                               @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
+                              @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
                               @Value("${bot.settings.work-with-groups}") String chatsIds,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
-                              CustomMessageSource messageSource) {
+                              CustomMessageSource messageSource,
+                              AntiBot antiBot) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
         this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
@@ -166,12 +171,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.wikiUrl = wikiUrl;
         this.pinnedMessage = pinnedMessage;
         this.versionInform = versionInform;
+        this.antiBotIsOn = antiBotIsOn;
         this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
         this.messageSource = messageSource;
+        this.antiBot = antiBot;
 
         this.random = new Random();
     }
@@ -197,12 +204,18 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
     }
 
-
     // </editor-fold>
 
     @Override
     public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
+
+        Locale locale = META.DEFAULT_LOCALE;
+
+        CallbackQuery callbackQuery = update.getCallbackQuery();
+        if (callbackQuery != null) {
+            return proceedCallBack(callbackQuery, locale);
+        }
 
         Message message = update.getMessage();
         if (message == null) {
@@ -213,7 +226,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         //        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
         //                        new Locale(message.getUser().getLanguageCode());
-        Locale locale = META.DEFAULT_LOCALE;
 
         MessageData workCheckMessage = checkMayWorkWith(message, locale);
         if (workCheckMessage != null) {
@@ -301,15 +313,63 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * @since 1.7.0.0
+     */
+    private MessageData proceedCallBack(CallbackQuery callbackQuery,
+                                        Locale locale) {
+        if (META.NOT_A_BOT_TEXT.equalsIgnoreCase(callbackQuery.getData())) {
+            //TODO: need to rebuild logic when "not_a_bot_text" will not be the one
+            antiBot.proceedCallBack(callbackQuery);
+
+            return welcomeNewChatMember(callbackQuery.getUser(), locale);
+        }
+
+        throw new UnsupportedOperationException(String.format("Unexpected callback data: '%s'!", callbackQuery.getData()));
+    }
+
+    /**
      * @since 1.4.1.0
      */
     private MessageData checkNewChatMembers(Message message,
                                             Locale locale) {
         List<User> newChatMembers = checkMessageForNewMembers(message);
-        if (newChatMembers == null) {
+        if (CollectionUtils.isEmpty(newChatMembers)) {
             return null;
         }
 
+        //TODO: need to rebuild in order to be able to check more then one new user at the same time
+        return antiBotIsOn && newChatMembers.size() == 1 && incomeByInviteLink(message.getUser(), newChatMembers.get(0)) ?
+               checkBotNewChatMembers(newChatMembers, message.getChat().getChatId(), message.getMessageId(), locale) :
+               welcomeNewChatMembers(newChatMembers, locale);
+    }
+
+    /**
+     * @since 1.7.0.0
+     */
+    private boolean incomeByInviteLink(User user,
+                                       User newUser) {
+        if (user == null || newUser == null) {
+            return true;
+        }
+
+        return user.getId().equals(newUser.getId());
+    }
+
+    /**
+     * @since 1.7.0.0
+     */
+    private MessageData checkBotNewChatMembers(List<User> newChatMembers,
+                                               Long chatId,
+                                               Long userIncomeMessageId,
+                                               Locale locale) {
+        return antiBot.checkUser(newChatMembers, chatId, userIncomeMessageId, locale);
+    }
+
+    /**
+     * @since 1.7.0.0
+     */
+    private MessageData welcomeNewChatMembers(List<User> newChatMembers,
+                                              Locale locale) {
         StringBuilder builder = new StringBuilder();
         newChatMembers.forEach(u -> builder.append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(
                 u.getFirstName()).append("</a>").append(", "));
@@ -317,6 +377,20 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         return MessageData.builder()
                           .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, builder.toString(),
                                                             fleaMarket, infoTable, wikiUrl, pinnedMessage))
+                          .build();
+    }
+
+    /**
+     * @since 1.7.0.0
+     */
+    private MessageData welcomeNewChatMember(User newChatMember,
+                                             Locale locale) {
+        String message = String.format("<a href=\"tg://user?id=%s\">%s</a>, ", newChatMember.getId(),
+                                       newChatMember.getFirstName());
+
+        return MessageData.builder()
+                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, message, fleaMarket,
+                                                            infoTable, wikiUrl, pinnedMessage))
                           .build();
     }
 

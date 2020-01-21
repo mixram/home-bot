@@ -26,6 +26,22 @@ public class SendMessage implements TelegramApiEntity {
     @JsonProperty("chat_id")
     private String chatId;
     /**
+     * Unique identifier of the target user (in case of kicking user).
+     */
+    @JsonProperty("user_id")
+    private String userId;
+    /**
+     * Unique identifier of the target message (in case of message deleting).
+     */
+    @JsonProperty("message_id")
+    private String messageId;
+    /**
+     * Date when the user will be unbanned, unix time. If user is banned for more than 366 days or less than 30 seconds
+     * from the current time they are considered to be banned forever.
+     */
+    @JsonProperty("until_date")
+    private Long untilDate;
+    /**
      * Text of the message to be sent.
      *
      * @since 0.1.3.0

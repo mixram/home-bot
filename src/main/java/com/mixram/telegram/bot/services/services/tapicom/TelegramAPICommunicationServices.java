@@ -19,6 +19,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,10 +40,14 @@ class TelegramAPICommunicationServices {
     private static final String GET_UPDATES_URL = "/getUpdates";
     private static final String SEND_MESSAGE_URL = "/sendMessage";
     private static final String LEAVE_CHAT_URL = "/leaveChat";
+    private static final String KICK_CHAT_MEMBER_URL = "/kickChatMember";
+    private static final String DELETE_MESSAGE_URL = "/deleteMessage";
+    private static final String UNBAN_CHAT_MEMBER_URL = "/unbanChatMember";
 
     private final String botName;
     private final String adminName;
     private final String mainUrlPart;
+    private final Integer secondsToBanUser;
 
     private final RestClient restClient;
     private final CustomMessageSource messageSource;
@@ -64,6 +70,7 @@ class TelegramAPICommunicationServices {
                                      @Value("${bot.settings.bot-token}") String botToken,
                                      @Value("${bot.settings.bot-name}") String botName,
                                      @Value("${bot.settings.admin-username}") String adminName,
+                                     @Value("${bot.settings.time-to-ban-user-after-kick}") Integer secondsToBanUser,
                                      CustomMessageSource messageSource,
                                      RestClient restClient) {
         restClient.setAnchorForLog(Bot3DLongPooling.class.getSimpleName());
@@ -73,6 +80,7 @@ class TelegramAPICommunicationServices {
         this.botName = botName;
         this.adminName = adminName;
         this.mainUrlPart = telegramUrl + "/bot" + botToken;
+        this.secondsToBanUser = secondsToBanUser;
     }
 
     // </editor-fold>
@@ -135,7 +143,7 @@ class TelegramAPICommunicationServices {
     protected void sendMessageToChat(Long chatId,
                                      MessageData messageData) {
         try {
-            log.debug("sendMessage => : chatId={}, messageData={}",
+            log.debug("sendMessageToChat => : chatId={}, messageData={}",
                       () -> chatId,
                       () -> messageData);
 
@@ -153,11 +161,8 @@ class TelegramAPICommunicationServices {
      * @since 0.1.3.0
      */
     protected void sendMessageToAdmin(MessageData message) {
-        Validate.notNull(message, "Message data for admin is not specified!");
-        Validate.notBlank(message.getMessage(), "Message for admin is not specified!");
-
         try {
-            log.debug("sendMessage => : messageData={}", () -> message);
+            log.debug("sendMessageToAdmin => : messageData={}", () -> message);
 
             doSendMessage(Long.valueOf(adminName), null, message);
 
@@ -198,7 +203,7 @@ class TelegramAPICommunicationServices {
             offset = updates.stream()
                             .map(Update :: getUpdateId)
                             .max(Comparator.naturalOrder())
-                            .map(AtomicLong ::new)
+                            .map(AtomicLong :: new)
                             .orElse(null);
 
             result = updatesHolder.getData();
@@ -244,6 +249,108 @@ class TelegramAPICommunicationServices {
         return adminName;
     }
 
+    /**
+     * To kick user from the chat.
+     *
+     * @param chatId chat ID.
+     * @param userId user ID.
+     *
+     * @since 1.7.0.0
+     */
+    protected void kickUserFromChat(String chatId,
+                                    String userId) {
+        try {
+            SendMessage sendMessage =
+                    SendMessage.builder()
+                               .chatId(chatId)
+                               .userId(userId)
+                               .untilDate(LocalDateTime.now()
+                                                       .plusSeconds(secondsToBanUser)
+                                                       .atZone(ZoneId.systemDefault()).toInstant()
+                                                       .getEpochSecond())
+                               .build();
+
+            String url = mainUrlPart + KICK_CHAT_MEMBER_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            log.debug("kickUserFromChat => message={}", () -> sendMessage);
+
+            Object answerResponse =
+                    restClient.post(url, headers.toSingleValueMap(), sendMessage, Object.class);
+            Validate.notNull(answerResponse, "Empty message!");
+
+            log.debug("kickUserFromChat ==> answer on message: {}", () -> answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    /**
+     * To unban user in chat.
+     *
+     * @param chatId chat ID.
+     * @param userId user ID.
+     *
+     * @since 1.7.0.0
+     */
+    protected void unbanUserInChat(String chatId,
+                                   String userId) {
+        try {
+            SendMessage sendMessage =
+                    SendMessage.builder()
+                               .chatId(chatId)
+                               .userId(userId)
+                               .build();
+
+            String url = mainUrlPart + UNBAN_CHAT_MEMBER_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            log.debug("unbanUserInChat => : message={}", () -> sendMessage);
+
+            Object answerResponse =
+                    restClient.post(url, headers.toSingleValueMap(), sendMessage, Object.class);
+            Validate.notNull(answerResponse, "Empty message!");
+
+            log.debug("unbanUserInChat ==> answer on message: {}", () -> answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    /**
+     * To delete message from the chat.
+     *
+     * @param chatId    chat ID.
+     * @param messageId message ID.
+     *
+     * @since 1.7.0.0
+     */
+    protected void removeMessageFromChat(String chatId,
+                                         String messageId) {
+        try {
+            SendMessage sendMessage = SendMessage.builder()
+                                                 .chatId(chatId)
+                                                 .messageId(messageId)
+                                                 .build();
+
+            String url = mainUrlPart + DELETE_MESSAGE_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            log.debug("removeMessageFromChat => message={}", () -> sendMessage);
+
+            Object answerResponse =
+                    restClient.post(url, headers.toSingleValueMap(), sendMessage, Object.class);
+            Validate.notNull(answerResponse, "Empty message!");
+
+            log.debug("removeMessageFromChat ==> answer on message: {}", () -> answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
@@ -281,6 +388,9 @@ class TelegramAPICommunicationServices {
     private SendMessageData createSendMessageData(Update update,
                                                   boolean userResponse) {
         Message mess = update.getMessage();
+        if (mess == null) {
+            mess = update.getCallbackQuery().getMessage();
+        }
 
         Long messageId = mess.getMessageId();
         Long chatId;
@@ -301,15 +411,17 @@ class TelegramAPICommunicationServices {
     private void doSendMessage(Long chatId,
                                Long messageId,
                                MessageData message) {
-        SendMessage.SendMessageBuilder builder = SendMessage.builder()
-                                                            .chatId(chatId.toString())
-                                                            .text(message.getMessage())
-                                                            .parseMode("HTML")
-                                                            .disableWebPagePreview(!message.isShowUrlPreview())
-                                                            .disableNotification(false);
+        SendMessage sendMessage = SendMessage.builder()
+                                             .chatId(chatId.toString())
+                                             .text(message.getMessage())
+                                             .replyMarkup(message.getReplyMarkup())
+                                             .parseMode("HTML")
+                                             .disableWebPagePreview(!message.isShowUrlPreview())
+                                             .disableNotification(false)
+                                             .build();
         if (message.isToResponse()) {
-            builder
-                    .replyToMessageId(messageId);
+            sendMessage
+                    .setReplyToMessageId(messageId);
         }
 
         String url = mainUrlPart + SEND_MESSAGE_URL;
@@ -317,13 +429,19 @@ class TelegramAPICommunicationServices {
                                                   .json()
                                                   .build();
 
+        log.debug("doSendMessage => message={}", () -> sendMessage);
+
         AnswerResponse<Message> answerResponse =
-                restClient.post(url, headers.toSingleValueMap(), builder.build(),
+                restClient.post(url, headers.toSingleValueMap(), sendMessage,
                                 new ParameterizedTypeReference<AnswerResponse<Message>>() {});
         Validate.notNull(answerResponse, "Empty message!");
         Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
 
-        log.debug("Answer on message: {}", () -> answerResponse);
+        if (message.getDoIfAntiBot() != null) {
+            message.getDoIfAntiBot().accept(answerResponse.getData().getMessageId());
+        }
+
+        log.debug("doSendMessage => answer on message: {}", () -> answerResponse);
     }
 
     // </editor-fold>
