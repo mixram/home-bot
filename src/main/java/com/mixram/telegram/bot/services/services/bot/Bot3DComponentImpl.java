@@ -83,6 +83,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String FULL_DISCOUNT_OTHER_MESSAGE = "telegram.bot.message.discount.full.other";
     private static final String SHORT_MESSAGE_LEGEND_MESSAGE = "telegram.bot.message.short-message-legend";
     private static final String NEW_CHAT_MEMBERS_HELLO_MESSAGE = "telegram.bot.message.new-chat-members-hello";
+    private static final String NEW_CHAT_MEMBERS_HELLO_MESSAGE_V2 = "telegram.bot.message.new-chat-members-hello-v2";
     private static final String VERSION_UPDATE_MESSAGE = "telegram.bot.message.version-info";
 
     private final Integer maxQuantity;
@@ -94,6 +95,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final String infoTable;
     private final String wikiUrl;
     private final String pinnedMessage;
+    private final String pinnedMessage2;
     private final boolean versionInform;
     private final Set<String> chatsIds;
     private final boolean antiBotIsOn;
@@ -154,6 +156,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.info-table}") String infoTable,
                               @Value("${bot.settings.wiki-url}") String wikiUrl,
                               @Value("${bot.settings.pinned-message}") String pinnedMessage,
+                              @Value("${bot.settings.pinned-message2}") String pinnedMessage2,
                               @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
                               @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
                               @Value("${bot.settings.work-with-groups}") String chatsIds,
@@ -170,6 +173,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.infoTable = infoTable;
         this.wikiUrl = wikiUrl;
         this.pinnedMessage = pinnedMessage;
+        this.pinnedMessage2 = pinnedMessage2;
         this.versionInform = versionInform;
         this.antiBotIsOn = antiBotIsOn;
         this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
@@ -190,7 +194,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             return;
         }
-        log.info("{}#remindVersion() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
+        log.info("{}#remindVersion() is started!", DiscountsOn3DPlasticModule.class::getSimpleName);
 
         try {
             String message = messageSource.getMessage(VERSION_UPDATE_MESSAGE, META.DEFAULT_LOCALE);
@@ -272,8 +276,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                     boolean noDataText,
                                                     Locale locale) {
         return plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-               noDataText ? messageSource.getMessage(NO_DATA_FOR_SHOP, locale) : null :
-               doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
+                noDataText ? messageSource.getMessage(NO_DATA_FOR_SHOP, locale) : null :
+                doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
     }
 
     /**
@@ -292,7 +296,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
                 String shopUrl = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? null :
-                                 plastic.getData().get(0).getShopUrl();
+                        plastic.getData().get(0).getShopUrl();
                 builder.append(
                         messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shopUrl, shop.getNameAlt(),
                                                  messageToSendStringTemp));
@@ -324,7 +328,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return welcomeNewChatMember(callbackQuery.getUser(), locale);
         }
 
-        throw new UnsupportedOperationException(String.format("Unexpected callback data: '%s'!", callbackQuery.getData()));
+        throw new UnsupportedOperationException(
+                String.format("Unexpected callback data: '%s'!", callbackQuery.getData()));
     }
 
     /**
@@ -338,9 +343,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         //TODO: need to rebuild in order to be able to check more then one new user at the same time
-        return antiBotIsOn && newChatMembers.size() == 1 && incomeByInviteLink(message.getUser(), newChatMembers.get(0)) ?
-               checkBotNewChatMembers(newChatMembers, message.getChat().getChatId(), message.getMessageId(), locale) :
-               welcomeNewChatMembers(newChatMembers, locale);
+        return antiBotIsOn && newChatMembers.size() == 1 && incomeByInviteLink(message.getUser(),
+                                                                               newChatMembers.get(0)) ?
+                checkBotNewChatMembers(newChatMembers, message.getChat().getChatId(), message.getMessageId(), locale) :
+                welcomeNewChatMembers(newChatMembers, locale);
     }
 
     /**
@@ -375,8 +381,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 u.getFirstName()).append("</a>").append(", "));
 
         return MessageData.builder()
-                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, builder.toString(),
-                                                            fleaMarket, infoTable, wikiUrl, pinnedMessage))
+                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE_V2, locale,
+                                                            builder.toString(), pinnedMessage, pinnedMessage2, wikiUrl))
                           .build();
     }
 
@@ -389,8 +395,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                        newChatMember.getFirstName());
 
         return MessageData.builder()
-                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE, locale, message, fleaMarket,
-                                                            infoTable, wikiUrl, pinnedMessage))
+                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE_V2, locale, message,
+                                                            pinnedMessage, pinnedMessage2, wikiUrl))
                           .build();
     }
 
@@ -518,8 +524,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareInfoAnswerAll(Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, infoTable, wikiUrl,
-                                                            pinnedMessage, System.getProperty("product.version.full")))
+                          .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, infoTable,
+                                                            wikiUrl, pinnedMessage,
+                                                            System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -547,7 +554,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             List<User> users = checkMessageForNewMembers(message);
 
             User user = message.getUser();
-            if (user != null && communicationComponent.getAdminName().equals(user.getId().toString()) && users == null) {
+            if (user != null && communicationComponent.getAdminName()
+                                                      .equals(user.getId().toString()) && users == null) {
                 return;
             }
             Long adminName = message.getChat().getChatId();
@@ -557,7 +565,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             LocalDateTime ldt = DateTimeUtils.getOperationDate(message.getTimestamp());
             Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
-                            new Locale(user.getLanguageCode());
+                    new Locale(user.getLanguageCode());
 
             MessageData messageData;
             if (users == null) {
@@ -573,7 +581,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                         MessageData.builder()
                                    .message(messageSource.getMessage(NEW_USER_MESSAGE, locale,
                                                                      JsonUtil.toPrettyJson(message.getChat()),
-                                                                     user == null ? "---" : JsonUtil.toPrettyJson(users),
+                                                                     user == null ? "---" : JsonUtil.toPrettyJson(
+                                                                             users),
                                                                      ldt))
                                    .build();
             }
@@ -592,7 +601,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                           .toAdmin(false)
                           .toResponse(false)
                           .message(messageSource.getMessage(
-                                  MISUNDERSTANDING_MESSAGES.get(random.nextInt(MISUNDERSTANDING_MESSAGES.size())), locale))
+                                  MISUNDERSTANDING_MESSAGES.get(random.nextInt(MISUNDERSTANDING_MESSAGES.size())),
+                                  locale))
                           .build();
     }
 
@@ -608,9 +618,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         Chat chat = message.getChat();
-        if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(chat.getType()))) {
+        if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(
+                chat.getType()))) {
             log.debug("Chat type '{}' does not correspond to allowed type '{}'.",
-                      chat :: getType,
+                      chat::getType,
                       () -> workType);
 
             return true;
@@ -721,7 +732,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_DAS:
             case D_PLEX:
                 messageToSendString = full ? prepareAnswerText(plastic, shop, locale) :
-                                      prepareAnswerTextShort(plastic, onlyDiscounts, locale);
+                        prepareAnswerTextShort(plastic, onlyDiscounts, locale);
 
                 break;
             default:
@@ -740,17 +751,18 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Map<PlasticType, List<ParseData>> byName =
                 plastic.getData().stream()
                        //                       .filter(ParseData :: isInStock)
-                       .collect(Collectors.groupingBy(ParseData :: getType, HashMap :: new,
-                                                      Collectors.toCollection(ArrayList :: new)));
+                       .collect(Collectors.groupingBy(ParseData::getType, HashMap::new,
+                                                      Collectors.toCollection(ArrayList::new)));
         Map<PlasticType, PlasticPresenceDto> discountsState =
                 byName.entrySet().stream()
-                      .collect(Collectors.toMap(Map.Entry :: getKey,
+                      .collect(Collectors.toMap(Map.Entry::getKey,
                                                 e -> definePlasticState(e.getValue())));
 
         if (onlyDiscounts) {
             discountsState = discountsState.entrySet().stream()
-                                           .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue().getPresenceState())
-                                           .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
+                                           .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue()
+                                                                                          .getPresenceState())
+                                           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
 
         StringBuilder answer = new StringBuilder();
@@ -767,9 +779,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               .collect(Collectors.toList());
         for (int i = 0; i < entryList.size(); i++) {
             Map.Entry<PlasticType, PlasticPresenceDto> entry = entryList.get(i);
-            answer.append(messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale, alignText(entry.getKey().getName()),
-                                                   getDiscountText(entry.getValue().getPresenceState()),
-                                                   entry.getValue().getMainUrl()));
+            answer.append(
+                    messageSource.getMessage(SHORT_DISCOUNT_PART_MESSAGE, locale, alignText(entry.getKey().getName()),
+                                             getDiscountText(entry.getValue().getPresenceState()),
+                                             entry.getValue().getMainUrl()));
             if (i == entryList.size() - 1) {
                 answer.append("\n");
             } else if ((i + 1) % 2 == 0) {
@@ -886,7 +899,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.2.0.0
      */
     private boolean mayUsePlastic(ParseData datum) {
-        return datum.isInStock() && ((datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum.getProductDiscountPercent() != null);
+        return datum.isInStock() && ((datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum
+                .getProductDiscountPercent() != null);
     }
 
     /**
@@ -920,7 +934,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         return (datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum.getProductDiscountPercent() != null ?
-               PlasticPresenceState.DISCOUNT : PlasticPresenceState.IN_STOCK;
+                PlasticPresenceState.DISCOUNT : PlasticPresenceState.IN_STOCK;
     }
 
     /**
