@@ -36,8 +36,10 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts";
-    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available";
+    //    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts";
+    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts.v2";
+    //    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available";
+    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available.v2";
     private static final String NEW_DISCOUNTS_ERROR_MESSAGE = "telegram.bot.message.new-discounts-error";
 
     private final Bot3DComponentImpl bot3DComponentImpl;
@@ -74,7 +76,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     @Override
     public void remind() {
-        String messagePart = bot3DComponentImpl.prepareMessageForShopsToSendString(false, true, false, META.DEFAULT_LOCALE);
+        String messagePart = bot3DComponentImpl.prepareMessageForShopsToSendString(false, true, false,
+                                                                                   META.DEFAULT_LOCALE);
         if (StringUtils.isNotBlank(messagePart)) {
             doSendToChats(REMINDER_MESSAGE, messagePart, META.DEFAULT_LOCALE);
         } else {
@@ -89,7 +92,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
             return;
         }
-        log.info("{}#discount() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
+        log.info("{}#discount() is started!", DiscountsOn3DPlasticModule.class::getSimpleName);
 
         Map<Shop3D, Data3DPlastic> oldPlasticsData = getOldPlastics();
         Map<Shop3D, Data3DPlastic> newPlasticsData = getPlastics();
@@ -100,9 +103,9 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                 Data3DPlastic oldPlasticHolder = oldPlasticsData.get(shop);
                 Data3DPlastic newPlasticHolder = newPlasticsData.get(shop);
                 List<ParseData> oldPlastics = oldPlasticHolder == null || oldPlasticHolder.getData() == null ?
-                                              Lists.newArrayListWithExpectedSize(0) : oldPlasticHolder.getData();
+                        Lists.newArrayListWithExpectedSize(0) : oldPlasticHolder.getData();
                 List<ParseData> newPlastics = newPlasticHolder == null || newPlasticHolder.getData() == null ?
-                                              Lists.newArrayListWithExpectedSize(0) : newPlasticHolder.getData();
+                        Lists.newArrayListWithExpectedSize(0) : newPlasticHolder.getData();
 
                 List<ParseData> newPlasticsWithD =
                         newPlastics.stream()
@@ -127,10 +130,12 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                                                      .shop(k)
                                                      .data(v)
                                                      .build();
-                String mess = bot3DComponentImpl.prepareMessageForShopToSendString(plastic, k, Command.getByShop(k), false,
+                String mess = bot3DComponentImpl.prepareMessageForShopToSendString(plastic, k, Command.getByShop(k),
+                                                                                   false,
                                                                                    true, true, META.DEFAULT_LOCALE);
                 builder
-                        .append(messageSource.getMessage(Bot3DComponentImpl.SHOP_MESSAGE_PART_MESSAGE, META.DEFAULT_LOCALE,
+                        .append(messageSource.getMessage(Bot3DComponentImpl.SHOP_MESSAGE_PART_MESSAGE,
+                                                         META.DEFAULT_LOCALE,
                                                          k.getUrl(), k.getNameAlt(), mess));
             });
 
@@ -141,7 +146,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
             try {
                 communicationComponent.sendMessageToAdmin(MessageData.builder()
                                                                      .message(messageSource.getMessage(
-                                                                             NEW_DISCOUNTS_ERROR_MESSAGE, Locale.ENGLISH))
+                                                                             NEW_DISCOUNTS_ERROR_MESSAGE,
+                                                                             Locale.ENGLISH))
                                                                      .toAdmin(true)
                                                                      .build());
             } catch (Exception ex) {
