@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mixram on 2019-04-22.
@@ -84,11 +85,11 @@ public class TelegramAPICommunicationComponent {
     }
 
     /**
-     * @see TelegramAPICommunicationServices#getAdminName()
+     * @see TelegramAPICommunicationServices#getAdmins()
      * @since 1.3.0.0
      */
-    public String getAdminName() {
-        return services.getAdminName();
+    public Set<Long> getAdmins() {
+        return services.getAdmins();
     }
 
     /**

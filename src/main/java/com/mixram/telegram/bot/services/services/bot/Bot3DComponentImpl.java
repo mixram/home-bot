@@ -1,7 +1,6 @@
 package com.mixram.telegram.bot.services.services.bot;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.entity.*;
@@ -89,7 +88,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final Integer maxQuantity;
     private final Random random;
     private final WorkType workType;
-    private final List<Long> allowedGroups;
     private final String adminEmail;
     private final String fleaMarket;
     private final String infoTable;
@@ -97,7 +95,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final String pinnedMessage;
     private final String pinnedMessage2;
     private final boolean versionInform;
-    private final Set<String> chatsIds;
     private final boolean antiBotIsOn;
 
     private final Module3DPlasticDataSearcher searcher;
@@ -105,6 +102,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final AsyncHelper asyncHelper;
     private final CustomMessageSource messageSource;
     private final AntiBot antiBot;
+    private final META meta;
 
 
     @Data
@@ -150,7 +148,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     @Autowired
     public Bot3DComponentImpl(@Value("${bot.settings.other.max-quantity-for-full-view}") Integer maxQuantity,
                               @Value("${bot.settings.work-with}") WorkType workType,
-                              @Value("${bot.settings.work-with-groups}") String allowedGroups,
                               @Value("${bot.settings.admin-email}") String adminEmail,
                               @Value("${bot.settings.flea-market}") String fleaMarket,
                               @Value("${bot.settings.info-table}") String infoTable,
@@ -159,15 +156,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.pinned-message2}") String pinnedMessage2,
                               @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
                               @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
-                              @Value("${bot.settings.work-with-groups}") String chatsIds,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
+                              META meta,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
                               CustomMessageSource messageSource,
                               AntiBot antiBot) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
-        this.allowedGroups = JsonUtil.fromJson(allowedGroups, new TypeReference<List<Long>>() {});
         this.adminEmail = adminEmail;
         this.fleaMarket = fleaMarket;
         this.infoTable = infoTable;
@@ -176,13 +172,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.pinnedMessage2 = pinnedMessage2;
         this.versionInform = versionInform;
         this.antiBotIsOn = antiBotIsOn;
-        this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
         this.asyncHelper = asyncHelper;
         this.messageSource = messageSource;
         this.antiBot = antiBot;
+        this.meta = meta;
 
         this.random = new Random();
     }
@@ -202,7 +198,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                           .message(message)
                                           .build();
 
-            chatsIds.forEach(c -> communicationComponent.sendMessageToChat(Long.valueOf(c), data));
+            meta.settings.forEach((groupId, settings) -> {
+                if (settings.getVersionInform()) {
+                    communicationComponent.sendMessageToChat(groupId, data);
+                }
+            });
         } catch (Exception ex) {
             log.warn("", ex);
         }
@@ -262,7 +262,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         //            saveNewUser();
         //        }
 
-        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat().getType(), locale);
+        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat(), locale);
     }
 
     /**
@@ -325,7 +325,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             //TODO: need to rebuild logic when "not_a_bot_text" will not be the one
             antiBot.proceedCallBack(callbackQuery);
 
-            return welcomeNewChatMember(callbackQuery.getUser(), locale);
+            System.out.println("11111111\n" + JsonUtil.toPrettyJson(callbackQuery));
+
+            return welcomeNewChatMember(callbackQuery.getUser(),
+                                        meta.settings.get(callbackQuery.getMessage().getChat().getChatId())
+                                                     .getWelcomeNewUserMessage(),
+                                        locale);
         }
 
         throw new UnsupportedOperationException(
@@ -342,11 +347,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return null;
         }
 
+        Long chatId = message.getChat().getChatId();
+        BotSettings settings = meta.settings.get(chatId);
+
         //TODO: need to rebuild in order to be able to check more then one new user at the same time
-        return antiBotIsOn && newChatMembers.size() == 1 && incomeByInviteLink(message.getUser(),
-                                                                               newChatMembers.get(0)) ?
-                checkBotNewChatMembers(newChatMembers, message.getChat().getChatId(), message.getMessageId(), locale) :
-                welcomeNewChatMembers(newChatMembers, locale);
+        return antiBotIsOn && settings.getEnableAntiBot() && newChatMembers.size() == 1 &&
+                incomeByInviteLink(message.getUser(), newChatMembers.get(0)) ?
+                checkBotNewChatMembers(newChatMembers, chatId, message.getMessageId(), locale) :
+                welcomeNewChatMembers(newChatMembers, settings.getWelcomeNewUserMessage(), locale);
     }
 
     /**
@@ -375,14 +383,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.7.0.0
      */
     private MessageData welcomeNewChatMembers(List<User> newChatMembers,
+                                              String mainMessageCode,
                                               Locale locale) {
         StringBuilder builder = new StringBuilder();
         newChatMembers.forEach(u -> builder.append("<a href=\"tg://user?id=").append(u.getId()).append("\">").append(
                 u.getFirstName()).append("</a>").append(", "));
 
         return MessageData.builder()
-                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE_V2, locale,
-                                                            builder.toString(), pinnedMessage, pinnedMessage2, wikiUrl))
+                          .message(messageSource.getMessage(mainMessageCode, locale, builder.toString()))
                           .build();
     }
 
@@ -390,13 +398,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      * @since 1.7.0.0
      */
     private MessageData welcomeNewChatMember(User newChatMember,
+                                             String mainMessageCode,
                                              Locale locale) {
         String message = String.format("<a href=\"tg://user?id=%s\">%s</a>, ", newChatMember.getId(),
                                        newChatMember.getFirstName());
 
         return MessageData.builder()
-                          .message(messageSource.getMessage(NEW_CHAT_MEMBERS_HELLO_MESSAGE_V2, locale, message,
-                                                            pinnedMessage, pinnedMessage2, wikiUrl))
+                          .message(messageSource.getMessage(mainMessageCode, locale, message))
                           .build();
     }
 
@@ -418,27 +426,16 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private MessageData checkMayWorkWith(Message message,
                                          Locale locale) {
         Chat chat = message.getChat();
+        BotSettings settings = meta.settings.get(chat.getChatId());
         switch (workType) {
             case P:
                 return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage(locale);
             case G:
-                if (isGroup(chat.getType())) {
-                    if (allowedGroups.contains(chat.getChatId())) {
-                        return null;
-                    }
-                    return prepareConcreteGroupChatMessage(locale);
-                } else {
-                    return prepareNoGroupChatMessage(locale);
-                }
+                return isGroup(chat.getType()) ? (settings == null ? prepareConcreteGroupChatMessage(locale) : null) :
+                        prepareNoGroupChatMessage(locale);
             case B:
-                if (isGroup(chat.getType())) {
-                    if (allowedGroups.contains(chat.getChatId())) {
-                        return null;
-                    }
-                    return prepareConcreteGroupChatMessage(locale);
-                } else {
-                    return null;
-                }
+                return isGroup(chat.getType()) ? (settings == null ? prepareConcreteGroupChatMessage(locale) : null) :
+                        null;
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
         }
@@ -509,10 +506,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 1.4.0.0
      */
-    private MessageData prepareInfoAnswer(Locale locale) {
+    private MessageData prepareInfoAnswer(String mainMessageId,
+                                          Locale locale) {
         return MessageData.builder()
-                          .message(messageSource.getMessage(INFO_ANSWER_MESSAGE, locale, fleaMarket, infoTable, wikiUrl,
-                                                            pinnedMessage, System.getProperty("product.version.full")))
+                          .message(messageSource.getMessage(mainMessageId, locale,
+                                                            System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
                           .userResponse(false)
@@ -525,7 +523,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private MessageData prepareInfoAnswerAll(Locale locale) {
         return MessageData.builder()
                           .message(messageSource.getMessage(INFO_ANSWER_ALL_MESSAGE, locale, fleaMarket, infoTable,
-                                                            wikiUrl, pinnedMessage,
+                                                            wikiUrl, pinnedMessage, pinnedMessage2,
                                                             System.getProperty("product.version.full")))
                           .toAdmin(false)
                           .toResponse(false)
@@ -554,12 +552,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             List<User> users = checkMessageForNewMembers(message);
 
             User user = message.getUser();
-            if (user != null && communicationComponent.getAdminName()
-                                                      .equals(user.getId().toString()) && users == null) {
+            if (user != null && communicationComponent.getAdmins()
+                                                      .contains(user.getId()) && users == null) {
                 return;
             }
-            Long adminName = message.getChat().getChatId();
-            if (communicationComponent.getAdminName().equals(adminName.toString()) && users == null) {
+            Long adminId = message.getChat().getChatId();
+            if (communicationComponent.getAdmins().contains(adminId) && users == null) {
                 return;
             }
 
@@ -643,15 +641,15 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareAnswerWithCommand(Command command,
                                                  boolean full,
-                                                 String chatType,
+                                                 Chat chat,
                                                  Locale locale) {
         Validate.notNull(command, "Command is not specified!");
 
         switch (workType) {
             case G:
                 if (Command.INFO == command) {
-                    if (isGroup(chatType)) {
-                        return prepareInfoAnswer(locale);
+                    if (isGroup(chat.getType())) {
+                        return prepareInfoAnswer(meta.settings.get(chat.getChatId()).getBotInfoMessage(), locale);
                     } else {
                         log.debug("Command '{}' is allowed in group chats bot only!",
                                   () -> command);
@@ -666,7 +664,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 }
             case P:
                 if (Command.START == command) {
-                    if (isPrivate(chatType)) {
+                    if (isPrivate(chat.getType())) {
                         return prepareStartAnswer(locale);
                     } else {
                         log.debug("Command '{}' is allowed in \"tet-a-tet\" bot only!",

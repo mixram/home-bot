@@ -1,14 +1,15 @@
 package com.mixram.telegram.bot.services.services.tapicom;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
-import com.mixram.telegram.bot.services.services.bot.Bot3DLongPooling;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.entity.SendMessageData;
 import com.mixram.telegram.bot.utils.CommonHeadersBuilder;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.META;
+import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.rest.RestClient;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -45,19 +46,20 @@ class TelegramAPICommunicationServices {
     private static final String UNBAN_CHAT_MEMBER_URL = "/unbanChatMember";
 
     private final String botName;
-    private final String adminName;
     private final String mainUrlPart;
     private final Integer secondsToBanUser;
+    private final Set<Long> adminsPrime;
 
     private final RestClient restClient;
     private final CustomMessageSource messageSource;
+    private final META meta;
 
     /**
      * Identifier of the first update to be returned. Must be greater by one than the highest among the identifiers of
      * previously received updates. By default, updates starting with the earliest unconfirmed update are returned. An
-     * update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id. The negative
-     * offset can be specified to retrieve updates starting from -offset update from the end of the updates queue. All
-     * previous updates will forgotten.
+     * update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id. The
+     * negative offset can be specified to retrieve updates starting from -offset update from the end of the updates
+     * queue. All previous updates will forgotten.
      */
     private AtomicLong offset;
 
@@ -69,16 +71,18 @@ class TelegramAPICommunicationServices {
     TelegramAPICommunicationServices(@Value("${bot.settings.base-url}") String telegramUrl,
                                      @Value("${bot.settings.bot-token}") String botToken,
                                      @Value("${bot.settings.bot-name}") String botName,
-                                     @Value("${bot.settings.admin-username}") String adminName,
+                                     @Value("${bot.settings.admins-prime}") String adminsPrime,
                                      @Value("${bot.settings.time-to-ban-user-after-kick}") Integer secondsToBanUser,
+                                     META meta,
                                      CustomMessageSource messageSource,
                                      RestClient restClient) {
-        restClient.setAnchorForLog(Bot3DLongPooling.class.getSimpleName());
+        restClient.setAnchorForLog(this.getClass().getSimpleName());
         this.restClient = restClient;
         this.messageSource = messageSource;
+        this.meta = meta;
 
         this.botName = botName;
-        this.adminName = adminName;
+        this.adminsPrime = JsonUtil.fromJson(adminsPrime, new TypeReference<Set<Long>>() {});
         this.mainUrlPart = telegramUrl + "/bot" + botToken;
         this.secondsToBanUser = secondsToBanUser;
     }
@@ -164,7 +168,7 @@ class TelegramAPICommunicationServices {
         try {
             log.debug("sendMessageToAdmin => : messageData={}", () -> message);
 
-            doSendMessage(Long.valueOf(adminName), null, message);
+            adminsPrime.forEach(id -> doSendMessage(id, null, message));
 
             if (message.isLeaveChat()) {
                 log.warn("Can not 'leave chat' from admin messages sending logic!");
@@ -194,16 +198,17 @@ class TelegramAPICommunicationServices {
         }
 
         try {
-            UpdateResponse updatesHolder = restClient.get(url, params, headers.toSingleValueMap(), UpdateResponse.class);
+            UpdateResponse updatesHolder = restClient.get(url, params, headers.toSingleValueMap(),
+                                                          UpdateResponse.class);
             Validate.notNull(updatesHolder, "Empty answer!");
             Validate.isTrue(updatesHolder.getResult(), "An error in process of updates getting! %s", updatesHolder);
 
             List<Update> updates = Optional.ofNullable(updatesHolder.getData()).orElse(
                     Lists.newArrayListWithExpectedSize(0));
             offset = updates.stream()
-                            .map(Update :: getUpdateId)
+                            .map(Update::getUpdateId)
                             .max(Comparator.naturalOrder())
-                            .map(AtomicLong :: new)
+                            .map(AtomicLong::new)
                             .orElse(null);
 
             result = updatesHolder.getData();
@@ -239,14 +244,14 @@ class TelegramAPICommunicationServices {
     }
 
     /**
-     * To get admin`s name (code).
+     * To get admins IDs.
      *
-     * @return admin`s name.
+     * @return IDs.
      *
      * @since 1.3.0.0
      */
-    protected String getAdminName() {
-        return adminName;
+    protected Set<Long> getAdmins() {
+        return adminsPrime;
     }
 
     /**

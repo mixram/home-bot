@@ -1,6 +1,5 @@
 package com.mixram.telegram.bot.services.reminders;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.services.domain.DiscountsListener;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
@@ -13,7 +12,6 @@ import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
 import com.mixram.telegram.bot.utils.META;
-import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import com.mixram.telegram.bot.utils.htmlparser.entity.ParseData;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +21,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -46,8 +47,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
     private final TelegramAPICommunicationComponent communicationComponent;
     private final CustomMessageSource messageSource;
     private final Module3DPlasticDataSearcher searcher;
+    private final META meta;
 
-    private final Set<String> chatsIds;
     private final boolean enableNewDiscountsReminder;
 
     // </editor-fold>
@@ -56,9 +57,9 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     @Autowired
     public DiscountsReminderImpl(
-            @Value("${bot.settings.work-with-groups}") String chatsIds,
             @Value("${bot.settings.scheduler.reminders.new-discount.enable}") boolean enableNewDiscountsReminder,
             @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
+            META meta,
             Bot3DComponentImpl bot3DComponentImpl,
             TelegramAPICommunicationComponent communicationComponent,
             CustomMessageSource messageSource) {
@@ -66,8 +67,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
         this.communicationComponent = communicationComponent;
         this.messageSource = messageSource;
         this.searcher = searcher;
+        this.meta = meta;
 
-        this.chatsIds = JsonUtil.fromJson(chatsIds, new TypeReference<Set<String>>() {});
         this.enableNewDiscountsReminder = enableNewDiscountsReminder;
     }
 
@@ -79,7 +80,7 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
         String messagePart = bot3DComponentImpl.prepareMessageForShopsToSendString(false, true, false,
                                                                                    META.DEFAULT_LOCALE);
         if (StringUtils.isNotBlank(messagePart)) {
-            doSendToChats(REMINDER_MESSAGE, messagePart, META.DEFAULT_LOCALE);
+            doSendRemindersToChats(REMINDER_MESSAGE, messagePart, META.DEFAULT_LOCALE);
         } else {
             log.info("No discounts to remind the chat(s).");
         }
@@ -139,7 +140,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                                                          k.getUrl(), k.getNameAlt(), mess));
             });
 
-            doSendToChats(NEW_DISCOUNTS_AVAILABLE_MESSAGE, builder.toString(), META.DEFAULT_LOCALE);
+            doSendNewDiscountsRemindersToChats(NEW_DISCOUNTS_AVAILABLE_MESSAGE, builder.toString(),
+                                               META.DEFAULT_LOCALE);
         } catch (Exception e) {
             log.warn("New discounts reminder exception!", e);
 
@@ -195,16 +197,42 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
     /**
      * @since 1.4.1.0
      */
-    private void doSendToChats(String mainMessage,
-                               String additionalMessage,
-                               Locale locale) {
-        String message = messageSource.getMessage(mainMessage, locale, additionalMessage);
+    private void doSendRemindersToChats(String mainMessage,
+                                        String additionalMessage,
+                                        Locale locale) {
+        MessageData data = prepareMessage(mainMessage, additionalMessage, locale);
 
-        MessageData data = MessageData.builder()
-                                      .message(message)
-                                      .build();
+        meta.settings.forEach((groupId, settings) -> {
+            if (settings.getReminders()) {
+                communicationComponent.sendMessageToChat(groupId, data);
+            }
+        });
+    }
 
-        chatsIds.forEach(c -> communicationComponent.sendMessageToChat(Long.valueOf(c), data));
+    /**
+     * @since 1.8.0.0
+     */
+    private void doSendNewDiscountsRemindersToChats(String mainMessage,
+                                                    String additionalMessage,
+                                                    Locale locale) {
+        MessageData data = prepareMessage(mainMessage, additionalMessage, locale);
+
+        meta.settings.forEach((groupId, settings) -> {
+            if (settings.getNewDiscountReminder()) {
+                communicationComponent.sendMessageToChat(groupId, data);
+            }
+        });
+    }
+
+    /**
+     * @since 1.8.0.0
+     */
+    private MessageData prepareMessage(String mainMessage,
+                                       String additionalMessage,
+                                       Locale locale) {
+        return MessageData.builder()
+                          .message(messageSource.getMessage(mainMessage, locale, additionalMessage))
+                          .build();
     }
 
     /**
