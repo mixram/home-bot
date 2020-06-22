@@ -76,6 +76,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String INFO_ANSWER_ALL_MESSAGE = "telegram.bot.message.info-answer.all";
     private static final String USER_CALL_MESSAGE = "telegram.bot.message.user-call";
     private static final String NEW_USER_MESSAGE = "telegram.bot.message.new-user";
+    private static final String USER_LEFT_GROUP_MESSAGE = "telegram.bot.message.user-left-group";
     public static final String SHOP_MESSAGE_PART_MESSAGE = "telegram.bot.message.shop-message.part";
     private static final String SHORT_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.short.part";
     private static final String FULL_DISCOUNT_PART_MESSAGE = "telegram.bot.message.discount.full.part";
@@ -214,6 +215,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
 
+        log.debug("UPDATE: {}", () -> update);
+
         Locale locale = META.DEFAULT_LOCALE;
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
@@ -241,6 +244,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             infoAdmin(update);
 
             return newChatMembersMessage;
+        }
+
+        MessageData leftChatMember = checkIfUserHasLeftGroup(message, META.DEFAULT_LOCALE);
+        if (leftChatMember != null) {
+            proceedUserHasLeftStuff(message);
+
+            return leftChatMember;
         }
 
         if (noNeedToAnswer(message)) {
@@ -325,8 +335,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             //TODO: need to rebuild logic when "not_a_bot_text" will not be the one
             antiBot.proceedCallBack(callbackQuery);
 
-            System.out.println("11111111\n" + JsonUtil.toPrettyJson(callbackQuery));
-
             return welcomeNewChatMember(callbackQuery.getUser(),
                                         meta.settings.get(callbackQuery.getMessage().getChat().getChatId())
                                                      .getWelcomeNewUserMessage(),
@@ -355,6 +363,40 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 incomeByInviteLink(message.getUser(), newChatMembers.get(0)) ?
                 checkBotNewChatMembers(newChatMembers, chatId, message.getMessageId(), locale) :
                 welcomeNewChatMembers(newChatMembers, settings.getWelcomeNewUserMessage(), locale);
+    }
+
+    /**
+     * @since 1.8.1.0
+     */
+    private MessageData checkIfUserHasLeftGroup(Message message,
+                                                Locale locale) {
+        User leftChatMember = checkMessageIfUserHasLeftGroup(message);
+        if (leftChatMember == null) {
+            return null;
+        }
+
+        return MessageData.builder()
+                          .toAdmin(true)
+                          .message(messageSource.getMessage(USER_LEFT_GROUP_MESSAGE, locale,
+                                                            JsonUtil.toPrettyJson(message.getChat()),
+                                                            JsonUtil.toPrettyJson(leftChatMember),
+                                                            prepareDateTime(message.getTimestamp())))
+                          .build();
+    }
+
+    /**
+     * @since 1.8.1.0
+     */
+    private void proceedUserHasLeftStuff(Message message) {
+        communicationComponent.removeMessageFromChat(String.valueOf(message.getChat().getChatId()),
+                                                     String.valueOf(message.getMessageId()));
+    }
+
+    /**
+     * @since 1.8.1.0
+     */
+    private User checkMessageIfUserHasLeftGroup(Message message) {
+        return message.getLeftChatMember();
     }
 
     /**
@@ -561,7 +603,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return;
             }
 
-            LocalDateTime ldt = DateTimeUtils.getOperationDate(message.getTimestamp());
+            LocalDateTime ldt = prepareDateTime(message.getTimestamp());
             Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
                     new Locale(user.getLanguageCode());
 
@@ -589,6 +631,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         } catch (Exception e) {
             log.warn("Error ==> infoAdmin", e);
         }
+    }
+
+    /**
+     * @since 1.8.1.0
+     */
+    private LocalDateTime prepareDateTime(Long timestamp) {
+        return DateTimeUtils.getOperationDate(timestamp);
     }
 
     /**

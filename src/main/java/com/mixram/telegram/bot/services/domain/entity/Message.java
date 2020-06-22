@@ -128,12 +128,20 @@ public class Message implements TelegramApiEntity {
     @JsonProperty("entities")
     private List<MessageEntity> entities;
     /**
-     * Optional. New members that were added to the group or supergroup and information about them (the bot itself may be one of these members).
+     * Optional. New members that were added to the group or supergroup and information about them (the bot itself may
+     * be one of these members).
      *
      * @since 1.4.1.0
      */
     @JsonProperty("new_chat_members")
     private List<User> newChatMembers;
+    /**
+     * Optional. A member was removed from the group, information about them (this member may be the bot itself).
+     *
+     * @since 1.4.1.0
+     */
+    @JsonProperty("left_chat_member")
+    private User leftChatMember;
 
 
     //TODO: to realize other response types
