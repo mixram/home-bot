@@ -16,7 +16,7 @@ import java.util.Locale;
  * @since 1.4.1.0
  */
 @Ignore
-@TestPropertySource("file:/Users/mixram/Documents/Dev/projects/universal-bot/configs/bootstrap.properties")
+@TestPropertySource("file:/Users/mixram/Documents/Dev/projects/universal-bot/dev/configs/bootstrap.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class LocaleTest {
