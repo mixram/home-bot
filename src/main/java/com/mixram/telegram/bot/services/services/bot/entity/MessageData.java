@@ -1,11 +1,13 @@
 package com.mixram.telegram.bot.services.services.bot.entity;
 
+import com.google.common.collect.Lists;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -50,6 +52,24 @@ public class MessageData {
      * Logic to run if the message is from anti-bot check.
      */
     private Consumer<Long> doIfAntiBot;
+    /**
+     * Logic to run if the message has "lazy action" logic.
+     */
+    private List<Consumer<Long>> doIfLazyAction;
+
+    public void setDoIfLazyAction(List<Consumer<Long>> lazyActionList) {
+        prepareLazyActionList();
+        this.doIfLazyAction.addAll(lazyActionList);
+    }
+
+    public void setDoIfLazyAction(Consumer<Long> lazyAction) {
+        prepareLazyActionList();
+        this.doIfLazyAction.add(lazyAction);
+    }
+
+    private void prepareLazyActionList() {
+        if (this.doIfLazyAction == null) this.doIfLazyAction = Lists.newArrayList();
+    }
 
     @Override
     public String toString() {

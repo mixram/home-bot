@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,5 +28,12 @@ public final class META {
     public META(@Value("${bot.settings.group.settings}") String settings) {
         Map<Long, BotSettings> tempMap = JsonUtil.fromJson(settings, new TypeReference<Map<Long, BotSettings>>() {});
         this.settings = ImmutableMap.copyOf(tempMap);
+    }
+
+    @PostConstruct
+    public void init() {
+        this.settings.forEach((k, v) -> {
+            if (v.isInvalid()) throw new RuntimeException(String.format("Settings for %s are invalid!", k));
+        });
     }
 }

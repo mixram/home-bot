@@ -1,7 +1,12 @@
 package com.mixram.telegram.bot;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
+import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogicImpl;
+import com.mixram.telegram.bot.utils.databinding.JsonUtil;
+import org.assertj.core.util.Lists;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author mixram on 2019-04-13.
@@ -10,24 +15,23 @@ import java.util.regex.Pattern;
 public class Tttest {
 
     public static void main(String[] args) {
-        String test1 = "ere";
-        String test2 = "er4e";
-        String test3 = "от 450 грн";
-        String test4 = "32грн";
-        String test5 = "от 50 до 30 грн";
+        LocalDateTime now = LocalDateTime.now();
+        LazyActionData test1 = LazyActionData.builder()
+                                             .messageId(1L)
+                                             .actionDateTime(now)
+                                             .build();
+        LazyActionData test2 = LazyActionData.builder()
+                                             .messageId(1L)
+                                             .actionDateTime(now.plusMinutes(20))
+                                             .build();
+        LazyActionData test3 = LazyActionData.builder()
+                                             .messageId(1L)
+                                             .actionDateTime(now.plusHours(2).plusMinutes(15))
+                                             .build();
 
-        final Pattern pattern = Pattern.compile("\\d+");
+        List<LazyActionData> testList = Lists.newArrayList(test1, test2, test3);
+        testList.sort(LazyActionLogicImpl.LAZY_ACTION_COMPARATOR);
 
-        final Matcher matcher1 = pattern.matcher(test1);
-        final Matcher matcher2 = pattern.matcher(test2);
-        final Matcher matcher3 = pattern.matcher(test3);
-        final Matcher matcher4 = pattern.matcher(test4);
-        final Matcher matcher5 = pattern.matcher(test5);
-
-        System.out.println("1: " + (matcher1.find() ? matcher1.group(0) : null));
-        System.out.println("2: " + (matcher2.find() ? matcher2.group(0) : null));
-        System.out.println("3: " + (matcher3.find() ? matcher3.group(0) : null));
-        System.out.println("4: " + (matcher4.find() ? matcher4.group(0) : null));
-        System.out.println("5: " + (matcher5.find() ? matcher5.group(0) : null));
+        System.out.println("TEST: " + JsonUtil.toPrettyJson(testList));
     }
 }

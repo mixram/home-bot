@@ -3,6 +3,7 @@ package com.mixram.telegram.bot.config.cache;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
+import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.NewMemberTempData;
 import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,6 +67,14 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<String, Map<String, NewMemberTempData>> dataNewMemberTempDataRedisTemplate() {
         RedisTemplate<String, Map<String, NewMemberTempData>> template = new RedisTemplate<>();
+        updateTemplate(template);
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, List<LazyActionData>> dataLazyActionDataRedisTemplate() {
+        RedisTemplate<String, List<LazyActionData>> template = new RedisTemplate<>();
         updateTemplate(template);
 
         return template;

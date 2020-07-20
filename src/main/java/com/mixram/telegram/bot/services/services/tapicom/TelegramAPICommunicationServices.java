@@ -108,14 +108,6 @@ class TelegramAPICommunicationServices {
             SendMessageData data = createSendMessageData(update, messageData.isUserResponse());
 
             doSendMessage(data.getChatId(), data.getMessageId(), messageData);
-
-            if (messageData.isLeaveChat()) {
-                try {
-                    leaveChat(update.getMessage().getChat().getChatId().toString());
-                } catch (Exception e) {
-                    log.warn("Chat leaving error!", e);
-                }
-            }
         } catch (Exception e) {
             log.warn("", e);
 
@@ -442,11 +434,36 @@ class TelegramAPICommunicationServices {
         Validate.notNull(answerResponse, "Empty message!");
         Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
 
-        if (message.getDoIfAntiBot() != null) {
-            message.getDoIfAntiBot().accept(answerResponse.getData().getMessageId());
-        }
+        doPostSendMessage(chatId, message, answerResponse);
 
         log.debug("doSendMessage => answer on message: {}", () -> answerResponse);
+    }
+
+    private void doPostSendMessage(Long chatId,
+                                   MessageData messageData,
+                                   AnswerResponse<Message> answerResponse) {
+        Long messageId = answerResponse.getData().getMessageId();
+        if (messageData.getDoIfAntiBot() != null) {
+            try {
+                messageData.getDoIfAntiBot().accept(messageId);
+            } catch (Exception e) {
+                log.warn("Anti-bot post routine error!", e);
+            }
+        }
+        if (messageData.getDoIfLazyAction() != null) {
+            try {
+                messageData.getDoIfLazyAction().forEach(la -> la.accept(messageId));
+            } catch (Exception e) {
+                log.warn("Lazy-message post routine error!", e);
+            }
+        }
+        if (messageData.isLeaveChat()) {
+            try {
+                leaveChat(chatId.toString());
+            } catch (Exception e) {
+                log.warn("Chat leaving error!", e);
+            }
+        }
     }
 
     // </editor-fold>
