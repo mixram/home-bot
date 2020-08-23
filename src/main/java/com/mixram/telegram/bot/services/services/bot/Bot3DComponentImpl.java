@@ -224,7 +224,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
 
-        log.debug("UPDATE: {}", () -> update);
+//        log.debug("UPDATE: {}", () -> update);
 
         Locale locale = META.DEFAULT_LOCALE;
 
