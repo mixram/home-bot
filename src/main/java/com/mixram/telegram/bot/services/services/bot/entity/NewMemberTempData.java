@@ -24,6 +24,7 @@ public class NewMemberTempData {
     private LocalDateTime added;
     private List<Long> messagesToDelete;
     private Long userIncomeMessageId;
+    private int rightAnswerNumber;
 
     @Override
     public String toString() {

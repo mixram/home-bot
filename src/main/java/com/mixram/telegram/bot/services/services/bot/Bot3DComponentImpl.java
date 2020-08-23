@@ -60,8 +60,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     private static final String SALES_PATTERN_STRING = "^/SALES_.*";
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
+    private static final String TEST_COMMANDS_PATTERN_STRING = "^/TEST.*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
+    private static final Pattern TEST_PATTERN = Pattern.compile(TEST_COMMANDS_PATTERN_STRING);
 
     private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
     private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
@@ -222,13 +224,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
 
-//        log.debug("UPDATE: {}", () -> update);
+        log.debug("UPDATE: {}", () -> update);
 
         Locale locale = META.DEFAULT_LOCALE;
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
         if (callbackQuery != null) {
-            MessageData messageData = proceedCallBack(callbackQuery, locale);
+            MessageData messageData = proceedCallBackV2(callbackQuery, locale);
 
             Long chatId = callbackQuery.getMessage().getChat().getChatId();
             saveToLazyActions(messageData, chatId, LazyAction.DELETE,
@@ -370,6 +372,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     /**
      * @since 1.7.0.0
+     * @deprecated use {@link Bot3DComponentImpl#proceedCallBackV2(CallbackQuery, Locale)} instead since 1.8.3.0.
      */
     private MessageData proceedCallBack(CallbackQuery callbackQuery,
                                         Locale locale) {
@@ -385,6 +388,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         throw new UnsupportedOperationException(
                 String.format("Unexpected callback data: '%s'!", callbackQuery.getData()));
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private MessageData proceedCallBackV2(CallbackQuery callbackQuery,
+                                          Locale locale) {
+        antiBot.proceedCallBack(callbackQuery);
+
+        return welcomeNewChatMember(callbackQuery.getUser(),
+                                    meta.settings.get(callbackQuery.getMessage().getChat().getChatId())
+                                                 .getWelcomeNewUserMessage(),
+                                    locale);
     }
 
     /**
@@ -746,6 +762,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Validate.notNull(command, "Command is not specified!");
 
         Chat chat = message.getChat();
+        User user = message.getUser();
 
         switch (workType) {
             case G:
@@ -758,14 +775,28 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
                         return messageData;
                     } else {
-                        log.debug("Command '{}' is allowed in group chats bot only!",
-                                  () -> command);
+                        log.debug("Command '{}' is allowed in group chats bot only!", () -> command);
 
                         return null;
                     }
+                } else if (Command.TEST == command) {
+                    if (meta.settings.get(chat.getChatId()).getAdminsPrime().contains(user.getId())) {
+                        MessageData messageData = MessageData.builder()
+                                                             .message(defineRandomMessageTest(user))
+                                                             .replyMarkup(defineRandomKeyTest())
+                                                             .toAdmin(false)
+                                                             .toResponse(false)
+                                                             .userResponse(false)
+                                                             .build();
+                        saveToLazyActionsTestData(messageData, chat.getChatId(), message.getMessageId());
+
+                        return messageData;
+                    }
+                    log.debug("Command '{}' is not allowed for not Admin!", () -> command);
+
+                    return null;
                 } else {
-                    log.debug("Command '{}' is not allowed in group chats bot!",
-                              () -> command);
+                    log.debug("Command '{}' is not allowed in group chats bot!", () -> command);
 
                     return null;
                 }
@@ -822,11 +853,50 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     }
 
     /**
+     * @since 1.8.3.0
+     */
+    private String defineRandomMessageTest(User user) {
+        return String.format("<a href=\"tg://user?id=%s\">%s</a>, якщо Ви людина - натисніть на кнопку 😊",
+                             user.getId(),
+                             user.getFirstName());
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private InlineKeyboard defineRandomKeyTest() {
+        List<List<InlineKeyboard.Key>> keyboard = new ArrayList<>(1);
+        keyboard.add(Lists.newArrayList(
+                new InlineKeyboard.Key("callback_1_button", "First button"),
+                new InlineKeyboard.Key("callback_2_button", "Second button")
+        ));
+        keyboard.add(Lists.newArrayList(
+                new InlineKeyboard.Key("callback_3_button", "Third button"),
+                new InlineKeyboard.Key("callback_4_button", "Forth button")
+        ));
+
+        return InlineKeyboard.builder()
+                             .inlineKeyboard(keyboard)
+                             .build();
+    }
+
+    /**
      * @since 0.1.3.0
      */
     private void saveToLazyActionsBotInfo(MessageData messageData,
                                           Long chatId,
                                           Long messageId) {
+        Integer botInfoRequestDeleteTime = meta.settings.get(chatId).getBotInfoRequestDeleteTime();
+        saveToLazyActions(messageData, chatId, LazyAction.DELETE, botInfoRequestDeleteTime);
+        saveToLazyActions(messageData, chatId, messageId, LazyAction.DELETE, botInfoRequestDeleteTime);
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void saveToLazyActionsTestData(MessageData messageData,
+                                           Long chatId,
+                                           Long messageId) {
         Integer botInfoRequestDeleteTime = meta.settings.get(chatId).getBotInfoRequestDeleteTime();
         saveToLazyActions(messageData, chatId, LazyAction.DELETE, botInfoRequestDeleteTime);
         saveToLazyActions(messageData, chatId, messageId, LazyAction.DELETE, botInfoRequestDeleteTime);
@@ -1095,6 +1165,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return CommandHolder.builder()
                                 .command(command)
                                 .full(full)
+                                .build();
+        }
+        if (TEST_PATTERN.matcher(text).matches()) {
+            String commandDataString = parseCommandDataString(text);
+            commandDataString = commandDataString.replaceAll("/", "");
+            Command command = Command.getByName(commandDataString);
+            if (command == null) {
+                throw new UnsupportedOperationException(String.format("Unexpected command! '%s'", text));
+            }
+
+            return CommandHolder.builder()
+                                .command(command)
+                                .full(false)
                                 .build();
         }
 

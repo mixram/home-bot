@@ -37,10 +37,10 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    //    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts";
-    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts.v2";
-    //    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available";
-    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available.v2";
+    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts";
+    //    private static final String REMINDER_MESSAGE = "telegram.bot.message.reminder.discounts.v2";
+    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available";
+    //    private static final String NEW_DISCOUNTS_AVAILABLE_MESSAGE = "telegram.bot.message.new-discounts-available.v2";
     private static final String NEW_DISCOUNTS_ERROR_MESSAGE = "telegram.bot.message.new-discounts-error";
 
     private final Bot3DComponentImpl bot3DComponentImpl;
