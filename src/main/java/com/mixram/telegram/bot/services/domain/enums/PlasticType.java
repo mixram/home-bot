@@ -143,7 +143,31 @@ public enum PlasticType {
     /**
      * ReZin.
      */
-    REZIN("REZIN");
+    REZIN("REZIN"),
+    /**
+     * TPU.
+     */
+    TPU("TPU"),
+    /**
+     * PCTG.
+     */
+    PCTG("PCTG"),
+    /**
+     * PLA flex.
+     */
+    PLA_FLEX("PLAF"),
+    /**
+     * Polypropylene.
+     */
+    PP("PP"),
+    /**
+     * Photopolimer SOFT.
+     */
+    FP_SOFT("SOFT"),
+    /**
+     * Photopolimer BASIC.
+     */
+    FP_BASIC("BASIC");
 
     @Getter
     String name;

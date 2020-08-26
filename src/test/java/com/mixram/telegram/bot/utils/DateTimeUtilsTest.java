@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit;
  * @author mixram on 2019-11-25.
  * @since 1.6.1.1
  */
-@TestPropertySource("file:/Users/mixram/Documents/Work/projects/universal-bot/configs/bootstrap.properties")
+@TestPropertySource("file:/Users/mixram/Documents/Dev/projects/3d-bot-microservices/universal-bot/jar_nerd/bootstrap.properties")
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class DateTimeUtilsTest {
