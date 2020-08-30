@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Nonnull;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
@@ -138,29 +139,7 @@ public class AntiBotImpl implements AntiBot {
                 String chatId = dataArray[0];
                 String userId = dataArray[1];
 
-                telegramAPICommunicationComponent.kickUserFromGroup(chatId, userId);
-                log.info("User {} has been kicked from chat {}!",
-                         () -> userId,
-                         () -> chatId);
-
-                telegramAPICommunicationComponent.unbanUserInChat(chatId, userId);
-                log.info("User {} has been unbaned in chat {}!",
-                         () -> userId,
-                         () -> chatId);
-
-                telegramAPICommunicationComponent.removeMessageFromChat(chatId,
-                                                                        String.valueOf(value.getUserIncomeMessageId()));
-                value.getMessagesToDelete().forEach(
-                        m -> telegramAPICommunicationComponent.removeMessageFromChat(chatId, String.valueOf(m)));
-
-                MessageData messageData = MessageData.builder()
-                                                     .toAdmin(true)
-                                                     .message(String.format(
-                                                             "<b>User has been kicked from chat %s!</b>\n%s",
-                                                             userId,
-                                                             JsonUtil.toPrettyJson(value)))
-                                                     .build();
-                telegramAPICommunicationComponent.sendMessageToAdmin(messageData);
+                doRemoveUserProcedures(chatId, userId, value);
 
                 removeFromTemp.add(key);
             }
@@ -181,6 +160,43 @@ public class AntiBotImpl implements AntiBot {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * To engage user removing procedures.
+     *
+     * @param chatId chat ID.
+     * @param userId user ID.
+     * @param data   data about a new member.
+     *
+     * @since 1.8.4.1
+     */
+    private void doRemoveUserProcedures(@Nonnull String chatId,
+                                        @Nonnull String userId,
+                                        @Nonnull NewMemberTempData data) {
+        telegramAPICommunicationComponent.kickUserFromGroup(chatId, userId);
+        log.info("User {} has been kicked from chat {}!",
+                 () -> userId,
+                 () -> chatId);
+
+        telegramAPICommunicationComponent.unbanUserInChat(chatId, userId);
+        log.info("User {} has been unbaned in chat {}!",
+                 () -> userId,
+                 () -> chatId);
+
+        telegramAPICommunicationComponent.removeMessageFromChat(chatId,
+                                                                String.valueOf(data.getUserIncomeMessageId()));
+        data.getMessagesToDelete().forEach(
+                m -> telegramAPICommunicationComponent.removeMessageFromChat(chatId, String.valueOf(m)));
+
+        MessageData messageData = MessageData.builder()
+                                             .toAdmin(true)
+                                             .message(String.format(
+                                                     "<b>User has been kicked from chat %s!</b>\n%s",
+                                                     userId,
+                                                     JsonUtil.toPrettyJson(data)))
+                                             .build();
+        telegramAPICommunicationComponent.sendMessageToAdmin(messageData);
+    }
+
+    /**
      * @since 1.8.3.0
      */
     private void doProceedCallbackV2(CallbackQuery callbackQuery) {
@@ -199,8 +215,13 @@ public class AntiBotImpl implements AntiBot {
 
         int rightAnswerNumber = newMemberTempData.getRightAnswerNumber();
         String keyForAnswer = ANTI_BOT_QUESTIONS.getOrDefault(rightAnswerNumber, Pair.of(null, null)).getKey();
-        Validate.isTrue(callbackQuery.getData().equalsIgnoreCase(keyForAnswer),
-                        "Wrong answer on the antibot question! %s", callbackQuery);
+        if (!callbackQuery.getData().equalsIgnoreCase(keyForAnswer)) {
+            doRemoveUserProcedures(chatId.toString(), user.getId().toString(), newMemberTempData);
+
+            throw new IllegalArgumentException(
+                    String.format("Wrong answer '%s' (expected '%s') on the antibot question! %s",
+                                  callbackQuery.getData(), keyForAnswer, callbackQuery));
+        }
 
         newMemberTempData.getMessagesToDelete().forEach(
                 message -> telegramAPICommunicationComponent.removeMessageFromChat(String.valueOf(chatId),
