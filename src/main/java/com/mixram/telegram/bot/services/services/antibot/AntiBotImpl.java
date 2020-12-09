@@ -50,11 +50,11 @@ public class AntiBotImpl implements AntiBot {
     static {
         Map<Integer, Pair<String, String>> tempMap = new HashMap<>(6);
         tempMap.put(0, Pair.of("zero_no_bot", "Нуль"));
-        tempMap.put(1, Pair.of("one_no_bot", "Один"));
-        tempMap.put(2, Pair.of("two_no_bot", "Два"));
-        tempMap.put(3, Pair.of("three_no_bot", "Три"));
-        tempMap.put(4, Pair.of("four_no_bot", "Чотири"));
-        tempMap.put(5, Pair.of("five_no_bot", "П'ять"));
+        tempMap.put(1, Pair.of("one_no_bot", "o-д-u-H"));
+        tempMap.put(2, Pair.of("two_no_bot", "д-B-a"));
+        tempMap.put(3, Pair.of("three_no_bot", "т-p-и"));
+        tempMap.put(4, Pair.of("four_no_bot", "ч-o-T-u-p-и"));
+        tempMap.put(5, Pair.of("five_no_bot", "п\"яTb"));
 
         ANTI_BOT_QUESTIONS = ImmutableMap.copyOf(tempMap);
         MAX = ANTI_BOT_QUESTIONS.size() - 1;
