@@ -1,23 +1,21 @@
 package com.mixram.telegram.bot.services.shedulers;
 
-import com.mixram.telegram.bot.services.services.antibot.AntiBot;
-import lombok.extern.log4j.Log4j2;
+import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * @author mixram on 2020-01-20.
- * @since 1.7.0.0
+ * @author mixram on 2020-07-20.
+ * @since 1.8.2.0
  */
-@Log4j2
 @Component
-public class AntiBotScheduler implements Scheduler {
+public class LazyActionScheduler implements Scheduler {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private final AntiBot antiBot;
+    private final LazyActionLogic lazyAction;
 
     private final boolean doSchedule;
 
@@ -25,10 +23,11 @@ public class AntiBotScheduler implements Scheduler {
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
+
     @Autowired
-    public AntiBotScheduler(@Value("${bot.settings.scheduler.anti-bot.enable}") boolean doSchedule,
-                            AntiBot antiBot) {
-        this.antiBot = antiBot;
+    public LazyActionScheduler(@Value("${bot.settings.scheduler.lazy-action.enable}") boolean doSchedule,
+                               LazyActionLogic lazyAction) {
+        this.lazyAction = lazyAction;
         this.doSchedule = doSchedule;
     }
 
@@ -37,13 +36,13 @@ public class AntiBotScheduler implements Scheduler {
 
 
     @Override
-    @Scheduled(cron = "${bot.settings.scheduler.anti-bot.cron-time}")
+    @Scheduled(cron = "${bot.settings.scheduler.lazy-action.cron-time}")
     public void schedule() {
         if (!doSchedule) {
             return;
         }
 
-        antiBot.checkUsers();
+        lazyAction.doLazyAction();
     }
 
 

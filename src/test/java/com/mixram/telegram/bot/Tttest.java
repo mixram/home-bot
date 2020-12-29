@@ -1,7 +1,10 @@
 package com.mixram.telegram.bot;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * @author mixram on 2019-04-13.
@@ -9,25 +12,28 @@ import java.util.regex.Pattern;
  */
 public class Tttest {
 
+    public static final Map<Integer, String> ANTI_BOT_QUESTIONS;
+    public static final int MIN = 1;
+    public static final int MAX;
+
+    static {
+        Map<Integer, String> tempMap = new HashMap<>(6);
+        tempMap.put(0, "Нуль");
+        tempMap.put(1, "Один");
+        tempMap.put(2, "Два");
+        tempMap.put(3, "Три");
+        tempMap.put(4, "Чотири");
+        tempMap.put(5, "П'ять");
+
+        ANTI_BOT_QUESTIONS = ImmutableMap.copyOf(tempMap);
+        MAX = ANTI_BOT_QUESTIONS.size() - 1;
+    }
+
     public static void main(String[] args) {
-        String test1 = "ere";
-        String test2 = "er4e";
-        String test3 = "от 450 грн";
-        String test4 = "32грн";
-        String test5 = "от 50 до 30 грн";
+        Random random = new Random();
 
-        final Pattern pattern = Pattern.compile("\\d+");
-
-        final Matcher matcher1 = pattern.matcher(test1);
-        final Matcher matcher2 = pattern.matcher(test2);
-        final Matcher matcher3 = pattern.matcher(test3);
-        final Matcher matcher4 = pattern.matcher(test4);
-        final Matcher matcher5 = pattern.matcher(test5);
-
-        System.out.println("1: " + (matcher1.find() ? matcher1.group(0) : null));
-        System.out.println("2: " + (matcher2.find() ? matcher2.group(0) : null));
-        System.out.println("3: " + (matcher3.find() ? matcher3.group(0) : null));
-        System.out.println("4: " + (matcher4.find() ? matcher4.group(0) : null));
-        System.out.println("5: " + (matcher5.find() ? matcher5.group(0) : null));
+        for (int i = 0; i < 100; i++) {
+            System.out.println(random.nextInt(MAX - MIN + 1) + MIN);
+        }
     }
 }

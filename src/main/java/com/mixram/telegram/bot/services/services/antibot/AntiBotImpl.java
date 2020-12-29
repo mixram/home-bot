@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.services.antibot;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
@@ -15,15 +16,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Nonnull;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -36,11 +36,30 @@ public class AntiBotImpl implements AntiBot {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
+    public static final Random RANDOM = new Random();
+    public static final Map<Integer, Pair<String, String>> ANTI_BOT_QUESTIONS;
+    public static final int MIN;
+    public static final int MAX;
+
     private static final String NEW_MEMBERS_TEMP_DATA = "new_members_temp_data";
     private static final String ID_SEPARATOR = "_";
 
     private final RedisTemplateHelper redisTemplateHelper;
     private final TelegramAPICommunicationComponent telegramAPICommunicationComponent;
+
+    static {
+        Map<Integer, Pair<String, String>> tempMap = new HashMap<>(6);
+        tempMap.put(0, Pair.of("zero_no_bot", "Нуль"));
+        tempMap.put(1, Pair.of("one_no_bot", "o-д-u-H"));
+        tempMap.put(2, Pair.of("two_no_bot", "д-B-a"));
+        tempMap.put(3, Pair.of("three_no_bot", "т-p-и"));
+        tempMap.put(4, Pair.of("four_no_bot", "ч-o-T-u-p-и"));
+        tempMap.put(5, Pair.of("five_no_bot", "п\"яTb"));
+
+        ANTI_BOT_QUESTIONS = ImmutableMap.copyOf(tempMap);
+        MAX = ANTI_BOT_QUESTIONS.size() - 1;
+        MIN = 1;
+    }
 
 
     @Data
@@ -85,17 +104,19 @@ public class AntiBotImpl implements AntiBot {
         Map<String, NewMemberTempData> membersData = getMembersTempDataFromRedis();
         List<MessageData> messages = Lists.newArrayListWithExpectedSize(newChatMembers.size());
         newChatMembers.forEach(u -> {
+            int nextInt = getNextInt();
             NewMemberTempData newMember =
                     NewMemberTempData.builder()
                                      .user(u)
                                      .added(LocalDateTime.now())
                                      .messagesToDelete(Lists.newArrayList())
                                      .userIncomeMessageId(userIncomeMessageId)
+                                     .rightAnswerNumber(nextInt)
                                      .build();
             membersData.put(prepareId(chatId, u.getId()), newMember);
             messages.add(MessageData.builder()
-                                    .message(defineRandomMessage(u))
-                                    .replyMarkup(defineRandomKey())
+                                    .message(defineRandomMessageV2(u.getId(), u.getFirstName(), nextInt))
+                                    .replyMarkup(defineStandardKeyboardV2())
                                     .doIfAntiBot(new NewMessageAdder(u.getId(), chatId))
                                     .build());
         });
@@ -118,28 +139,7 @@ public class AntiBotImpl implements AntiBot {
                 String chatId = dataArray[0];
                 String userId = dataArray[1];
 
-                telegramAPICommunicationComponent.kickUserFromGroup(chatId, userId);
-                log.info("User {} has been kicked from chat {}!",
-                         () -> userId,
-                         () -> chatId);
-
-                telegramAPICommunicationComponent.unbanUserInChat(chatId, userId);
-                log.info("User {} has been unbaned in chat {}!",
-                         () -> userId,
-                         () -> chatId);
-
-                telegramAPICommunicationComponent.removeMessageFromChat(chatId,
-                                                                        String.valueOf(value.getUserIncomeMessageId()));
-                value.getMessagesToDelete().forEach(
-                        m -> telegramAPICommunicationComponent.removeMessageFromChat(chatId, String.valueOf(m)));
-
-                MessageData messageData = MessageData.builder()
-                                                     .toAdmin(true)
-                                                     .message(String.format("<b>User has been kicked from chat %s!</b>\n%s",
-                                                                            userId,
-                                                                            JsonUtil.toPrettyJson(value)))
-                                                     .build();
-                telegramAPICommunicationComponent.sendMessageToAdmin(messageData);
+                doRemoveUserProcedures(chatId, userId, value);
 
                 removeFromTemp.add(key);
             }
@@ -153,8 +153,92 @@ public class AntiBotImpl implements AntiBot {
 
     @Override
     public void proceedCallBack(CallbackQuery callbackQuery) {
+        doProceedCallbackV2(callbackQuery);
+    }
+
+
+    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * To engage user removing procedures.
+     *
+     * @param chatId chat ID.
+     * @param userId user ID.
+     * @param data   data about a new member.
+     *
+     * @since 1.8.4.1
+     */
+    private void doRemoveUserProcedures(@Nonnull String chatId,
+                                        @Nonnull String userId,
+                                        @Nonnull NewMemberTempData data) {
+        telegramAPICommunicationComponent.kickUserFromGroup(chatId, userId);
+        log.info("User {} has been kicked from chat {}!",
+                 () -> userId,
+                 () -> chatId);
+
+        telegramAPICommunicationComponent.unbanUserInChat(chatId, userId);
+        log.info("User {} has been unbaned in chat {}!",
+                 () -> userId,
+                 () -> chatId);
+
+        telegramAPICommunicationComponent.removeMessageFromChat(chatId,
+                                                                String.valueOf(data.getUserIncomeMessageId()));
+        data.getMessagesToDelete().forEach(
+                m -> telegramAPICommunicationComponent.removeMessageFromChat(chatId, String.valueOf(m)));
+
+        MessageData messageData = MessageData.builder()
+                                             .toAdmin(true)
+                                             .message(String.format(
+                                                     "<b>User has been kicked from chat %s!</b>\n%s",
+                                                     userId,
+                                                     JsonUtil.toPrettyJson(data)))
+                                             .build();
+        telegramAPICommunicationComponent.sendMessageToAdmin(messageData);
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private void doProceedCallbackV2(CallbackQuery callbackQuery) {
         Validate.notNull(callbackQuery, "Callback is not specified!");
-        Validate.isTrue(META.NOT_A_BOT_TEXT.equalsIgnoreCase(callbackQuery.getData()), "The callback is not for AntiBot!");
+
+        User user = callbackQuery.getUser();
+        Validate.notNull(user, "User is not specified!");
+
+        Long chatId = callbackQuery.getMessage().getChat().getChatId();
+        String key = prepareId(chatId, user.getId());
+        Map<String, NewMemberTempData> membersTempDataFromRedis = getMembersTempDataFromRedis();
+        NewMemberTempData newMemberTempData = membersTempDataFromRedis.get(key);
+        if (newMemberTempData == null) {
+            throw new UnsupportedOperationException(String.format("User %s not found!", key));
+        }
+
+        int rightAnswerNumber = newMemberTempData.getRightAnswerNumber();
+        String keyForAnswer = ANTI_BOT_QUESTIONS.getOrDefault(rightAnswerNumber, Pair.of(null, null)).getKey();
+        if (!callbackQuery.getData().equalsIgnoreCase(keyForAnswer)) {
+            doRemoveUserProcedures(chatId.toString(), user.getId().toString(), newMemberTempData);
+
+            throw new IllegalArgumentException(
+                    String.format("Wrong answer '%s' (expected '%s') on the antibot question! %s",
+                                  callbackQuery.getData(), keyForAnswer, callbackQuery));
+        }
+
+        newMemberTempData.getMessagesToDelete().forEach(
+                message -> telegramAPICommunicationComponent.removeMessageFromChat(String.valueOf(chatId),
+                                                                                   String.valueOf(message)));
+
+        membersTempDataFromRedis.remove(key);
+
+        storeNewMembersTempDataToRedis(membersTempDataFromRedis);
+    }
+
+    /**
+     * @since 1.7.0.0
+     */
+    private void doProceedCallback(CallbackQuery callbackQuery) {
+        Validate.notNull(callbackQuery, "Callback is not specified!");
+        Validate.isTrue(META.NOT_A_BOT_TEXT.equalsIgnoreCase(callbackQuery.getData()),
+                        "The callback is not for AntiBot!");
 
         //TODO: need to rebuild logic when "not_a_bot_text" will not be the one
 
@@ -178,7 +262,12 @@ public class AntiBotImpl implements AntiBot {
         storeNewMembersTempDataToRedis(membersTempDataFromRedis);
     }
 
-    // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+    /**
+     * @since 1.8.3.0
+     */
+    private int getNextInt() {
+        return RANDOM.nextInt(MAX - MIN + 1) + MIN;
+    }
 
     /**
      * @since 1.7.0.0
@@ -211,14 +300,17 @@ public class AntiBotImpl implements AntiBot {
      * @since 1.7.0.0
      */
     private Map<String, NewMemberTempData> getMembersTempDataFromRedis() {
-        Map<String, NewMemberTempData> membersData = redisTemplateHelper.getMembersTempDataFromRedis(NEW_MEMBERS_TEMP_DATA);
+        Map<String, NewMemberTempData> membersData = redisTemplateHelper.getMembersTempDataFromRedis(
+                NEW_MEMBERS_TEMP_DATA);
 
         return membersData == null ? Maps.newHashMap() : membersData;
     }
 
     /**
      * @since 1.7.0.0
+     * @deprecated use {@link AntiBotImpl#defineStandardKeyboard()} instead since 1.8.3.0.
      */
+    @Deprecated
     private InlineKeyboard defineRandomKey() {
         List<List<InlineKeyboard.Key>> keyboard = new ArrayList<>(1);
         keyboard.add(Lists.newArrayList(new InlineKeyboard.Key(META.NOT_A_BOT_TEXT, "Я не бот 🤟")));
@@ -229,11 +321,95 @@ public class AntiBotImpl implements AntiBot {
     }
 
     /**
-     * @since 1.7.0.0
+     * @since 1.8.3.0
      */
+    private InlineKeyboard defineStandardKeyboard() {
+        List<List<InlineKeyboard.Key>> keyboard = new ArrayList<>();
+        keyboard.add(
+                Lists.newArrayList(
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(0).getKey(), "0"),
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(1).getKey(), "1"),
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(2).getKey(), "2")
+                )
+        );
+        keyboard.add(
+                Lists.newArrayList(
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(3).getKey(), "3"),
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(4).getKey(), "4"),
+                        new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(5).getKey(), "5")
+                )
+        );
+
+        return InlineKeyboard.builder()
+                             .inlineKeyboard(keyboard)
+                             .build();
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private InlineKeyboard defineStandardKeyboardV2() {
+        List<Integer> shuffledKeys = getShuffledKeys(ANTI_BOT_QUESTIONS);
+        int sizeOfOneRow = getSizeOfOneRow(ANTI_BOT_QUESTIONS);
+        List<InlineKeyboard.Key> firstRow = new ArrayList<>(sizeOfOneRow);
+        List<InlineKeyboard.Key> secondRow = new ArrayList<>(sizeOfOneRow);
+
+        firstRow.add(0, new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(0).getKey(), "0"));
+        for (Integer key : shuffledKeys) {
+            if (0 == key) {
+                continue;
+            }
+            if (firstRow.size() < sizeOfOneRow) {
+                firstRow.add(new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(key).getKey(), key.toString()));
+                continue;
+            }
+            if (secondRow.size() < sizeOfOneRow) {
+                secondRow.add(new InlineKeyboard.Key(ANTI_BOT_QUESTIONS.get(key).getKey(), key.toString()));
+            }
+        }
+
+        return InlineKeyboard.builder()
+                             .inlineKeyboard(Lists.newArrayList(firstRow, secondRow))
+                             .build();
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private int getSizeOfOneRow(Map<?, ?> map) {
+        return map.size() / 2;
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private List<Integer> getShuffledKeys(Map<Integer, Pair<String, String>> antiBotQuestions) {
+        List<Integer> keys = new ArrayList<>(antiBotQuestions.keySet());
+        Collections.shuffle(keys);
+
+        return keys;
+    }
+
+    /**
+     * @since 1.7.0.0
+     * @deprecated use {@link AntiBotImpl#defineRandomMessageV2(Long, String, int)} instead since 1.8.3.0.
+     */
+    @Deprecated
     private String defineRandomMessage(User user) {
-        return String.format("<a href=\"tg://user?id=%s\">%s</a>, якщо Ви людина - натисніть на кнопку 😊", user.getId(),
+        return String.format("<a href=\"tg://user?id=%s\">%s</a>, якщо Ви людина - натисніть на кнопку 😊",
+                             user.getId(),
                              user.getFirstName());
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private String defineRandomMessageV2(Long userId,
+                                         String userName,
+                                         int questionNumber) {
+        return String.format(
+                "<a href=\"tg://user?id=%s\">%s</a>, якщо Ви людина - натисніть на кнопку з цифрою '%s' 😊",
+                userId, userName, ANTI_BOT_QUESTIONS.get(questionNumber).getValue());
     }
 
     /**

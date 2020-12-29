@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.domain.entity;
 
+import com.mixram.telegram.bot.utils.Validable;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.Data;
 
@@ -10,7 +11,7 @@ import java.util.Set;
  * @since 1.8.0.0
  */
 @Data
-public class BotSettings {
+public class BotSettings implements Validable {
 
     private Set<Long> adminsPrime;
     private Set<Long> admins;
@@ -20,6 +21,26 @@ public class BotSettings {
     private Boolean versionInform;
     private String welcomeNewUserMessage;
     private String botInfoMessage;
+    /**
+     * In seconds.
+     */
+    private Integer helloMessageDeleteTime;
+    /**
+     * In seconds.
+     */
+    private Integer botInfoRequestDeleteTime;
+
+    @Override
+    public boolean isValid() {
+        return adminsPrime != null && admins != null && reminders != null && newDiscountReminder != null &&
+                enableAntiBot != null && versionInform != null && welcomeNewUserMessage != null &&
+                botInfoMessage != null && helloMessageDeleteTime != null && botInfoRequestDeleteTime != null;
+    }
+
+    @Override
+    public boolean isInvalid() {
+        return !isValid();
+    }
 
     @Override
     public String toString() {

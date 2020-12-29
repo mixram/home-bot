@@ -11,8 +11,11 @@ import com.mixram.telegram.bot.services.domain.enums.WorkType;
 import com.mixram.telegram.bot.services.modules.DiscountsOn3DPlasticModule;
 import com.mixram.telegram.bot.services.modules.Module3DPlasticDataSearcher;
 import com.mixram.telegram.bot.services.services.antibot.AntiBot;
+import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
+import com.mixram.telegram.bot.services.services.bot.enums.LazyAction;
 import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
+import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogicImpl;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
@@ -36,6 +39,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -56,8 +60,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     private static final String SALES_PATTERN_STRING = "^/SALES_.*";
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
+    private static final String TEST_COMMANDS_PATTERN_STRING = "^/TEST.*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
+    private static final Pattern TEST_PATTERN = Pattern.compile(TEST_COMMANDS_PATTERN_STRING);
 
     private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
     private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
@@ -100,6 +106,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
+    private final LazyActionLogicImpl lazyActionLogic;
     private final AsyncHelper asyncHelper;
     private final CustomMessageSource messageSource;
     private final AntiBot antiBot;
@@ -162,7 +169,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
                               CustomMessageSource messageSource,
-                              AntiBot antiBot) {
+                              AntiBot antiBot,
+                              LazyActionLogicImpl lazyActionLogic) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
         this.adminEmail = adminEmail;
@@ -179,6 +187,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.asyncHelper = asyncHelper;
         this.messageSource = messageSource;
         this.antiBot = antiBot;
+        this.lazyActionLogic = lazyActionLogic;
         this.meta = meta;
 
         this.random = new Random();
@@ -191,7 +200,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             return;
         }
-        log.info("{}#remindVersion() is started!", DiscountsOn3DPlasticModule.class::getSimpleName);
+        log.info("{}#remindVersion() is started!", DiscountsOn3DPlasticModule.class :: getSimpleName);
 
         try {
             String message = messageSource.getMessage(VERSION_UPDATE_MESSAGE, META.DEFAULT_LOCALE);
@@ -221,7 +230,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         CallbackQuery callbackQuery = update.getCallbackQuery();
         if (callbackQuery != null) {
-            return proceedCallBack(callbackQuery, locale);
+            MessageData messageData = proceedCallBackV2(callbackQuery, locale);
+
+            Long chatId = callbackQuery.getMessage().getChat().getChatId();
+            saveToLazyActions(messageData, chatId, LazyAction.DELETE,
+                              meta.settings.get(chatId).getHelloMessageDeleteTime());
+
+            return messageData;
         }
 
         Message message = update.getMessage();
@@ -242,6 +257,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         MessageData newChatMembersMessage = checkNewChatMembers(message, META.DEFAULT_LOCALE);
         if (newChatMembersMessage != null) {
             infoAdmin(update);
+
+            if (newChatMembersMessage.getDoIfAntiBot() == null) {
+                Long chatId = message.getChat().getChatId();
+                saveToLazyActions(newChatMembersMessage, chatId, LazyAction.DELETE,
+                                  meta.settings.get(chatId).getHelloMessageDeleteTime());
+            }
 
             return newChatMembersMessage;
         }
@@ -272,7 +293,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         //            saveNewUser();
         //        }
 
-        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message.getChat(), locale);
+        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message, locale);
     }
 
     /**
@@ -327,7 +348,31 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * @since 1.8.2.0
+     */
+    private void saveToLazyActions(MessageData messageData,
+                                   Long chatId,
+                                   LazyAction lazyAction,
+                                   Integer actionTime) {
+        saveToLazyActions(messageData, chatId, null, lazyAction, actionTime);
+    }
+
+    /**
+     * @since 1.8.2.0
+     */
+    private void saveToLazyActions(MessageData messageData,
+                                   Long chatId,
+                                   Long messageId,
+                                   LazyAction lazyAction,
+                                   Integer actionTime) {
+        Consumer<Long> saver = lazyActionLogic.createSaver(
+                new LazyActionData(chatId, messageId, lazyAction, LocalDateTime.now().plusSeconds(actionTime)));
+        messageData.setDoIfLazyAction(Lists.newArrayList(saver));
+    }
+
+    /**
      * @since 1.7.0.0
+     * @deprecated use {@link Bot3DComponentImpl#proceedCallBackV2(CallbackQuery, Locale)} instead since 1.8.3.0.
      */
     private MessageData proceedCallBack(CallbackQuery callbackQuery,
                                         Locale locale) {
@@ -346,6 +391,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     }
 
     /**
+     * @since 1.8.3.0
+     */
+    private MessageData proceedCallBackV2(CallbackQuery callbackQuery,
+                                          Locale locale) {
+        antiBot.proceedCallBack(callbackQuery);
+
+        return welcomeNewChatMember(callbackQuery.getUser(),
+                                    meta.settings.get(callbackQuery.getMessage().getChat().getChatId())
+                                                 .getWelcomeNewUserMessage(),
+                                    locale);
+    }
+
+    /**
      * @since 1.4.1.0
      */
     private MessageData checkNewChatMembers(Message message,
@@ -359,10 +417,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         BotSettings settings = meta.settings.get(chatId);
 
         //TODO: need to rebuild in order to be able to check more then one new user at the same time
-        return antiBotIsOn && settings.getEnableAntiBot() && newChatMembers.size() == 1 &&
-                incomeByInviteLink(message.getUser(), newChatMembers.get(0)) ?
+        return needAntiBotCheck(settings, newChatMembers, message) ?
                 checkBotNewChatMembers(newChatMembers, chatId, message.getMessageId(), locale) :
                 welcomeNewChatMembers(newChatMembers, settings.getWelcomeNewUserMessage(), locale);
+    }
+
+    /**
+     * @since 1.8.2.0
+     */
+    private boolean needAntiBotCheck(BotSettings settings,
+                                     List<User> newChatMembers,
+                                     Message message) {
+        return antiBotIsOn && settings.getEnableAntiBot() && newChatMembers.size() == 1 &&
+                incomeByInviteLink(message.getUser(), newChatMembers.get(0));
     }
 
     /**
@@ -668,7 +735,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(
                 chat.getType()))) {
             log.debug("Chat type '{}' does not correspond to allowed type '{}'.",
-                      chat::getType,
+                      chat :: getType,
                       () -> workType);
 
             return true;
@@ -690,24 +757,46 @@ public class Bot3DComponentImpl implements Bot3DComponent {
      */
     private MessageData prepareAnswerWithCommand(Command command,
                                                  boolean full,
-                                                 Chat chat,
+                                                 Message message,
                                                  Locale locale) {
         Validate.notNull(command, "Command is not specified!");
+
+        Chat chat = message.getChat();
+        User user = message.getUser();
 
         switch (workType) {
             case G:
                 if (Command.INFO == command) {
                     if (isGroup(chat.getType())) {
-                        return prepareInfoAnswer(meta.settings.get(chat.getChatId()).getBotInfoMessage(), locale);
+                        Long chatId = chat.getChatId();
+                        MessageData messageData =
+                                prepareInfoAnswer(meta.settings.get(chatId).getBotInfoMessage(), locale);
+                        saveToLazyActionsBotInfo(messageData, chatId, message.getMessageId());
+
+                        return messageData;
                     } else {
-                        log.debug("Command '{}' is allowed in group chats bot only!",
-                                  () -> command);
+                        log.debug("Command '{}' is allowed in group chats bot only!", () -> command);
 
                         return null;
                     }
+                } else if (Command.TEST == command) {
+                    if (meta.settings.get(chat.getChatId()).getAdminsPrime().contains(user.getId())) {
+                        MessageData messageData = MessageData.builder()
+                                                             .message(defineRandomMessageTest(user))
+                                                             .replyMarkup(defineRandomKeyTest())
+                                                             .toAdmin(false)
+                                                             .toResponse(false)
+                                                             .userResponse(false)
+                                                             .build();
+                        saveToLazyActionsTestData(messageData, chat.getChatId(), message.getMessageId());
+
+                        return messageData;
+                    }
+                    log.debug("Command '{}' is not allowed for not Admin!", () -> command);
+
+                    return null;
                 } else {
-                    log.debug("Command '{}' is not allowed in group chats bot!",
-                              () -> command);
+                    log.debug("Command '{}' is not allowed in group chats bot!", () -> command);
 
                     return null;
                 }
@@ -728,36 +817,89 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     return null;
                 }
             case B:
-                String messageToSendString;
-
-                if (Command.INFO == command) {
-                    return prepareInfoAnswerAll(locale);
-                } else if (Command.START == command) {
-                    return prepareStartAnswer(locale);
-                } else if (Command.D_ALL == command) {
-                    messageToSendString = prepareMessageForShopsToSendString(full, false, true, locale);
-                } else {
-                    Shop3D shop = command.getShop();
-                    Data3DPlastic plastic = searcher.search(shop);
-
-                    messageToSendString = prepareMessageForShopToSendString(plastic, shop, command, full, false, true,
-                                                                            locale);
-                }
-
-                if (StringUtils.isBlank(messageToSendString)) {
-                    messageToSendString = messageSource.getMessage(NO_DISCOUNTS, locale);
-                }
-
-                return MessageData.builder()
-                                  .toAdmin(false)
-                                  .toResponse(false)
-                                  .userResponse(WorkType.P == workType)
-                                  .showUrlPreview(false)
-                                  .message(messageToSendString)
-                                  .build();
+//                String messageToSendString;
+//
+//                if (Command.INFO == command) {
+//                    MessageData messageData = prepareInfoAnswerAll(locale);
+//                    saveToLazyActionsBotInfo(messageData, chat.getChatId(), message.getMessageId());
+//
+//                    return messageData;
+//                } else if (Command.START == command) {
+//                    return prepareStartAnswer(locale);
+//                } else if (Command.D_ALL == command) {
+//                    messageToSendString = prepareMessageForShopsToSendString(full, false, true, locale);
+//                } else {
+//                    Shop3D shop = command.getShop();
+//                    Data3DPlastic plastic = searcher.search(shop);
+//
+//                    messageToSendString = prepareMessageForShopToSendString(plastic, shop, command, full, false, true,
+//                                                                            locale);
+//                }
+//
+//                if (StringUtils.isBlank(messageToSendString)) {
+//                    messageToSendString = messageSource.getMessage(NO_DISCOUNTS, locale);
+//                }
+//
+//                return MessageData.builder()
+//                                  .toAdmin(false)
+//                                  .toResponse(false)
+//                                  .userResponse(WorkType.P == workType)
+//                                  .showUrlPreview(false)
+//                                  .message(messageToSendString)
+//                                  .build();
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
         }
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private String defineRandomMessageTest(User user) {
+        return String.format("<a href=\"tg://user?id=%s\">%s</a>, якщо Ви людина - натисніть на кнопку 😊",
+                             user.getId(),
+                             user.getFirstName());
+    }
+
+    /**
+     * @since 1.8.3.0
+     */
+    private InlineKeyboard defineRandomKeyTest() {
+        List<List<InlineKeyboard.Key>> keyboard = new ArrayList<>(1);
+        keyboard.add(Lists.newArrayList(
+                new InlineKeyboard.Key("callback_1_button", "First button"),
+                new InlineKeyboard.Key("callback_2_button", "Second button")
+        ));
+        keyboard.add(Lists.newArrayList(
+                new InlineKeyboard.Key("callback_3_button", "Third button"),
+                new InlineKeyboard.Key("callback_4_button", "Forth button")
+        ));
+
+        return InlineKeyboard.builder()
+                             .inlineKeyboard(keyboard)
+                             .build();
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void saveToLazyActionsBotInfo(MessageData messageData,
+                                          Long chatId,
+                                          Long messageId) {
+        Integer botInfoRequestDeleteTime = meta.settings.get(chatId).getBotInfoRequestDeleteTime();
+        saveToLazyActions(messageData, chatId, LazyAction.DELETE, botInfoRequestDeleteTime);
+        saveToLazyActions(messageData, chatId, messageId, LazyAction.DELETE, botInfoRequestDeleteTime);
+    }
+
+    /**
+     * @since 0.1.3.0
+     */
+    private void saveToLazyActionsTestData(MessageData messageData,
+                                           Long chatId,
+                                           Long messageId) {
+        Integer botInfoRequestDeleteTime = meta.settings.get(chatId).getBotInfoRequestDeleteTime();
+        saveToLazyActions(messageData, chatId, LazyAction.DELETE, botInfoRequestDeleteTime);
+        saveToLazyActions(messageData, chatId, messageId, LazyAction.DELETE, botInfoRequestDeleteTime);
     }
 
     /**
@@ -798,18 +940,18 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         Map<PlasticType, List<ParseData>> byName =
                 plastic.getData().stream()
                        //                       .filter(ParseData :: isInStock)
-                       .collect(Collectors.groupingBy(ParseData::getType, HashMap::new,
-                                                      Collectors.toCollection(ArrayList::new)));
+                       .collect(Collectors.groupingBy(ParseData :: getType, HashMap :: new,
+                                                      Collectors.toCollection(ArrayList :: new)));
         Map<PlasticType, PlasticPresenceDto> discountsState =
                 byName.entrySet().stream()
-                      .collect(Collectors.toMap(Map.Entry::getKey,
+                      .collect(Collectors.toMap(Map.Entry :: getKey,
                                                 e -> definePlasticState(e.getValue())));
 
         if (onlyDiscounts) {
             discountsState = discountsState.entrySet().stream()
                                            .filter(e -> PlasticPresenceState.DISCOUNT == e.getValue()
                                                                                           .getPresenceState())
-                                           .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                                           .collect(Collectors.toMap(Map.Entry :: getKey, Map.Entry :: getValue));
         }
 
         StringBuilder answer = new StringBuilder();
@@ -1023,6 +1165,19 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return CommandHolder.builder()
                                 .command(command)
                                 .full(full)
+                                .build();
+        }
+        if (TEST_PATTERN.matcher(text).matches()) {
+            String commandDataString = parseCommandDataString(text);
+            commandDataString = commandDataString.replaceAll("/", "");
+            Command command = Command.getByName(commandDataString);
+            if (command == null) {
+                throw new UnsupportedOperationException(String.format("Unexpected command! '%s'", text));
+            }
+
+            return CommandHolder.builder()
+                                .command(command)
+                                .full(false)
                                 .build();
         }
 

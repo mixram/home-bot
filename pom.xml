@@ -6,7 +6,7 @@
 
     <groupId>com.mixram.telegram.bot</groupId>
     <artifactId>universal-bot</artifactId>
-    <version>1.9.0.0</version>
+    <version>1.8.5.0</version>
     <packaging>jar</packaging>
 
     <name>universal-bot</name>

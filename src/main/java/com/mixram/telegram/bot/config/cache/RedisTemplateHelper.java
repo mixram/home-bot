@@ -2,6 +2,7 @@ package com.mixram.telegram.bot.config.cache;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
+import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.NewMemberTempData;
 import com.mixram.telegram.bot.services.services.stat.entity.StatData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,12 +27,14 @@ public class RedisTemplateHelper {
     private static final String PLASTIC_SHOP_OLD_PREFIX = "plastic_shop_old";
     private static final String STAT_PREFIX = "statistics";
     private static final String NEW_MEMBER_PREFIX = "new_member";
+    private static final String LAZY_ACTION_PREFIX = "lazy_action";
 
     private final String prefix;
 
     private final RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic;
     private final RedisTemplate<String, StatData> redisTemplateStatData;
     private final RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData;
+    private final RedisTemplate<String, List<LazyActionData>> redisLazyActionData;
 
     // </editor-fold>
 
@@ -41,10 +45,12 @@ public class RedisTemplateHelper {
             @Qualifier("data3DPlasticRedisTemplate") RedisTemplate<String, Data3DPlastic> redisTemplate3DPlastic,
             @Qualifier("dataStatDataRedisTemplate") RedisTemplate<String, StatData> redisTemplateStatData,
             @Qualifier("dataNewMemberTempDataRedisTemplate") RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData,
+            @Qualifier("dataLazyActionDataRedisTemplate") RedisTemplate<String, List<LazyActionData>> redisLazyActionData,
             @Value("${spring.redis.prefix}") String prefix) {
         this.redisTemplate3DPlastic = redisTemplate3DPlastic;
         this.redisTemplateStatData = redisTemplateStatData;
         this.redisTemplateNewMemberTempData = redisTemplateNewMemberTempData;
+        this.redisLazyActionData = redisLazyActionData;
         this.prefix = prefix;
     }
 
@@ -199,6 +205,43 @@ public class RedisTemplateHelper {
      */
     public Map<String, NewMemberTempData> getMembersTempDataFromRedis(String key) {
         return redisTemplateNewMemberTempData.opsForValue().get(prepareKey(key, NEW_MEMBER_PREFIX));
+    }
+
+    /**
+     * To save lazy-action data in redis.
+     *
+     * @param data data to save.
+     * @param key  key to save with.
+     *
+     * @since 1.8.2.0
+     */
+    public void storeLazyActionDataToRedis(List<LazyActionData> data,
+                                           String key) {
+        redisLazyActionData.opsForValue().set(prepareKey(key, LAZY_ACTION_PREFIX), data);
+    }
+
+    /**
+     * To delete lazy-action data from redis.
+     *
+     * @param key key to delete with.
+     *
+     * @since 1.8.2.0
+     */
+    public void deleteLazyActionDataFromRedis(String key) {
+        redisLazyActionData.delete(prepareKey(key, LAZY_ACTION_PREFIX));
+    }
+
+    /**
+     * To get lazy-action data from redis.
+     *
+     * @param key key to get with.
+     *
+     * @return data or null.
+     *
+     * @since 1.8.2.0
+     */
+    public List<LazyActionData> getLazyActionDataFromRedis(String key) {
+        return redisLazyActionData.opsForValue().get(prepareKey(key, LAZY_ACTION_PREFIX));
     }
 
 
