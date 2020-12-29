@@ -187,8 +187,8 @@ public class DiscountsReminderImpl implements DiscountsReminder, DiscountsListen
                 return true;
             }
 
-            return newPlastic.getProductSalePrice() != null && newPlastic.getProductSalePrice().compareTo(
-                    pl.getProductSalePrice()) < 0;
+            return newPlastic.getProductSalePrice() != null && pl.getProductSalePrice() != null &&
+                    newPlastic.getProductSalePrice().compareTo(pl.getProductSalePrice()) < 0;
         }
 
         return false;
