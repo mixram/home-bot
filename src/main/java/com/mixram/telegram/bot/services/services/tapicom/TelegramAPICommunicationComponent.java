@@ -6,6 +6,7 @@ import org.apache.commons.lang3.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Set;
 
@@ -126,6 +127,19 @@ public class TelegramAPICommunicationComponent {
         Validate.notBlank(userId, "User ID is not specified!");
 
         services.unbanUserInChat(chatId, userId);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#manageRightsChatMember(String, String, boolean)
+     * @since 1.8.5.0
+     */
+    public void manageRightsChatMember(@Nonnull String chatId,
+                                       @Nonnull String userId,
+                                       boolean restrict) {
+        Validate.notBlank(chatId, "Chat ID is not specified!");
+        Validate.notBlank(userId, "User ID is not specified!");
+
+        services.manageRightsChatMember(chatId, userId, restrict);
     }
 
 

@@ -44,6 +44,7 @@ class TelegramAPICommunicationServices {
     private static final String KICK_CHAT_MEMBER_URL = "/kickChatMember";
     private static final String DELETE_MESSAGE_URL = "/deleteMessage";
     private static final String UNBAN_CHAT_MEMBER_URL = "/unbanChatMember";
+    private static final String RESTRICT_CHAT_MEMBER_URL = "/restrictChatMember";
 
     private final String botName;
     private final String mainUrlPart;
@@ -55,11 +56,10 @@ class TelegramAPICommunicationServices {
     private final META meta;
 
     /**
-     * Identifier of the first update to be returned. Must be greater by one than the highest among the identifiers of
-     * previously received updates. By default, updates starting with the earliest unconfirmed update are returned. An
-     * update is considered confirmed as soon as getUpdates is called with an offset higher than its update_id. The
-     * negative offset can be specified to retrieve updates starting from -offset update from the end of the updates
-     * queue. All previous updates will forgotten.
+     * Identifier of the first update to be returned. Must be greater by one than the highest among the identifiers of previously received
+     * updates. By default, updates starting with the earliest unconfirmed update are returned. An update is considered confirmed as soon as
+     * getUpdates is called with an offset higher than its update_id. The negative offset can be specified to retrieve updates starting from
+     * -offset update from the end of the updates queue. All previous updates will forgotten.
      */
     private AtomicLong offset;
 
@@ -343,6 +343,40 @@ class TelegramAPICommunicationServices {
             Validate.notNull(answerResponse, "Empty message!");
 
             log.debug("removeMessageFromChat ==> answer on message: {}", () -> answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    /**
+     * To restrict user in the chat.
+     *
+     * @param chatId chat ID.
+     * @param userId user ID.
+     *
+     * @since 1.8.5.0
+     */
+    protected void manageRightsChatMember(String chatId,
+                                          String userId,
+                                          boolean restrict) {
+        try {
+            SendMessage sendMessage =
+                    SendMessage.builder()
+                               .chatId(chatId)
+                               .userId(userId)
+                               .permissions(restrict ? ChatPermissions.RESTRICTED_ALL() : ChatPermissions.GRANTED_ALL())
+                               .build();
+
+            String url = mainUrlPart + RESTRICT_CHAT_MEMBER_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            log.debug("restrictChatMember => message={}", () -> sendMessage);
+
+            Object answerResponse = restClient.post(url, headers.toSingleValueMap(), sendMessage, Object.class);
+            Validate.notNull(answerResponse, "Empty message!");
+
+            log.debug("restrictChatMember ==> answer on message: {}", () -> answerResponse);
         } catch (Exception e) {
             log.warn("", e);
         }

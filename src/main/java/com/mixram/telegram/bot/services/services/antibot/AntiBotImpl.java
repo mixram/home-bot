@@ -119,6 +119,12 @@ public class AntiBotImpl implements AntiBot {
                                     .replyMarkup(defineStandardKeyboardV2())
                                     .doIfAntiBot(new NewMessageAdder(u.getId(), chatId))
                                     .build());
+
+            try {
+                telegramAPICommunicationComponent.manageRightsChatMember(String.valueOf(chatId), String.valueOf(u.getId()), true);
+            } catch (Exception e) {
+                log.warn("", e);
+            }
         });
 
         storeNewMembersTempDataToRedis(membersData);
@@ -221,6 +227,12 @@ public class AntiBotImpl implements AntiBot {
             throw new IllegalArgumentException(
                     String.format("Wrong answer '%s' (expected '%s') on the antibot question! %s",
                                   callbackQuery.getData(), keyForAnswer, callbackQuery));
+        }
+
+        try {
+            telegramAPICommunicationComponent.manageRightsChatMember(String.valueOf(chatId), String.valueOf(user.getId()), false);
+        } catch (Exception e) {
+            log.warn("", e);
         }
 
         newMemberTempData.getMessagesToDelete().forEach(

@@ -79,13 +79,20 @@ public class SendMessage implements TelegramApiEntity {
     @JsonProperty("reply_to_message_id")
     private Long replyToMessageId;
     /**
-     * Optional. Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard,
-     * instructions to remove reply keyboard or to force a reply from the user.
+     * Optional. Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to
+     * remove reply keyboard or to force a reply from the user.
      *
      * @since 0.1.3.0
      */
     @JsonProperty("reply_markup")
     private Object replyMarkup;
+    /**
+     * A JSON-serialized object for new user permissions.
+     *
+     * @since 1.8.5.0
+     */
+    @JsonProperty("permissions")
+    private ChatPermissions permissions;
 
     @Override
     public String toString() {
