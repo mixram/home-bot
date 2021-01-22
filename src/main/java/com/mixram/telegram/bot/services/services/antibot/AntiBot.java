@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.services.antibot;
 
+import com.mixram.telegram.bot.services.domain.entity.CASData;
 import com.mixram.telegram.bot.services.domain.entity.CallbackQuery;
 import com.mixram.telegram.bot.services.domain.entity.User;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
@@ -47,4 +48,15 @@ public interface AntiBot {
      * @since 1.7.0.0
      */
     void proceedCallBack(CallbackQuery callbackQuery);
+
+    /**
+     * To get data from <a href="https://cas.chat">CAS service</a>.
+     *
+     * @param id user ID.
+     *
+     * @return CAS data.
+     *
+     * @since 1.8.5.0
+     */
+    CASData checkCAS(Long id);
 }

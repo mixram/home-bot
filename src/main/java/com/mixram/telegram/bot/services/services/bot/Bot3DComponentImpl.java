@@ -44,6 +44,9 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent.SOMETHING_WRONG_MESSAGE;
+
+
 /**
  * @author mixram on 2019-04-10.
  * @since 1.4.1.0
@@ -61,9 +64,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String SALES_PATTERN_STRING = "^/SALES_.*";
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
     private static final String TEST_COMMANDS_PATTERN_STRING = "^/TEST.*";
+    private static final String CAS_PATTERN_STRING = "^/CAS_MSG_.*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
     private static final Pattern TEST_PATTERN = Pattern.compile(TEST_COMMANDS_PATTERN_STRING);
+    private static final Pattern CAS_PATTERN = Pattern.compile(CAS_PATTERN_STRING);
 
     private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
     private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
@@ -127,6 +132,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
          * true - need full message content, false - need short message content.
          */
         private boolean full;
+        /**
+         * Some needed data for the command.
+         */
+        private Object data;
 
         @Override
         public String toString() {
@@ -235,6 +244,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             Long chatId = callbackQuery.getMessage().getChat().getChatId();
             saveToLazyActions(messageData, chatId, LazyAction.DELETE,
                               meta.settings.get(chatId).getHelloMessageDeleteTime());
+            checkCAS(callbackQuery);
 
             return messageData;
         }
@@ -293,7 +303,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         //            saveNewUser();
         //        }
 
-        return prepareAnswerWithCommand(command.getCommand(), command.isFull(), message, locale);
+        return prepareAnswerWithCommand(command, message, locale);
     }
 
     /**
@@ -307,8 +317,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                                     boolean noDataText,
                                                     Locale locale) {
         return plastic == null || CollectionUtils.isEmpty(plastic.getData()) ?
-                noDataText ? messageSource.getMessage(NO_DATA_FOR_SHOP, locale) : null :
-                doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
+               noDataText ? messageSource.getMessage(NO_DATA_FOR_SHOP, locale) : null :
+               doPrepareMessageToSendString(command, full, onlyDiscounts, plastic, shop, locale);
     }
 
     /**
@@ -327,7 +337,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             if (StringUtils.isNotBlank(messageToSendStringTemp) && !NO_DATA_FOR_SHOP.equals(messageToSendStringTemp)) {
                 String shopUrl = plastic == null || CollectionUtils.isEmpty(plastic.getData()) ? null :
-                        plastic.getData().get(0).getShopUrl();
+                                 plastic.getData().get(0).getShopUrl();
                 builder.append(
                         messageSource.getMessage(SHOP_MESSAGE_PART_MESSAGE, locale, shopUrl, shop.getNameAlt(),
                                                  messageToSendStringTemp));
@@ -346,6 +356,47 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.8.5.0
+     */
+    private void checkCAS(CallbackQuery query) {
+        asyncHelper.doAsync((Supplier<Void>) () -> {
+            try {
+                final Long chatId = query.getMessage().getChat().getChatId();
+                final BotSettings botSettings = meta.settings.get(chatId);
+                if (botSettings == null || CollectionUtils.isEmpty(botSettings.getInfoChats())) {
+                    log.warn("There are no BotSettings for chat " + chatId + "!");
+
+                    return null;
+                }
+
+                final User user = query.getUser();
+                final Long id = user.getId();
+
+//                final CASData data = antiBot.checkCAS(user.getId());
+                final CASData data = antiBot.checkCAS(606290477L);
+                final CASData.CASResultData casData = data.getData();
+
+                if (data.isBaned()) {
+                    final String message = "Новый пользователь (" + id + ", " + user.getUsername() + ", " + user.getFirstName() +
+                            " " + user.getLastName() + "):\n" +
+                            "📌 нарушений: " + (casData == null || casData.getOffenses() == null ? 0 : casData.getOffenses()) + ";\n" +
+                            "📌 когда забанили: " + (casData == null || casData.getTimeAdded() == null ? "нет данных" : casData.getTimeAdded()) + ";\n\n" +
+                            "Чтобы посмотреть бан-сообщения - кликай: /cas_msg_" + id;
+                    final MessageData messageData = MessageData.builder()
+                                                               .message(message)
+                                                               .build();
+
+                    botSettings.getInfoChats().forEach(c -> communicationComponent.sendMessageToChat(c, messageData));
+                }
+            } catch (Exception e) {
+                log.warn("CAS exception!", e);
+            }
+
+            return null;
+        });
+    }
 
     /**
      * @since 1.8.2.0
@@ -418,8 +469,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         //TODO: need to rebuild in order to be able to check more then one new user at the same time
         return needAntiBotCheck(settings, newChatMembers, message) ?
-                checkBotNewChatMembers(newChatMembers, chatId, message.getMessageId(), locale) :
-                welcomeNewChatMembers(newChatMembers, settings.getWelcomeNewUserMessage(), locale);
+               checkBotNewChatMembers(newChatMembers, chatId, message.getMessageId(), locale) :
+               welcomeNewChatMembers(newChatMembers, settings.getWelcomeNewUserMessage(), locale);
     }
 
     /**
@@ -541,10 +592,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return isPrivate(chat.getType()) ? null : prepareNoPrivateChatMessage(locale);
             case G:
                 return isGroup(chat.getType()) ? (settings == null ? prepareConcreteGroupChatMessage(locale) : null) :
-                        prepareNoGroupChatMessage(locale);
+                       prepareNoGroupChatMessage(locale);
             case B:
                 return isGroup(chat.getType()) ? (settings == null ? prepareConcreteGroupChatMessage(locale) : null) :
-                        null;
+                       null;
             default:
                 throw new UnsupportedOperationException(String.format("Unexpected work type: '%s'!", workType));
         }
@@ -672,7 +723,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             LocalDateTime ldt = prepareDateTime(message.getTimestamp());
             Locale locale = user == null || user.getLanguageCode() == null ? META.DEFAULT_LOCALE :
-                    new Locale(user.getLanguageCode());
+                            new Locale(user.getLanguageCode());
 
             MessageData messageData;
             if (users == null) {
@@ -755,14 +806,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     /**
      * @since 0.1.3.0
      */
-    private MessageData prepareAnswerWithCommand(Command command,
-                                                 boolean full,
+    private MessageData prepareAnswerWithCommand(CommandHolder commandHolder,
                                                  Message message,
                                                  Locale locale) {
-        Validate.notNull(command, "Command is not specified!");
+        Validate.notNull(commandHolder, "Command is not specified!");
 
         Chat chat = message.getChat();
         User user = message.getUser();
+        final Command command = commandHolder.getCommand();
 
         switch (workType) {
             case G:
@@ -795,6 +846,41 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                     log.debug("Command '{}' is not allowed for not Admin!", () -> command);
 
                     return null;
+                } else if (Command.CAS == command) {
+                    final Long chatId = chat.getChatId();
+                    if (meta.settings.get(chatId).getInfoChats().contains(chatId)) {
+                        String messageCas;
+                        try {
+                            final CASData.CASResultData casData = antiBot.checkCAS(Long.valueOf((String) commandHolder.getData()))
+                                                                         .getData();
+                            if (casData == null || CollectionUtils.isEmpty(casData.getMessages())) {
+                                messageCas = "Данных по бан-сообщениям нет";
+                            } else {
+                                int counter = 1;
+                                final StringBuilder builder = new StringBuilder();
+                                for (String casDataMessage : casData.getMessages()) {
+                                    builder.append("<b>Бан-пост #").append(counter++).append("</b>").append("\n");
+                                    builder.append("=====================").append("\n");
+                                    builder.append(casDataMessage).append("\n");
+                                    builder.append("=====================").append("\n\n");
+                                }
+
+                                messageCas = builder.toString();
+                            }
+                        } catch (Exception e) {
+                            log.warn("CAS details exception!", e);
+                            messageCas = messageSource.getMessage(SOMETHING_WRONG_MESSAGE, locale);
+                        }
+
+                        final MessageData messageData = MessageData.builder()
+                                                                   .message(messageCas)
+                                                                   .build();
+                        saveToLazyActions(messageData, chatId, message.getMessageId(), LazyAction.DELETE,
+                                          meta.settings.get(chatId).getHelloMessageDeleteTime());
+                        saveToLazyActions(messageData, chatId, LazyAction.DELETE, meta.settings.get(chatId).getHelloMessageDeleteTime());
+
+                        return messageData;
+                    }
                 } else {
                     log.debug("Command '{}' is not allowed in group chats bot!", () -> command);
 
@@ -921,7 +1007,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             case D_DAS:
             case D_PLEX:
                 messageToSendString = full ? prepareAnswerText(plastic, shop, locale) :
-                        prepareAnswerTextShort(plastic, onlyDiscounts, locale);
+                                      prepareAnswerTextShort(plastic, onlyDiscounts, locale);
 
                 break;
             default:
@@ -1123,7 +1209,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         return (datum.getProductOldPrice() != null && datum.getProductSalePrice() != null) || datum.getProductDiscountPercent() != null ?
-                PlasticPresenceState.DISCOUNT : PlasticPresenceState.IN_STOCK;
+               PlasticPresenceState.DISCOUNT : PlasticPresenceState.IN_STOCK;
     }
 
     /**
@@ -1177,6 +1263,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             return CommandHolder.builder()
                                 .command(command)
+                                .full(false)
+                                .build();
+        }
+        if (CAS_PATTERN.matcher(text).matches()) {
+            return CommandHolder.builder()
+                                .command(Command.CAS)
+                                .data(text.substring(text.lastIndexOf("_") + 1))
                                 .full(false)
                                 .build();
         }

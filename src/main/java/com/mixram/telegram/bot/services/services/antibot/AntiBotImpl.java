@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
+import com.mixram.telegram.bot.services.domain.entity.CASData;
 import com.mixram.telegram.bot.services.domain.entity.CallbackQuery;
 import com.mixram.telegram.bot.services.domain.entity.InlineKeyboard;
 import com.mixram.telegram.bot.services.domain.entity.User;
@@ -162,6 +163,12 @@ public class AntiBotImpl implements AntiBot {
         doProceedCallbackV2(callbackQuery);
     }
 
+    @Override
+    public CASData checkCAS(@Nonnull Long id) {
+        Validate.notNull(id, "User ID is not specified!");
+
+        return telegramAPICommunicationComponent.checkCAS(id);
+    }
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 

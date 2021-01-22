@@ -55,7 +55,11 @@ public enum Command {
     /**
      * Start command.
      */
-    TEST(null, "TEST");
+    TEST(null, "TEST"),
+    /**
+     * Start command.
+     */
+    CAS(null, "CAS");
 
     @Getter
     Shop3D shop;

@@ -29,6 +29,7 @@ public class BotSettings implements Validable {
      * In seconds.
      */
     private Integer botInfoRequestDeleteTime;
+    private Set<Long> infoChats;
 
     @Override
     public boolean isValid() {

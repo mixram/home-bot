@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.services.tapicom;
 
+import com.mixram.telegram.bot.services.domain.entity.CASData;
 import com.mixram.telegram.bot.services.domain.entity.Update;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import org.apache.commons.lang3.Validate;
@@ -18,6 +19,8 @@ import java.util.Set;
 public class TelegramAPICommunicationComponent {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
+
+    public static final String SOMETHING_WRONG_MESSAGE = "telegram.bot.message.something-wrong";
 
     private final TelegramAPICommunicationServices services;
 
@@ -140,6 +143,17 @@ public class TelegramAPICommunicationComponent {
         Validate.notBlank(userId, "User ID is not specified!");
 
         services.manageRightsChatMember(chatId, userId, restrict);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#checkCAS(Long)
+     * @since 1.8.5.0
+     */
+    @Nonnull
+    public CASData checkCAS(@Nonnull Long id) {
+        Validate.notNull(id, "User ID is not specified!");
+
+        return services.checkCAS(id);
     }
 
 

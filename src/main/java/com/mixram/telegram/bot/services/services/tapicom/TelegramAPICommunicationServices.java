@@ -20,10 +20,13 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nonnull;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent.SOMETHING_WRONG_MESSAGE;
 
 /**
  * @author mixram on 2019-04-22.
@@ -35,8 +38,6 @@ class TelegramAPICommunicationServices {
 
     // <editor-fold defaultstate="collapsed" desc="***API elements***">
 
-    private static final String SOMETHING_WRONG_MESSAGE = "telegram.bot.message.something-wrong";
-
     private static final String GET_ME_URL = "/getMe";
     private static final String GET_UPDATES_URL = "/getUpdates";
     private static final String SEND_MESSAGE_URL = "/sendMessage";
@@ -45,11 +46,13 @@ class TelegramAPICommunicationServices {
     private static final String DELETE_MESSAGE_URL = "/deleteMessage";
     private static final String UNBAN_CHAT_MEMBER_URL = "/unbanChatMember";
     private static final String RESTRICT_CHAT_MEMBER_URL = "/restrictChatMember";
+    private static final String CAS_CHECK_URL = "/check";
 
     private final String botName;
     private final String mainUrlPart;
     private final Integer secondsToBanUser;
     private final Set<Long> adminsPrime;
+    private final String CASMainUrl;
 
     private final RestClient restClient;
     private final CustomMessageSource messageSource;
@@ -73,6 +76,7 @@ class TelegramAPICommunicationServices {
                                      @Value("${bot.settings.bot-name}") String botName,
                                      @Value("${bot.settings.admins-prime}") String adminsPrime,
                                      @Value("${bot.settings.time-to-ban-user-after-kick}") Integer secondsToBanUser,
+                                     @Value("${service.cas.base-url}") String CASMainUrl,
                                      META meta,
                                      CustomMessageSource messageSource,
                                      RestClient restClient) {
@@ -85,6 +89,7 @@ class TelegramAPICommunicationServices {
         this.adminsPrime = JsonUtil.fromJson(adminsPrime, new TypeReference<Set<Long>>() {});
         this.mainUrlPart = telegramUrl + "/bot" + botToken;
         this.secondsToBanUser = secondsToBanUser;
+        this.CASMainUrl = CASMainUrl;
     }
 
     // </editor-fold>
@@ -198,9 +203,9 @@ class TelegramAPICommunicationServices {
             List<Update> updates = Optional.ofNullable(updatesHolder.getData()).orElse(
                     Lists.newArrayListWithExpectedSize(0));
             offset = updates.stream()
-                            .map(Update::getUpdateId)
+                            .map(Update :: getUpdateId)
                             .max(Comparator.naturalOrder())
-                            .map(AtomicLong::new)
+                            .map(AtomicLong :: new)
                             .orElse(null);
 
             result = updatesHolder.getData();
@@ -380,6 +385,27 @@ class TelegramAPICommunicationServices {
         } catch (Exception e) {
             log.warn("", e);
         }
+    }
+
+    /**
+     * To get data from <a href="https://cas.chat">CAS service</a>.
+     *
+     * @param id user ID.
+     *
+     * @return CAS data.
+     *
+     * @since 1.8.5.0
+     */
+    @Nonnull
+    protected CASData checkCAS(@Nonnull Long id) {
+        String url = CASMainUrl + CAS_CHECK_URL;
+        Map<String, String> params = new HashMap<>(1);
+        params.put("user_id", String.valueOf(id));
+
+        CASData response = restClient.get(url, params, null, CASData.class);
+        Validate.notNull(response, "Empty answer!");
+
+        return response;
     }
 
 
