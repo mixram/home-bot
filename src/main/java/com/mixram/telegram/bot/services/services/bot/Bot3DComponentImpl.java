@@ -374,8 +374,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 final User user = query.getUser();
                 final Long id = user.getId();
 
-//                final CASData data = antiBot.checkCAS(user.getId());
-                final CASData data = antiBot.checkCAS(606290477L);
+                final CASData data = antiBot.checkCAS(user.getId());
                 final CASData.CASResultData casData = data.getData();
 
                 if (data.isBaned()) {
@@ -1267,9 +1266,11 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                                 .build();
         }
         if (CAS_PATTERN.matcher(text).matches()) {
+            String commandDataString = parseCommandDataString(text);
+
             return CommandHolder.builder()
                                 .command(Command.CAS)
-                                .data(text.substring(text.lastIndexOf("_") + 1))
+                                .data(commandDataString.substring(commandDataString.lastIndexOf("_") + 1))
                                 .full(false)
                                 .build();
         }
