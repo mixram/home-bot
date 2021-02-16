@@ -19,12 +19,18 @@ public class BotSettings implements Validable {
     private Boolean newDiscountReminder;
     private Boolean enableAntiBot;
     private Boolean versionInform;
+    private Boolean enableAntiSwearing;
+    private Boolean enableMarketLogic;
     private String welcomeNewUserMessage;
     private String botInfoMessage;
     /**
      * In seconds.
      */
     private Integer helloMessageDeleteTime;
+    /**
+     * In seconds.
+     */
+    private Integer marketMessageDeleteTime;
     /**
      * In seconds.
      */

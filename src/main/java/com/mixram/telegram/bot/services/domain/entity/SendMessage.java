@@ -26,6 +26,13 @@ public class SendMessage implements TelegramApiEntity {
     @JsonProperty("chat_id")
     private String chatId;
     /**
+     * Unique identifier for the chat where the original message was sent (or channel username in the format @channelusername).
+     *
+     * @since 1.8.8.0
+     */
+    @JsonProperty("from_chat_id")
+    private String fromChatId;
+    /**
      * Unique identifier of the target user (in case of kicking user).
      */
     @JsonProperty("user_id")

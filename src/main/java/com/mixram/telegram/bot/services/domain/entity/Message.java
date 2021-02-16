@@ -85,8 +85,8 @@ public class Message implements TelegramApiEntity {
     @JsonProperty("forward_date")
     private Long forwardDate;
     /**
-     * Optional. For replies, the original message. Note that the Message object in this field will not contain further
-     * reply_to_message fields even if it itself is a reply.
+     * Optional. For replies, the original message. Note that the Message object in this field will not contain further reply_to_message
+     * fields even if it itself is a reply.
      *
      * @since 0.1.2.0
      */
@@ -121,15 +121,8 @@ public class Message implements TelegramApiEntity {
     @JsonProperty("text")
     private String text;
     /**
-     * Optional. For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text.
-     *
-     * @since 0.1.3.0
-     */
-    @JsonProperty("entities")
-    private List<MessageEntity> entities;
-    /**
-     * Optional. New members that were added to the group or supergroup and information about them (the bot itself may
-     * be one of these members).
+     * Optional. New members that were added to the group or supergroup and information about them (the bot itself may be one of these
+     * members).
      *
      * @since 1.4.1.0
      */
@@ -142,6 +135,41 @@ public class Message implements TelegramApiEntity {
      */
     @JsonProperty("left_chat_member")
     private User leftChatMember;
+    /**
+     * For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#messageentity">MessageEntity</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("entities")
+    private List<MessageEntity> entities;
+    /**
+     * For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear in the caption.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#messageentity">MessageEntity</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("caption_entities")
+    private List<MessageEntity> captionEntities;
+    /**
+     * Caption for the animation, audio, document, photo, video or voice, 0-1024 characters.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @since 1.8.8.0
+     */
+    @JsonProperty("caption")
+    private String caption;
+    /**
+     * Caption for the animation, audio, document, photo, video or voice, 0-1024 characters.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#document">Document</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("document")
+    private Document document;
 
 
     //TODO: to realize other response types

@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.config.cache;
 
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Message;
 import com.mixram.telegram.bot.services.domain.enums.Shop3D;
 import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.NewMemberTempData;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +30,7 @@ public class RedisTemplateHelper {
     private static final String STAT_PREFIX = "statistics";
     private static final String NEW_MEMBER_PREFIX = "new_member";
     private static final String LAZY_ACTION_PREFIX = "lazy_action";
+    private static final String POSTPONED_MESSAGES_PREFIX = "postponed_messages";
 
     private final String prefix;
 
@@ -35,6 +38,7 @@ public class RedisTemplateHelper {
     private final RedisTemplate<String, StatData> redisTemplateStatData;
     private final RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData;
     private final RedisTemplate<String, List<LazyActionData>> redisLazyActionData;
+    private final RedisTemplate<String, Map<String, List<Message>>> redisTemplatePostponedMessagesData;
 
     // </editor-fold>
 
@@ -46,11 +50,13 @@ public class RedisTemplateHelper {
             @Qualifier("dataStatDataRedisTemplate") RedisTemplate<String, StatData> redisTemplateStatData,
             @Qualifier("dataNewMemberTempDataRedisTemplate") RedisTemplate<String, Map<String, NewMemberTempData>> redisTemplateNewMemberTempData,
             @Qualifier("dataLazyActionDataRedisTemplate") RedisTemplate<String, List<LazyActionData>> redisLazyActionData,
+            @Qualifier("dataPostponedMessagesDataRedisTemplate") RedisTemplate<String, Map<String, List<Message>>> redisTemplatePostponedMessagesData,
             @Value("${spring.redis.prefix}") String prefix) {
         this.redisTemplate3DPlastic = redisTemplate3DPlastic;
         this.redisTemplateStatData = redisTemplateStatData;
         this.redisTemplateNewMemberTempData = redisTemplateNewMemberTempData;
         this.redisLazyActionData = redisLazyActionData;
+        this.redisTemplatePostponedMessagesData = redisTemplatePostponedMessagesData;
         this.prefix = prefix;
     }
 
@@ -65,8 +71,8 @@ public class RedisTemplateHelper {
      *
      * @since 0.1.3.0
      */
-    public void storePlasticToRedis(Data3DPlastic plastic,
-                                    Shop3D key) {
+    public void storePlasticToRedis(@Nonnull Data3DPlastic plastic,
+                                    @Nonnull Shop3D key) {
         redisTemplate3DPlastic.opsForValue().set(prepareKey(key, PLASTIC_SHOP_PREFIX), plastic);
     }
 
@@ -77,7 +83,7 @@ public class RedisTemplateHelper {
      *
      * @since 0.1.3.0
      */
-    public void deletePlasticFromRedis(Shop3D key) {
+    public void deletePlasticFromRedis(@Nonnull Shop3D key) {
         redisTemplate3DPlastic.delete(prepareKey(key, PLASTIC_SHOP_PREFIX));
     }
 
@@ -90,7 +96,7 @@ public class RedisTemplateHelper {
      *
      * @since 0.1.3.0
      */
-    public Data3DPlastic getPlasticFromRedis(Shop3D key) {
+    public Data3DPlastic getPlasticFromRedis(@Nonnull Shop3D key) {
         return redisTemplate3DPlastic.opsForValue().get(prepareKey(key, PLASTIC_SHOP_PREFIX));
     }
 
@@ -103,8 +109,8 @@ public class RedisTemplateHelper {
      *
      * @since 1.4.1.0
      */
-    public void storeOldPlasticToRedis(Data3DPlastic plastic,
-                                       Shop3D key) {
+    public void storeOldPlasticToRedis(@Nonnull Data3DPlastic plastic,
+                                       @Nonnull Shop3D key) {
         redisTemplate3DPlastic.opsForValue().set(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX), plastic);
     }
 
@@ -115,7 +121,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.4.1.0
      */
-    public void deleteOldPlasticFromRedis(Shop3D key) {
+    public void deleteOldPlasticFromRedis(@Nonnull Shop3D key) {
         redisTemplate3DPlastic.delete(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX));
     }
 
@@ -128,7 +134,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.4.1.0
      */
-    public Data3DPlastic getOldPlasticFromRedis(Shop3D key) {
+    public Data3DPlastic getOldPlasticFromRedis(@Nonnull Shop3D key) {
         return redisTemplate3DPlastic.opsForValue().get(prepareKey(key, PLASTIC_SHOP_OLD_PREFIX));
     }
 
@@ -141,8 +147,8 @@ public class RedisTemplateHelper {
      *
      * @since 1.3.0.0
      */
-    public void storeStatisticsToRedis(StatData stat,
-                                       String key) {
+    public void storeStatisticsToRedis(@Nonnull StatData stat,
+                                       @Nonnull String key) {
         redisTemplateStatData.opsForValue().set(prepareKey(key, STAT_PREFIX), stat);
     }
 
@@ -153,7 +159,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.3.0.0
      */
-    public void deleteStatisticsFromRedis(String key) {
+    public void deleteStatisticsFromRedis(@Nonnull String key) {
         redisTemplateStatData.delete(prepareKey(key, STAT_PREFIX));
     }
 
@@ -166,7 +172,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.3.0.0
      */
-    public StatData getStatisticsFromRedis(String key) {
+    public StatData getStatisticsFromRedis(@Nonnull String key) {
         return redisTemplateStatData.opsForValue().get(prepareKey(key, STAT_PREFIX));
     }
 
@@ -178,8 +184,8 @@ public class RedisTemplateHelper {
      *
      * @since 1.7.0.0
      */
-    public void storeNewMembersTempDataToRedis(Map<String, NewMemberTempData> data,
-                                               String key) {
+    public void storeNewMembersTempDataToRedis(@Nonnull Map<String, NewMemberTempData> data,
+                                               @Nonnull String key) {
         redisTemplateNewMemberTempData.opsForValue().set(prepareKey(key, NEW_MEMBER_PREFIX), data);
     }
 
@@ -190,7 +196,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.3.0.0
      */
-    public void deleteNewMembersTempDataFromRedis(String key) {
+    public void deleteNewMembersTempDataFromRedis(@Nonnull String key) {
         redisTemplateNewMemberTempData.delete(prepareKey(key, NEW_MEMBER_PREFIX));
     }
 
@@ -203,7 +209,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.7.0.0
      */
-    public Map<String, NewMemberTempData> getMembersTempDataFromRedis(String key) {
+    public Map<String, NewMemberTempData> getMembersTempDataFromRedis(@Nonnull String key) {
         return redisTemplateNewMemberTempData.opsForValue().get(prepareKey(key, NEW_MEMBER_PREFIX));
     }
 
@@ -215,8 +221,8 @@ public class RedisTemplateHelper {
      *
      * @since 1.8.2.0
      */
-    public void storeLazyActionDataToRedis(List<LazyActionData> data,
-                                           String key) {
+    public void storeLazyActionDataToRedis(@Nonnull List<LazyActionData> data,
+                                           @Nonnull String key) {
         redisLazyActionData.opsForValue().set(prepareKey(key, LAZY_ACTION_PREFIX), data);
     }
 
@@ -227,7 +233,7 @@ public class RedisTemplateHelper {
      *
      * @since 1.8.2.0
      */
-    public void deleteLazyActionDataFromRedis(String key) {
+    public void deleteLazyActionDataFromRedis(@Nonnull String key) {
         redisLazyActionData.delete(prepareKey(key, LAZY_ACTION_PREFIX));
     }
 
@@ -240,8 +246,34 @@ public class RedisTemplateHelper {
      *
      * @since 1.8.2.0
      */
-    public List<LazyActionData> getLazyActionDataFromRedis(String key) {
+    public List<LazyActionData> getLazyActionDataFromRedis(@Nonnull String key) {
         return redisLazyActionData.opsForValue().get(prepareKey(key, LAZY_ACTION_PREFIX));
+    }
+
+    /**
+     * To get postponed messages data from redis.
+     *
+     * @param key key to get with.
+     *
+     * @return data or null.
+     *
+     * @since 1.8.8.0
+     */
+    public Map<String, List<Message>> getPostponedMessagesDataFromRedis(@Nonnull String key) {
+        return redisTemplatePostponedMessagesData.opsForValue().get(prepareKey(key, POSTPONED_MESSAGES_PREFIX));
+    }
+
+    /**
+     * To save postponed messaged to Redis.
+     *
+     * @param data data to save.
+     * @param key  key part.
+     *
+     * @since 1.8.8.0
+     */
+    public void storePostponedMessagesDataToRedis(@Nonnull Map<String, List<Message>> data,
+                                                  @Nonnull String key) {
+        redisTemplatePostponedMessagesData.opsForValue().set(prepareKey(key, POSTPONED_MESSAGES_PREFIX), data);
     }
 
 

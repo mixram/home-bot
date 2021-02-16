@@ -3,6 +3,7 @@ package com.mixram.telegram.bot.config.cache;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mixram.telegram.bot.services.domain.entity.Data3DPlastic;
+import com.mixram.telegram.bot.services.domain.entity.Message;
 import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.NewMemberTempData;
 import com.mixram.telegram.bot.services.services.stat.entity.StatData;
@@ -75,6 +76,14 @@ public class RedisConfig {
     @Bean
     public RedisTemplate<String, List<LazyActionData>> dataLazyActionDataRedisTemplate() {
         RedisTemplate<String, List<LazyActionData>> template = new RedisTemplate<>();
+        updateTemplate(template);
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, Map<String, List<Message>>> dataPostponedMessagesDataRedisTemplate() {
+        RedisTemplate<String, Map<String, List<Message>>> template = new RedisTemplate<>();
         updateTemplate(template);
 
         return template;

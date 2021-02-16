@@ -156,6 +156,20 @@ public class TelegramAPICommunicationComponent {
         return services.checkCAS(id);
     }
 
+    /**
+     * @see TelegramAPICommunicationServices#forwardMessage(String, String, String)
+     * @since 1.8.8.0
+     */
+    public void forwardMessage(@Nonnull String baseChatId,
+                               @Nonnull String targetChatId,
+                               @Nonnull String messageId) {
+        Validate.notBlank(baseChatId, "Base chat ID is not specified!");
+        Validate.notBlank(targetChatId, "Target chat ID is not specified!");
+        Validate.notBlank(messageId, "Message ID is not specified!");
+
+        services.forwardMessage(baseChatId, targetChatId, messageId);
+    }
+
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 

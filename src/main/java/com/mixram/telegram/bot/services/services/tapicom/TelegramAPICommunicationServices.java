@@ -41,6 +41,7 @@ class TelegramAPICommunicationServices {
     private static final String GET_ME_URL = "/getMe";
     private static final String GET_UPDATES_URL = "/getUpdates";
     private static final String SEND_MESSAGE_URL = "/sendMessage";
+    private static final String FORWARD_MESSAGE_URL = "/forwardMessage";
     private static final String LEAVE_CHAT_URL = "/leaveChat";
     private static final String KICK_CHAT_MEMBER_URL = "/kickChatMember";
     private static final String DELETE_MESSAGE_URL = "/deleteMessage";
@@ -406,6 +407,41 @@ class TelegramAPICommunicationServices {
         Validate.notNull(response, "Empty answer!");
 
         return response;
+    }
+
+    /**
+     * To forward a message.
+     *
+     * @param baseChatId   chat, where message originally appeared.
+     * @param targetChatId chat, where message should be forwarded.
+     * @param messageId    message ID, that need to be forwarded.
+     *
+     * @since 1.8.8.0
+     */
+    protected void forwardMessage(@Nonnull String baseChatId,
+                                  @Nonnull String targetChatId,
+                                  @Nonnull String messageId) {
+        try {
+            String url = mainUrlPart + FORWARD_MESSAGE_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            SendMessage sendMessage =
+                    SendMessage.builder()
+                               .chatId(targetChatId)
+                               .fromChatId(baseChatId)
+                               .messageId(messageId)
+                               .disableNotification(true)
+                               .build();
+
+            AnswerResponse<Message> answerResponse =
+                    restClient.post(url, headers.toSingleValueMap(), sendMessage,
+                                    new ParameterizedTypeReference<AnswerResponse<Message>>() {});
+            Validate.notNull(answerResponse, "Empty message!");
+            Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
     }
 
 

@@ -53,6 +53,13 @@ public class MessageEntity implements TelegramApiEntity {
      */
     @JsonProperty("user")
     private User user;
+    /**
+     * Optional. For “pre” only, the programming language of the entity text.
+     *
+     * @since 1.8.8.0
+     */
+    @JsonProperty("language")
+    private String language;
 
     @Override
     public String toString() {

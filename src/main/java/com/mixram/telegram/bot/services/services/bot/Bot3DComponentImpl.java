@@ -15,7 +15,8 @@ import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
 import com.mixram.telegram.bot.services.services.bot.enums.LazyAction;
 import com.mixram.telegram.bot.services.services.bot.enums.PlasticPresenceState;
-import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogicImpl;
+import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogic;
+import com.mixram.telegram.bot.services.services.market.MarketLogic;
 import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
 import com.mixram.telegram.bot.utils.AsyncHelper;
 import com.mixram.telegram.bot.utils.CustomMessageSource;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Nonnull;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -65,10 +67,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
     private static final String TEST_COMMANDS_PATTERN_STRING = "^/TEST.*";
     private static final String CAS_PATTERN_STRING = "^/CAS_MSG_.*";
+    private static final String MARKET_PATTERN_STRING = "^#(продам|продажа|продаю|куплю|покупка|покупаю|купую|бронь|забронировать|бронирую|услуга|послуга|продано).*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
     private static final Pattern TEST_PATTERN = Pattern.compile(TEST_COMMANDS_PATTERN_STRING);
     private static final Pattern CAS_PATTERN = Pattern.compile(CAS_PATTERN_STRING);
+    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING);
 
     private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
     private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
@@ -108,10 +112,14 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final String pinnedMessage2;
     private final boolean versionInform;
     private final boolean antiBotIsOn;
+    private final boolean casIsOn;
+    private final boolean marketIsOn;
+    private final String archiveChatId;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
-    private final LazyActionLogicImpl lazyActionLogic;
+    private final LazyActionLogic lazyActionLogic;
+    private final MarketLogic marketLogic;
     private final AsyncHelper asyncHelper;
     private final CustomMessageSource messageSource;
     private final AntiBot antiBot;
@@ -173,13 +181,17 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.pinned-message2}") String pinnedMessage2,
                               @Value("${bot.settings.other.inform-about-version}") boolean versionInform,
                               @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
+                              @Value("${bot.settings.other.cas-is-on}") boolean casIsOn,
+                              @Value("${bot.settings.other.market-logic-is-on}") boolean marketIsOn,
+                              @Value("${bot.settings.other.market-archive-chat-id}") String archiveChatId,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               META meta,
                               TelegramAPICommunicationComponent communicationComponent,
                               AsyncHelper asyncHelper,
                               CustomMessageSource messageSource,
                               AntiBot antiBot,
-                              LazyActionLogicImpl lazyActionLogic) {
+                              LazyActionLogic lazyActionLogic,
+                              MarketLogic marketLogic) {
         this.maxQuantity = maxQuantity;
         this.workType = workType;
         this.adminEmail = adminEmail;
@@ -190,6 +202,9 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.pinnedMessage2 = pinnedMessage2;
         this.versionInform = versionInform;
         this.antiBotIsOn = antiBotIsOn;
+        this.casIsOn = casIsOn;
+        this.marketIsOn = marketIsOn;
+        this.archiveChatId = archiveChatId;
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
@@ -197,6 +212,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.messageSource = messageSource;
         this.antiBot = antiBot;
         this.lazyActionLogic = lazyActionLogic;
+        this.marketLogic = marketLogic;
         this.meta = meta;
 
         this.random = new Random();
@@ -233,7 +249,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     public MessageData proceedUpdate(Update update) {
         Validate.notNull(update, "Update is not specified!");
 
-//        log.debug("UPDATE: {}", () -> update);
+        log.debug("UPDATE: {}", () -> update);
 
         Locale locale = META.DEFAULT_LOCALE;
 
@@ -242,8 +258,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             MessageData messageData = proceedCallBackV2(callbackQuery, locale);
 
             Long chatId = callbackQuery.getMessage().getChat().getChatId();
-            saveToLazyActions(messageData, chatId, LazyAction.DELETE,
-                              meta.settings.get(chatId).getHelloMessageDeleteTime());
+            saveToLazyActions(messageData, chatId, LazyAction.DELETE, meta.settings.get(chatId).getHelloMessageDeleteTime());
             checkCAS(callbackQuery);
 
             return messageData;
@@ -251,9 +266,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
         Message message = update.getMessage();
         if (message == null) {
-            log.warn("Unexpected 'Update' structure! {}", () -> update);
+            message = update.getEditedMessage();
+            if (message == null) {
+                log.warn("No 'Message' in 'Update' structure! {}", () -> update);
 
-            return null;
+                return null;
+            }
         }
 
         //        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
@@ -270,8 +288,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             if (newChatMembersMessage.getDoIfAntiBot() == null) {
                 Long chatId = message.getChat().getChatId();
-                saveToLazyActions(newChatMembersMessage, chatId, LazyAction.DELETE,
-                                  meta.settings.get(chatId).getHelloMessageDeleteTime());
+                saveToLazyActions(newChatMembersMessage, chatId, LazyAction.DELETE, meta.settings.get(chatId).getHelloMessageDeleteTime());
             }
 
             return newChatMembersMessage;
@@ -283,6 +300,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
             return leftChatMember;
         }
+
+        doMarketLogic(message);
 
         if (noNeedToAnswer(message)) {
             return null;
@@ -358,9 +377,59 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
 
     /**
+     * @since 1.8.8.0
+     */
+    private void doMarketLogic(@Nonnull Message message) {
+        try {
+            if (!marketIsOn) return;
+
+            final Long chatId = message.getChat().getChatId();
+            final Long messageId = message.getMessageId();
+            final BotSettings botSettings = meta.settings.get(chatId);
+
+            if (botSettings.getEnableMarketLogic() == null || !botSettings.getEnableMarketLogic()) return;
+
+            if (message.getMediaGroupId() != null) {
+                marketLogic.saveMessageToRedisForPostponedLazyAction(message);
+
+                log.info("Message {} has media group id. Will be postponed.", messageId);
+
+                return;
+            }
+
+            if (marketLogic.isAdvertisement(message)) {
+                try {
+                    log.info("Message {} is an advertisement, will not be deleted.", messageId);
+
+                    lazyActionLogic.removeLazyActionFromRedis(
+                            new LazyActionData(chatId, messageId, LazyAction.DELETE, LocalDateTime.now()));
+                    communicationComponent.forwardMessage(String.valueOf(chatId), archiveChatId, String.valueOf(messageId));
+                } catch (Exception e) {
+                    log.warn("", e);
+                }
+
+                return;
+            }
+
+            try {
+                log.info("Message {} is not an advertisement, will be deleted.", messageId);
+                lazyActionLogic.saveLazyActionToRedis(
+                        new LazyActionData(chatId, null, LazyAction.DELETE,
+                                           LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())));
+            } catch (Exception e) {
+                log.warn("", e);
+            }
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    /**
      * @since 1.8.5.0
      */
     private void checkCAS(CallbackQuery query) {
+        if (!casIsOn) return;
+
         asyncHelper.doAsync((Supplier<Void>) () -> {
             try {
                 final Long chatId = query.getMessage().getChat().getChatId();
@@ -782,8 +851,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         Chat chat = message.getChat();
-        if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(
-                chat.getType()))) {
+        if ((workType == WorkType.G && isPrivate(chat.getType())) || (workType == WorkType.P && isGroup(chat.getType()))) {
             log.debug("Chat type '{}' does not correspond to allowed type '{}'.",
                       chat :: getType,
                       () -> workType);
@@ -792,8 +860,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         }
 
         List<MessageEntity> entities = message.getEntities();
-        if (entities != null && entities.get(0).getType().equalsIgnoreCase("bot_command") && entities.get(
-                0).getOffset() == 0) {
+        if (entities != null && entities.get(0).getType().equalsIgnoreCase("bot_command") && entities.get(0).getOffset() == 0) {
             return false;
         }
 

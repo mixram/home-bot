@@ -20,11 +20,10 @@ import lombok.NoArgsConstructor;
 public class Update implements TelegramApiEntity {
 
     /**
-     * The update`s unique identifier.<br>
-     * Update identifiers start from a certain positive number and increase sequentially. This ID becomes especially handy
-     * if you’re using Webhooks, since it allows you to ignore repeated updates or to restore the correct update sequence,
-     * should they get out of order. If there are no new updates for at least a week, then identifier of the next update will
-     * be chosen randomly instead of sequentially.
+     * The update`s unique identifier.<br> Update identifiers start from a certain positive number and increase sequentially. This ID
+     * becomes especially handy if you’re using Webhooks, since it allows you to ignore repeated updates or to restore the correct update
+     * sequence, should they get out of order. If there are no new updates for at least a week, then identifier of the next update will be
+     * chosen randomly instead of sequentially.
      *
      * @since 0.1.0.0
      */
@@ -39,6 +38,33 @@ public class Update implements TelegramApiEntity {
      */
     @JsonProperty("message")
     private Message message;
+    /**
+     * New version of a message that is known to the bot and was edited.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#message">Message</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("edited_message")
+    private Message editedMessage;
+    /**
+     * New incoming channel post of any kind — text, photo, sticker, etc.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#message">Message</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("channel_post")
+    private Message channelPost;
+    /**
+     * New version of a channel post that is known to the bot and was edited.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#message">Message</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("edited_channel_post")
+    private Message editedChannelPost;
     /**
      * This object represents an incoming callback query from a callback button in an inline keyboard.<br>
      *
