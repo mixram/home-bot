@@ -67,12 +67,10 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private static final String OTHER_COMMANDS_PATTERN_STRING = "^/START.*|^/INFO.*";
     private static final String TEST_COMMANDS_PATTERN_STRING = "^/TEST.*";
     private static final String CAS_PATTERN_STRING = "^/CAS_MSG_.*";
-    private static final String MARKET_PATTERN_STRING = "^#(продам|продажа|продаю|куплю|покупка|покупаю|купую|бронь|забронировать|бронирую|услуга|послуга|продано).*";
     private static final Pattern SALES_PATTERN = Pattern.compile(SALES_PATTERN_STRING);
     private static final Pattern OTHER_PATTERN = Pattern.compile(OTHER_COMMANDS_PATTERN_STRING);
     private static final Pattern TEST_PATTERN = Pattern.compile(TEST_COMMANDS_PATTERN_STRING);
     private static final Pattern CAS_PATTERN = Pattern.compile(CAS_PATTERN_STRING);
-    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING);
 
     private static final String NO_WORK_WITH_SHOP = "telegram.bot.message.no-work-with-shop";
     private static final String NO_DATA_FOR_SHOP = "telegram.bot.message.no-data-for-shop";
@@ -114,7 +112,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final boolean antiBotIsOn;
     private final boolean casIsOn;
     private final boolean marketIsOn;
-    private final String archiveChatId;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -183,7 +180,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
                               @Value("${bot.settings.other.cas-is-on}") boolean casIsOn,
                               @Value("${bot.settings.other.market-logic-is-on}") boolean marketIsOn,
-                              @Value("${bot.settings.other.market-archive-chat-id}") String archiveChatId,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               META meta,
                               TelegramAPICommunicationComponent communicationComponent,
@@ -204,7 +200,6 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.antiBotIsOn = antiBotIsOn;
         this.casIsOn = casIsOn;
         this.marketIsOn = marketIsOn;
-        this.archiveChatId = archiveChatId;
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
@@ -398,27 +393,12 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             }
 
             if (marketLogic.isAdvertisement(message)) {
-                try {
-                    log.info("Message {} is an advertisement, will not be deleted.", messageId);
-
-                    lazyActionLogic.removeLazyActionFromRedis(
-                            new LazyActionData(chatId, messageId, LazyAction.DELETE, LocalDateTime.now()));
-                    communicationComponent.forwardMessage(String.valueOf(chatId), archiveChatId, String.valueOf(messageId));
-                } catch (Exception e) {
-                    log.warn("", e);
-                }
+                marketLogic.doIfAdvertisement(chatId, messageId);
 
                 return;
             }
 
-            try {
-                log.info("Message {} is not an advertisement, will be deleted.", messageId);
-                lazyActionLogic.saveLazyActionToRedis(
-                        new LazyActionData(chatId, null, LazyAction.DELETE,
-                                           LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())));
-            } catch (Exception e) {
-                log.warn("", e);
-            }
+            marketLogic.doIfNotAdvertisement(chatId, messageId);
         } catch (Exception e) {
             log.warn("", e);
         }

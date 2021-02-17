@@ -2,6 +2,7 @@ package com.mixram.telegram.bot.services.services.tapicom;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
+import com.mixram.telegram.bot.services.domain.InputMedia;
 import com.mixram.telegram.bot.services.domain.entity.*;
 import com.mixram.telegram.bot.services.domain.ex.TelegramApiException;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
@@ -42,6 +43,7 @@ class TelegramAPICommunicationServices {
     private static final String GET_UPDATES_URL = "/getUpdates";
     private static final String SEND_MESSAGE_URL = "/sendMessage";
     private static final String FORWARD_MESSAGE_URL = "/forwardMessage";
+    private static final String SEND_MEDIA_GROUP_URL = "/sendMediaGroup";
     private static final String LEAVE_CHAT_URL = "/leaveChat";
     private static final String KICK_CHAT_MEMBER_URL = "/kickChatMember";
     private static final String DELETE_MESSAGE_URL = "/deleteMessage";
@@ -437,6 +439,38 @@ class TelegramAPICommunicationServices {
             AnswerResponse<Message> answerResponse =
                     restClient.post(url, headers.toSingleValueMap(), sendMessage,
                                     new ParameterizedTypeReference<AnswerResponse<Message>>() {});
+            Validate.notNull(answerResponse, "Empty message!");
+            Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    /**
+     * To send a media group.
+     *
+     * @param chatId chat ID.
+     * @param media  a list with media to send.
+     *
+     * @since 1.8.8.0
+     */
+    protected void sendMediaGroup(@Nonnull String chatId,
+                                  @Nonnull List<InputMedia> media) {
+        try {
+            String url = mainUrlPart + SEND_MEDIA_GROUP_URL;
+            HttpHeaders headers = CommonHeadersBuilder.newInstance()
+                                                      .json()
+                                                      .build();
+            SendMessage sendMessage =
+                    SendMessage.builder()
+                               .chatId(chatId)
+                               .media(media)
+                               .disableNotification(true)
+                               .build();
+
+            AnswerResponse<List<Message>> answerResponse =
+                    restClient.post(url, headers.toSingleValueMap(), sendMessage,
+                                    new ParameterizedTypeReference<AnswerResponse<List<Message>>>() {});
             Validate.notNull(answerResponse, "Empty message!");
             Validate.isTrue(answerResponse.getResult(), "An error in process of message sending! %s", answerResponse);
         } catch (Exception e) {

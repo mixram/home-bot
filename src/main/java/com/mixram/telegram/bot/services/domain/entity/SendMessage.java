@@ -1,6 +1,7 @@
 package com.mixram.telegram.bot.services.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mixram.telegram.bot.services.domain.InputMedia;
 import com.mixram.telegram.bot.services.domain.TelegramApiEntity;
 import com.mixram.telegram.bot.utils.databinding.JsonUtil;
 import lombok.AllArgsConstructor;
@@ -8,9 +9,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * @author mixram on 2019-04-12.
- * @since ...
+ * @since 0.1.0.0
  */
 @Data
 @Builder
@@ -43,8 +46,8 @@ public class SendMessage implements TelegramApiEntity {
     @JsonProperty("message_id")
     private String messageId;
     /**
-     * Date when the user will be unbanned, unix time. If user is banned for more than 366 days or less than 30 seconds
-     * from the current time they are considered to be banned forever.
+     * Date when the user will be unbanned, unix time. If user is banned for more than 366 days or less than 30 seconds from the current
+     * time they are considered to be banned forever.
      */
     @JsonProperty("until_date")
     private Long untilDate;
@@ -100,6 +103,13 @@ public class SendMessage implements TelegramApiEntity {
      */
     @JsonProperty("permissions")
     private ChatPermissions permissions;
+    /**
+     * A JSON-serialized array describing messages to be sent, must include 2-10 items.
+     *
+     * @since 1.8.8.0
+     */
+    @JsonProperty("media")
+    private List<InputMedia> media;
 
     @Override
     public String toString() {

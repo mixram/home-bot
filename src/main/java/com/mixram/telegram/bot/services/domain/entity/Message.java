@@ -170,6 +170,15 @@ public class Message implements TelegramApiEntity {
      */
     @JsonProperty("document")
     private Document document;
+    /**
+     * Caption for the animation, audio, document, photo, video or voice, 0-1024 characters.<br>
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#photosize">PhotoSize</a>
+     * @since 1.8.8.0
+     */
+    @JsonProperty("photo")
+    private List<PhotoSize> photo;
 
 
     //TODO: to realize other response types

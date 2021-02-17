@@ -3,19 +3,35 @@ package com.mixram.telegram.bot.services.services.market;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mixram.telegram.bot.config.cache.RedisTemplateHelper;
+import com.mixram.telegram.bot.services.domain.InputMedia;
+import com.mixram.telegram.bot.services.domain.entity.BotSettings;
+import com.mixram.telegram.bot.services.domain.entity.InputMediaPhoto;
 import com.mixram.telegram.bot.services.domain.entity.Message;
+import com.mixram.telegram.bot.services.domain.entity.User;
+import com.mixram.telegram.bot.services.services.bot.entity.LazyActionData;
+import com.mixram.telegram.bot.services.services.bot.enums.LazyAction;
+import com.mixram.telegram.bot.services.services.lazyaction.LazyActionLogic;
+import com.mixram.telegram.bot.services.services.tapicom.TelegramAPICommunicationComponent;
+import com.mixram.telegram.bot.utils.META;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author mixram on 2021-02-16.
  * @since 1.8.8.0
  */
+@Log4j2
 @Component
 public class MarketLogicImpl implements MarketLogic {
 
@@ -24,26 +40,37 @@ public class MarketLogicImpl implements MarketLogic {
     private static final Object LOCK = new Object();
 
     private static final String POSTPONED_MESSAGES_DATA = "postponed_messages_data";
+    private static final String MARKET_PATTERN_STRING = ".*#(продам|куплю|бронь).*";
+    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING);
 
+    private final TelegramAPICommunicationComponent communicationComponent;
+    private final LazyActionLogic lazyActionLogic;
     private final RedisTemplateHelper redisTemplateHelper;
+    private final META meta;
+
+    private final String archiveChatId;
 
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="***Util elements***">
 
     @Autowired
-    public MarketLogicImpl(RedisTemplateHelper redisTemplateHelper) {
+    public MarketLogicImpl(@Value("${bot.settings.other.market-archive-chat-id}") String archiveChatId,
+                           TelegramAPICommunicationComponent communicationComponent,
+                           LazyActionLogic lazyActionLogic,
+                           RedisTemplateHelper redisTemplateHelper,
+                           META meta) {
+        this.communicationComponent = communicationComponent;
+        this.lazyActionLogic = lazyActionLogic;
         this.redisTemplateHelper = redisTemplateHelper;
+        this.meta = meta;
+
+        this.archiveChatId = archiveChatId;
     }
 
     // </editor-fold>
 
 
-    /**
-     * To do stored lazy action.
-     *
-     * @since 1.8.8.0
-     */
     @Override
     public void doPostponedAction() {
         synchronized (LOCK) {
@@ -54,12 +81,12 @@ public class MarketLogicImpl implements MarketLogic {
                 final boolean isAdv = messagesList.stream()
                                                   .anyMatch(this :: isAdvertisement);
                 if (isAdv) {
-                    //TODO: тут нужно сделать логику как в doMarketLogic() с удалением ВСЕХ сообщений из lazyAction и форвардингом сообщения со всеми фотками в чат-архив.
+//                    messagesList.forEach(m -> doIfAdvertisement(m.getChat().getChatId(), m.getMessageId()));
+                    doIfAdvertisement(messagesList);
                 } else {
-                    //TODO: тут нужно сделать логику как в doMarketLogic() с сохранением ВСЕХ сообщений в lazyAction для удаления.
+//                    messagesList.forEach(m -> doIfNotAdvertisement(m.getChat().getChatId(), m.getMessageId()));
+                    doIfNotAdvertisement(messagesList);
                 }
-
-                //TODO: и вообще, логики тут и в doMarketLogic() должны быть где-то в одном месте: думаю, что надо всю логику переносить сюда, чтобы она просто вызывалась из doMarketLogic(), а не реализовывалась там.
             });
 
             savePostponedMessagesDataToRedis(Maps.newHashMap());
@@ -67,12 +94,6 @@ public class MarketLogicImpl implements MarketLogic {
     }
 
 
-    /**
-     * To save message to Redis for postponed lazy action.<br> The message will be stored in Redis and processed some later with scheduler.
-     * The result of scheduler work will be the message stored in Redis in lazy-actions-collection with
-     *
-     * @since 1.8.8.0
-     */
     @Override
     public void saveMessageToRedisForPostponedLazyAction(@Nonnull Message message) {
         synchronized (LOCK) {
@@ -88,7 +109,6 @@ public class MarketLogicImpl implements MarketLogic {
         }
     }
 
-
     /**
      * To check if text contains signs, that message is an advertisement.
      *
@@ -102,19 +122,108 @@ public class MarketLogicImpl implements MarketLogic {
     public boolean isAdvertisement(@Nonnull Message message) {
         final String text = message.getText() == null ? message.getCaption() : message.getText();
 
-        return StringUtils.isNotBlank(text) && (
-                text.startsWith("#продам")
-                        || text.startsWith("#куплю")
-                        || text.startsWith("#бронь")
-                        || text.startsWith("#услуга")
-                        || text.startsWith("#продано")
-                        || text.startsWith("#послуга")
-                        || text.startsWith("#объявление")
-        );
+//        return StringUtils.isNotBlank(text) && (
+//                text.contains("#продам")
+//                        || text.contains("#куплю")
+//                        || text.contains("#бронь")
+//        );
+
+        return StringUtils.isNotBlank(text) && MARKET_PATTERN.matcher(text).matches();
     }
 
+    @Override
+    public void doIfAdvertisement(@Nonnull Long chatId,
+                                  @Nonnull Long messageId) {
+        try {
+            log.info("Message {} is an advertisement, will not be deleted.", messageId);
+
+            lazyActionLogic.removeLazyActionFromRedis(
+                    new LazyActionData(chatId, messageId, LazyAction.DELETE, LocalDateTime.now()));
+            communicationComponent.forwardMessage(String.valueOf(chatId), archiveChatId, String.valueOf(messageId));
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    @Override
+    public void doIfAdvertisement(@Nonnull List<Message> messages) {
+        try {
+            log.info("Messages are an advertisement, will not be deleted.");
+
+            final LocalDateTime now = LocalDateTime.now();
+            final Long chatId = messages.get(0).getChat().getChatId();
+            final List<LazyActionData> la = Lists.newArrayListWithExpectedSize(messages.size());
+            final List<InputMedia> mg = Lists.newArrayListWithExpectedSize(messages.size());
+            messages.forEach(m -> {
+                la.add(new LazyActionData(chatId, m.getMessageId(), LazyAction.DELETE, now));
+                mg.add(new InputMediaPhoto(m.getPhoto().get(m.getPhoto().size() - 1).getFileId(), prepareCaption(m),
+                                           m.getCaptionEntities()));
+            });
+
+            lazyActionLogic.removeLazyActionsFromRedis(la);
+            communicationComponent.sendMediaGroup(archiveChatId, mg);
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    @Override
+    public void doIfNotAdvertisement(@Nonnull Long chatId,
+                                     @Nonnull Long messageId) {
+        try {
+            log.info("Message {} is not an advertisement, will be deleted.", messageId);
+
+            final BotSettings botSettings = meta.settings.get(chatId);
+            lazyActionLogic.saveLazyActionToRedis(
+                    new LazyActionData(chatId, messageId, LazyAction.DELETE,
+                                       LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())));
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
+
+    @Override
+    public void doIfNotAdvertisement(@Nonnull List<Message> messages) {
+        try {
+            log.info("Messages are not an advertisement, will be deleted.");
+
+            final Long chatId = messages.get(0).getChat().getChatId();
+            final BotSettings botSettings = meta.settings.get(chatId);
+            lazyActionLogic.saveLazyActionsToRedis(
+                    messages.stream()
+                            .map(m -> new LazyActionData(chatId, m.getMessageId(), LazyAction.DELETE,
+                                                         LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())))
+                            .collect(Collectors.toList())
+            );
+        } catch (Exception e) {
+            log.warn("", e);
+        }
+    }
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.8.8.0
+     */
+    @Nullable
+    private String prepareCaption(@Nonnull Message message) {
+        return message.getCaption() == null ? null : message.getCaption() + "\n\nАвтор: " + prepareUserName(message.getUser());
+    }
+
+    /**
+     * @since 1.8.8.0
+     */
+    @Nonnull
+    private String prepareUserName(@Nonnull User user) {
+        final StringBuilder builder = new StringBuilder();
+        if (user.getFirstName() != null) builder.append(user.getFirstName()).append(" ");
+        if (user.getLastName() != null) builder.append(user.getLastName());
+        if (user.getFirstName() != null || user.getLastName() != null) builder.append(", ");
+        if (user.getUsername() != null) builder.append("@").append(user.getUsername()).append(", ");
+        builder.append(user.getId()).append(".");
+
+        return builder.toString();
+    }
 
     /**
      * @since 1.8.8.0

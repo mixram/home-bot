@@ -1,5 +1,6 @@
 package com.mixram.telegram.bot.services.services.tapicom;
 
+import com.mixram.telegram.bot.services.domain.InputMedia;
 import com.mixram.telegram.bot.services.domain.entity.CASData;
 import com.mixram.telegram.bot.services.domain.entity.Update;
 import com.mixram.telegram.bot.services.services.bot.entity.MessageData;
@@ -168,6 +169,18 @@ public class TelegramAPICommunicationComponent {
         Validate.notBlank(messageId, "Message ID is not specified!");
 
         services.forwardMessage(baseChatId, targetChatId, messageId);
+    }
+
+    /**
+     * @see TelegramAPICommunicationServices#sendMediaGroup(String, List)
+     * @since 1.8.8.0
+     */
+    public void sendMediaGroup(@Nonnull String chatId,
+                               @Nonnull List<InputMedia> media) {
+        Validate.notBlank(chatId, "Chat ID is not specified!");
+        Validate.notEmpty(media, "Media is not specified!");
+
+        services.sendMediaGroup(chatId, media);
     }
 
 
