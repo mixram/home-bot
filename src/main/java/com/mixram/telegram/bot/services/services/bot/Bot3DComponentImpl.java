@@ -398,7 +398,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                 return;
             }
 
-            marketLogic.doIfNotAdvertisement(chatId, messageId);
+            marketLogic.doIfNotAdvertisement(message);
         } catch (Exception e) {
             log.warn("", e);
         }

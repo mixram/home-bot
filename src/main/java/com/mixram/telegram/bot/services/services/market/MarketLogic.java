@@ -67,8 +67,7 @@ public interface MarketLogic {
      *
      * @since 1.8.8.0
      */
-    void doIfNotAdvertisement(@Nonnull Long chatId,
-                              @Nonnull Long messageId);
+    void doIfNotAdvertisement(@Nonnull Message message);
 
     /**
      * To do a bunch of actions if message is not an advertisement.

@@ -22,8 +22,10 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,15 @@ public class MarketLogicImpl implements MarketLogic {
     private final META meta;
 
     private final String archiveChatId;
+
+
+    private static final Comparator<InputMedia> COMPARATOR = (o1, o2) -> {
+        if (o1.getCaption() == null && o2.getCaption() != null) return 1;
+        if (o1.getCaption() != null && o2.getCaption() == null) return -1;
+        if (o1.getCaption() == null && o2.getCaption() == null) return 0;
+
+        return o1.getCaption().compareTo(o2.getCaption());
+    };
 
     // </editor-fold>
 
@@ -120,7 +131,7 @@ public class MarketLogicImpl implements MarketLogic {
      */
     @Override
     public boolean isAdvertisement(@Nonnull Message message) {
-        final String text = message.getText() == null ? message.getCaption() : message.getText();
+        final String text = prepareText(message);
 
 //        return StringUtils.isNotBlank(text) && (
 //                text.contains("#продам")
@@ -159,6 +170,7 @@ public class MarketLogicImpl implements MarketLogic {
                 mg.add(new InputMediaPhoto(m.getPhoto().get(m.getPhoto().size() - 1).getFileId(), prepareCaption(m),
                                            m.getCaptionEntities()));
             });
+            mg.sort(COMPARATOR);
 
             lazyActionLogic.removeLazyActionsFromRedis(la);
             communicationComponent.sendMediaGroup(archiveChatId, mg);
@@ -168,14 +180,22 @@ public class MarketLogicImpl implements MarketLogic {
     }
 
     @Override
-    public void doIfNotAdvertisement(@Nonnull Long chatId,
-                                     @Nonnull Long messageId) {
+    public void doIfNotAdvertisement(@Nonnull Message message) {
         try {
-            log.info("Message {} is not an advertisement, will be deleted.", messageId);
-
+            final Long chatId = message.getChat().getChatId();
             final BotSettings botSettings = meta.settings.get(chatId);
+
+            if (botSettings.getAdmins() != null && botSettings.getAdmins().contains(message.getUser().getId())) {
+                log.info("Message {} is from admin {}_{}. Will not be deleted.",
+                         message :: getMessageId,
+                         () -> message.getUser().getUsername(),
+                         () -> message.getUser().getId());
+                return;
+            }
+
+            log.info("Message {} is not an advertisement, will be deleted.", message :: getMessageId);
             lazyActionLogic.saveLazyActionToRedis(
-                    new LazyActionData(chatId, messageId, LazyAction.DELETE,
+                    new LazyActionData(chatId, message.getMessageId(), LazyAction.DELETE,
                                        LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())));
         } catch (Exception e) {
             log.warn("", e);
@@ -189,10 +209,13 @@ public class MarketLogicImpl implements MarketLogic {
 
             final Long chatId = messages.get(0).getChat().getChatId();
             final BotSettings botSettings = meta.settings.get(chatId);
+            final Set<Long> admins = botSettings.getAdmins();
+            final LocalDateTime plusSeconds = LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime());
+
             lazyActionLogic.saveLazyActionsToRedis(
                     messages.stream()
-                            .map(m -> new LazyActionData(chatId, m.getMessageId(), LazyAction.DELETE,
-                                                         LocalDateTime.now().plusSeconds(botSettings.getMarketMessageDeleteTime())))
+                            .filter(m -> admins == null || !admins.contains(m.getUser().getId()))
+                            .map(m -> new LazyActionData(chatId, m.getMessageId(), LazyAction.DELETE, plusSeconds))
                             .collect(Collectors.toList())
             );
         } catch (Exception e) {
@@ -206,8 +229,17 @@ public class MarketLogicImpl implements MarketLogic {
      * @since 1.8.8.0
      */
     @Nullable
+    private String prepareText(@Nonnull Message message) {
+        return message.getText() == null ? message.getCaption() : message.getText();
+    }
+
+    /**
+     * @since 1.8.8.0
+     */
+    @Nullable
     private String prepareCaption(@Nonnull Message message) {
-        return message.getCaption() == null ? null : message.getCaption() + "\n\nАвтор: " + prepareUserName(message.getUser());
+        final String text = prepareText(message);
+        return text == null ? null : text + "\n\nАвтор: " + prepareUserName(message.getUser());
     }
 
     /**

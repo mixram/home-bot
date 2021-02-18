@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class InputMediaThumbAbstr extends InputMediaAbstr {
+public abstract class InputMediaThumbAbstr extends InputMediaAbstr {
 
     /**
      * Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side.
