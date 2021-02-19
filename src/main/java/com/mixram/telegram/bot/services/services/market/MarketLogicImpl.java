@@ -43,7 +43,7 @@ public class MarketLogicImpl implements MarketLogic {
 
     private static final String POSTPONED_MESSAGES_DATA = "postponed_messages_data";
     private static final String MARKET_PATTERN_STRING = ".*#(продам|куплю|бронь).*";
-    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING);
+    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING, Pattern.DOTALL);
 
     private final TelegramAPICommunicationComponent communicationComponent;
     private final LazyActionLogic lazyActionLogic;
