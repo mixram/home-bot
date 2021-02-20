@@ -166,7 +166,7 @@ public class LazyActionLogicImpl implements LazyActionLogic {
         synchronized (LOCK) {
             List<LazyActionData> lazyActionDataList = getLazyActionListFromRedis();
 
-            lazyActionDataList.remove(lazyActionData);
+            lazyActionDataList.removeIf(la -> la.equals(lazyActionData));
 
             doSaveLazyActionsToRedis(lazyActionDataList);
         }

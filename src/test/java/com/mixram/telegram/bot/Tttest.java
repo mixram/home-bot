@@ -1,12 +1,6 @@
 package com.mixram.telegram.bot;
 
-import com.google.common.collect.Lists;
-import com.mixram.telegram.bot.services.domain.InputMedia;
-import com.mixram.telegram.bot.services.domain.entity.InputMediaPhoto;
-import com.mixram.telegram.bot.utils.databinding.JsonUtil;
-
-import java.util.Comparator;
-import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author mixram on 2019-04-13.
@@ -15,29 +9,27 @@ import java.util.List;
 public class Tttest {
 
     public static void main(String[] args) {
-        final List<InputMedia> mg = Lists.newArrayList(
-                new InputMediaPhoto("1", null, null),
-                new InputMediaPhoto("2", "тут текст", null),
-                new InputMediaPhoto("3", null, null),
-                new InputMediaPhoto("4", "#продам", null)
-        );
-        mg.sort(COMPARATOR2);
+        final String test1 = "#продам тест";
+        final String test2 = " #продам тест";
+        final String test3 = "dsds #продам тест";
+        final String test4 = "dsds  тест #продам";
+        final String test5 = "dsds  тест#продам";
+        final String test6 = "dsds  тест#Продам";
+        final String test7 = "#Продам dsds  тест";
+        final String test8 = "#придам dsds  тест";
 
-        System.out.println("T: " + JsonUtil.toPrettyJson(mg));
+        System.out.println("1: " + MARKET_PATTERN.matcher(test1).matches());
+        System.out.println("2: " + MARKET_PATTERN.matcher(test2).matches());
+        System.out.println("3: " + MARKET_PATTERN.matcher(test3).matches());
+        System.out.println("4: " + MARKET_PATTERN.matcher(test4).matches());
+        System.out.println("5: " + MARKET_PATTERN.matcher(test5).matches());
+        System.out.println("6: " + MARKET_PATTERN.matcher(test6).matches());
+        System.out.println("7: " + MARKET_PATTERN.matcher(test7).matches());
+        System.out.println("8: " + MARKET_PATTERN.matcher(test8).matches());
     }
 
-    private static final Comparator<InputMedia> COMPARATOR = (o1, o2) -> {
-        final String caption1 = o1.getCaption() == null ? "" : o1.getCaption();
-        final String caption2 = o2.getCaption() == null ? "" : o2.getCaption();
+    //    private static final String MARKET_PATTERN_STRING = ".*#[а-яА-я].*";
+    private static final String MARKET_PATTERN_STRING = ".*#([пП][рР][оО][дД][аА][мМ]|[кК][уУ][пП][лЛ][юЮ]|[бБ][рР][оО][нН][ьЬ]).*";
+    private static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING, Pattern.DOTALL);
 
-        return caption1.compareTo(caption2);
-    };
-
-    private static final Comparator<InputMedia> COMPARATOR2 = (o1, o2) -> {
-        if (o1.getCaption() == null && o2.getCaption() != null) return 1;
-        if (o1.getCaption() != null && o2.getCaption() == null) return -1;
-        if (o1.getCaption() == null && o2.getCaption() == null) return 0;
-
-        return o1.getCaption().compareTo(o2.getCaption());
-    };
 }
