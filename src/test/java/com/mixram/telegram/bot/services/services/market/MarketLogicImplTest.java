@@ -29,6 +29,9 @@ public class MarketLogicImplTest extends TestCase {
         final String test6 = "dsds  тест#Продам";
         final String test7 = "#Продам dsds  тест";
         final String test8 = "#придам dsds  тест";
+        final String test9 = "#вiддам dsds  тест";
+        final String test10 = " dsds  #вiддам тест";
+        final String test11 = "#вiдам dsds  тест";
 
         assertTrue(MARKET_PATTERN.matcher(test1).matches());
         assertTrue(MARKET_PATTERN.matcher(test2).matches());
@@ -38,5 +41,8 @@ public class MarketLogicImplTest extends TestCase {
         assertTrue(MARKET_PATTERN.matcher(test6).matches());
         assertTrue(MARKET_PATTERN.matcher(test7).matches());
         assertFalse(MARKET_PATTERN.matcher(test8).matches());
+        assertTrue(MARKET_PATTERN.matcher(test9).matches());
+        assertTrue(MARKET_PATTERN.matcher(test10).matches());
+        assertTrue(MARKET_PATTERN.matcher(test11).matches());
     }
 }
