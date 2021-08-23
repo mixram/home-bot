@@ -29,7 +29,7 @@
         <lombok.version>1.18.4</lombok.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <junit.version>4.12</junit.version>
-        <jsoup.version>1.11.3</jsoup.version>
+        <jsoup.version>1.14.2</jsoup.version>
     </properties>
 
     <dependencyManagement>
