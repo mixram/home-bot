@@ -11,7 +11,7 @@ import static com.mixram.telegram.bot.services.services.market.MarketLogicImpl.M
 
 /**
  * @author mixram on 2021-02-21.
- * @since
+ * @since 1.8.8.2
  */
 //@Ignore
 @TestPropertySource("file:/Users/mixram/Documents/Dev/projects/3d-bot-microservices/universal-bot/dev/configs/bootstrap.properties")

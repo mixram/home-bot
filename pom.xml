@@ -6,7 +6,7 @@
 
     <groupId>com.mixram.telegram.bot</groupId>
     <artifactId>universal-bot</artifactId>
-    <version>1.8.8.3</version>
+    <version>1.8.9.0</version>
     <packaging>jar</packaging>
 
     <name>universal-bot</name>
@@ -28,7 +28,7 @@
         <modelmapper.version>1.1.0</modelmapper.version>
         <lombok.version>1.18.4</lombok.version>
         <commons-lang3.version>3.8.1</commons-lang3.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <jsoup.version>1.14.2</jsoup.version>
     </properties>
 
