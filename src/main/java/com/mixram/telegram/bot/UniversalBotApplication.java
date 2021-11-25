@@ -22,7 +22,7 @@ public class UniversalBotApplication {
         pushVersion2Env();
 
         SpringApplication app = new SpringApplication(UniversalBotApplication.class);
-        app.setWebApplicationType(WebApplicationType.SERVLET);
+        app.setWebApplicationType(WebApplicationType.NONE);
         app.run(args);
 
         log.info("PRODUCT_VERSION ==> '{}'", System.getProperty("product.version"));
