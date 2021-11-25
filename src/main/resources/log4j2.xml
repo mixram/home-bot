@@ -3,79 +3,17 @@
 
     <Properties>
         <Property name="pattern1">%p %d{HH:mm:ss,SSS} [%t] %C: %m%n</Property>
-        <Property name="pattern2">%style{[%d{HH:mm:ss.SSS}]}{cyan} [%25.25c{1}:%-4L] - %highlight{%m}{FATAL=red blink,
-            ERROR=red, WARN=yellow bold, INFO=white, DEBUG=green bold, TRACE=blue} [%-5level]%n
+        <Property name="pattern2">%style{[%d{HH:mm:ss.SSS}]}{cyan} [%25.25c{1}:%-4L] - %highlight{%m}{FATAL=red blink, ERROR=red,
+            WARN=yellow bold, INFO=white, DEBUG=green bold, TRACE=blue} [%-5level]%n
         </Property>
         <Property name="pattern3">[%-5level] [%d{HH:mm:ss.SSS}] [%25.25t] [%25.25c{1}:%-4L] - %m%n</Property>
-        <Property name="basePath">logs</Property>
     </Properties>
 
     <Appenders>
 
         <Console name="STDOUT" target="SYSTEM_OUT">
-            <PatternLayout pattern="${pattern2}" />
+            <PatternLayout pattern="${pattern2}"/>
         </Console>
-
-        <RollingFile
-                name="commonFile"
-                fileName="${basePath}/common.log"
-                filePattern="${basePath}/common.%d{yyyyMMdd}.log.gz"
-                ignoreExceptions="false">
-            <PatternLayout>
-                <Pattern>${pattern2}</Pattern>
-            </PatternLayout>
-            <Policies>
-                <OnStartupTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB" />
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-            <DefaultRolloverStrategy max="5" />
-        </RollingFile>
-        <RollingFile
-                name="securityFile"
-                fileName="${basePath}/security.log"
-                filePattern="${basePath}/security.%d{yyyyMMdd}.log.gz"
-                ignoreExceptions="false">
-            <PatternLayout>
-                <Pattern>${pattern2}</Pattern>
-            </PatternLayout>
-            <Policies>
-                <OnStartupTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB" />
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-            <DefaultRolloverStrategy max="5" />
-        </RollingFile>
-        <RollingFile
-                name="restFile"
-                fileName="${basePath}/rest.log"
-                filePattern="${basePath}/rest.%d{yyyyMMdd}.log.gz"
-                ignoreExceptions="false">
-            <PatternLayout>
-                <Pattern>${pattern2}</Pattern>
-            </PatternLayout>
-            <Policies>
-                <OnStartupTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB" />
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-            <DefaultRolloverStrategy max="5" />
-        </RollingFile>
-        <RollingFile
-                name="springFile"
-                fileName="${basePath}/spring.log"
-                filePattern="${basePath}/spring.%d{yyyyMMdd}.log.gz"
-                ignoreExceptions="false">
-            <PatternLayout>
-                <Pattern>${pattern2}</Pattern>
-            </PatternLayout>
-            <Policies>
-                <OnStartupTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB" />
-                <TimeBasedTriggeringPolicy />
-            </Policies>
-            <DefaultRolloverStrategy max="5" />
-        </RollingFile>
 
     </Appenders>
 
@@ -83,35 +21,25 @@
 
         <!-- main log -->
         <Logger name="com.mixram.telegram.bot" level="info" includeLocation="true" additivity="false">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="STDOUT"/>
         </Logger>
         <Logger name="com.mixram.telegram.bot.config.security" level="info" includeLocation="true" additivity="false">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="commonFile" />
-            <AppenderRef ref="securityFile" />
+            <AppenderRef ref="STDOUT"/>
         </Logger>
         <Logger name="com.mixram.telegram.bot.utils.rest" level="info" includeLocation="true" additivity="false">
-            <AppenderRef ref="commonFile" />
-            <AppenderRef ref="restFile" />
+            <AppenderRef ref="STDOUT"/>
         </Logger>
 
         <!-- spring log -->
         <Logger name="org.springframework" level="info" includeLocation="true" additivity="false">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="commonFile" />
-            <AppenderRef ref="springFile" />
+            <AppenderRef ref="STDOUT"/>
         </Logger>
-        <Logger name="org.springframework.security" level="info" includeLocation="true"
-                additivity="false">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="commonFile" />
-            <AppenderRef ref="springFile" />
+        <Logger name="org.springframework.security" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="STDOUT"/>
         </Logger>
 
         <Root level="info" includeLocation="true">
-            <AppenderRef ref="STDOUT" />
-            <AppenderRef ref="commonFile" />
+            <AppenderRef ref="STDOUT"/>
         </Root>
 
     </Loggers>

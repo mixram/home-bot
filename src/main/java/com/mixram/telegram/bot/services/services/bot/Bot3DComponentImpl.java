@@ -211,6 +211,8 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return null;
         }
 
+        log.debug("MESSAGE: " + JsonUtil.toJson(message));
+
         //        Locale locale = message.getUser() == null || message.getUser().getLanguageCode() == null ? META.DEFAULT_LOCALE :
         //                        new Locale(message.getUser().getLanguageCode());
         Locale locale = META.DEFAULT_LOCALE;
@@ -908,4 +910,3 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     // </editor-fold>
 }
-
