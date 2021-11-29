@@ -6,6 +6,7 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Properties;
 
 /**
@@ -27,6 +28,7 @@ public class UniversalBotApplication {
 
         log.info("PRODUCT_VERSION ==> '{}'", System.getProperty("product.version"));
         log.info("PRODUCT_VERSION_FULL ==> '{}'", System.getProperty("product.version.full"));
+        log.info("CURRENT_DATE_TIME ==> '{}'", LocalDateTime.now());
     }
 
     private static void pushVersion2Env() throws IOException {
