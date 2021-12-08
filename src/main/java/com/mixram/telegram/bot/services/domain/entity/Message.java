@@ -179,6 +179,16 @@ public class Message implements TelegramApiEntity {
      */
     @JsonProperty("photo")
     private List<PhotoSize> photo;
+    /**
+     * Sender of the message, sent on behalf of a chat. The channel itself for channel messages. The supergroup itself for messages from
+     * anonymous group administrators. The linked channel for messages automatically forwarded to the discussion group.
+     *
+     * @apiNote the parameter is optional!
+     * @see <a href="https://core.telegram.org/bots/api#chat">Chat</a>
+     * @since 1.10.0.0
+     */
+    @JsonProperty("sender_chat")
+    private Chat senderIsChat;
 
 
     //TODO: to realize other response types

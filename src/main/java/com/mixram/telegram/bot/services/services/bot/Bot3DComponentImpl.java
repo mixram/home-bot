@@ -38,6 +38,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -112,6 +113,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private final boolean antiBotIsOn;
     private final boolean casIsOn;
     private final boolean marketIsOn;
+    private final String archiveChatId;
 
     private final Module3DPlasticDataSearcher searcher;
     private final TelegramAPICommunicationComponent communicationComponent;
@@ -180,6 +182,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
                               @Value("${bot.settings.other.anti-bot-is-on}") boolean antiBotIsOn,
                               @Value("${bot.settings.other.cas-is-on}") boolean casIsOn,
                               @Value("${bot.settings.other.market-logic-is-on}") boolean marketIsOn,
+                              @Value("${bot.settings.other.market-archive-chat-id}") String archiveChatId,
                               @Qualifier("discountsOn3DPlasticDataCacheComponent") Module3DPlasticDataSearcher searcher,
                               META meta,
                               TelegramAPICommunicationComponent communicationComponent,
@@ -200,6 +203,7 @@ public class Bot3DComponentImpl implements Bot3DComponent {
         this.antiBotIsOn = antiBotIsOn;
         this.casIsOn = casIsOn;
         this.marketIsOn = marketIsOn;
+        this.archiveChatId = archiveChatId;
 
         this.searcher = searcher;
         this.communicationComponent = communicationComponent;
@@ -296,6 +300,13 @@ public class Bot3DComponentImpl implements Bot3DComponent {
             return leftChatMember;
         }
 
+        MessageData senderIsChat = checkIfSenderIsChat(message);
+        if (senderIsChat != null) {
+            proceedSenderIsChat(message);
+
+            return senderIsChat;
+        }
+
         doMarketLogic(message);
 
         if (noNeedToAnswer(message)) {
@@ -370,6 +381,20 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
 
     // <editor-fold defaultstate="collapsed" desc="***Private elements***">
+
+    /**
+     * @since 1.10.0.0
+     */
+    @Nullable
+    private MessageData checkIfSenderIsChat(@Nonnull Message message) {
+        final Chat senderIsChat = message.getSenderIsChat();
+        if (senderIsChat == null) return null;
+        else return MessageData.builder()
+                               .toAdmin(true)
+                               .message(String.format("User has posted message as a chat '%s : %s'!", senderIsChat.getChatId(),
+                                                      senderIsChat.getTitle()))
+                               .build();
+    }
 
     /**
      * @since 1.8.8.0
@@ -556,6 +581,17 @@ public class Bot3DComponentImpl implements Bot3DComponent {
     private void proceedUserHasLeftStuff(Message message) {
         communicationComponent.removeMessageFromChat(String.valueOf(message.getChat().getChatId()),
                                                      String.valueOf(message.getMessageId()));
+    }
+
+    /**
+     * @since 1.10.0.0
+     */
+    private void proceedSenderIsChat(Message message) {
+        final String chatId = String.valueOf(message.getChat().getChatId());
+        final String messageId = String.valueOf(message.getMessageId());
+
+        communicationComponent.forwardMessage(chatId, archiveChatId, messageId);
+        communicationComponent.removeMessageFromChat(chatId, messageId);
     }
 
     /**
@@ -1339,4 +1375,3 @@ public class Bot3DComponentImpl implements Bot3DComponent {
 
     // </editor-fold>
 }
-
