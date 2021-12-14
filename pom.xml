@@ -6,7 +6,7 @@
 
     <groupId>com.mixram.telegram.bot</groupId>
     <artifactId>universal-bot</artifactId>
-    <version>1.7.1.0</version>
+    <version>1.7.1.1</version>
     <packaging>jar</packaging>
 
     <name>universal-bot</name>
@@ -30,6 +30,8 @@
         <commons-lang3.version>3.8.1</commons-lang3.version>
         <junit.version>4.12</junit.version>
         <jsoup.version>1.11.3</jsoup.version>
+        <!--Log4J2 vulnerability fix (https://spring.io/blog/2021/12/10/log4j2-vulnerability-and-spring-boot)-->
+        <log4j2.version>2.15.0</log4j2.version>
     </properties>
 
     <dependencyManagement>
