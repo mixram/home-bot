@@ -44,7 +44,7 @@ public class MarketLogicImpl implements MarketLogic {
     private static final String POSTPONED_MESSAGES_DATA = "postponed_messages_data";
     //    private static final String MARKET_PATTERN_STRING = ".*#(продам|куплю|бронь).*";
     private static final String MARKET_PATTERN_STRING =
-            ".*#([пП][рР][оО][дД][аА][мМ]|[кК][уУ][пП][лЛ][юЮ]|[бБ][рР][оО][нН][ьЬ]|[вВ][iI][дД][дД]?[аА][мМ]).*";
+            ".*#([пП][рР][оО][дД][аА][мМ]|[кК][уУ][пП][лЛ][юЮ]|[бБ][рР][оО][нН][ьЬ]|[вВ][іІ][дД][дД]?[аА][мМ]).*";
     public static final Pattern MARKET_PATTERN = Pattern.compile(MARKET_PATTERN_STRING, Pattern.DOTALL);
 
     private final TelegramAPICommunicationComponent communicationComponent;
